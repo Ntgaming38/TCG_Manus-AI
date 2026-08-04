@@ -17,67 +17,57 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-[#1a0a2e]">
+        <Loader2 className="h-8 w-8 animate-spin text-yellow-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center">
-      {/* Background image - Pokemon artwork */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Full background image - the Pokemon artwork */}
       <div className="absolute inset-0">
         <img
-          src="/manus-storage/pokemon-login-bg_72a2127d.png"
-          alt="Pokemon Trading"
+          src="/manus-storage/pokemon-login-bg_f461bbf3.png"
+          alt="Pokemon Trading Manager"
           className="w-full h-full object-cover"
         />
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 flex flex-col items-center gap-6 px-4 max-w-lg w-full">
-        {/* Pokémon Logo Text */}
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="pokemon-logo-text text-6xl md:text-8xl tracking-wider drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
+      {/* Overlay content - positioned over the image */}
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-between py-8">
+        {/* Top area - POKÉMON logo replacing "Học Viện Bảo Bối" */}
+        <div className="flex flex-col items-center mt-4">
+          <h1 className="pokemon-logo-text text-7xl md:text-9xl tracking-wider drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] select-none">
             POKÉMON
           </h1>
-          <p className="text-blue-200 text-sm md:text-base font-semibold tracking-widest uppercase drop-shadow-lg">
+          <p className="text-white/90 text-sm md:text-base font-bold tracking-[0.3em] uppercase mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             Trading Manager
           </p>
         </div>
 
-        {/* Login card */}
-        <div className="w-full max-w-sm bg-black/60 backdrop-blur-xl border border-yellow-500/30 rounded-2xl p-8 shadow-2xl shadow-black/40 mt-4">
-          <div className="flex flex-col items-center gap-6">
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-white">
-                Chào mừng trở lại
-              </h2>
-              <p className="text-sm text-gray-300 mt-1">
-                Đăng nhập để quản lý bộ sưu tập của bạn
-              </p>
-            </div>
-
-            <Button
-              onClick={() => startLogin()}
-              size="lg"
-              className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all duration-200 active:scale-[0.97]"
-            >
-              Đăng nhập
-            </Button>
-
-            <p className="text-xs text-gray-400 text-center">
-              Quản lý Card, Box, Pack - Theo dõi lợi nhuận
-            </p>
+        {/* Bottom area - Login section (similar to original "Bắt đầu" button area) */}
+        <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8">
+          {/* Server info bar (mimicking the original design) */}
+          <div className="w-full bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-3 flex items-center justify-between">
+            <span className="text-white/80 text-sm">Pokémon Trading Manager</span>
+            <span className="text-yellow-400 text-sm font-semibold">v1.0</span>
           </div>
-        </div>
 
-        {/* Version */}
-        <p className="text-xs text-white/50">
-          Phiên bản 1.0.0
-        </p>
+          {/* Login button (styled like the green "Bắt đầu" button) */}
+          <Button
+            onClick={() => startLogin()}
+            size="lg"
+            className="w-full max-w-[200px] bg-gradient-to-b from-green-400 to-green-600 hover:from-green-300 hover:to-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/40 border border-green-300/30 rounded-lg py-6 transition-all duration-150 active:scale-[0.97]"
+          >
+            Bắt đầu
+          </Button>
+
+          {/* Version text */}
+          <p className="text-white/40 text-xs">
+            Phiên bản: 1.0.0
+          </p>
+        </div>
       </div>
     </div>
   );
