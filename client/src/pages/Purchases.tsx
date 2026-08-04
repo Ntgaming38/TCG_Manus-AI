@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
@@ -62,6 +63,13 @@ export default function Purchases() {
     });
     return sorted;
   }, [purchases, sortField, sortDirection]);
+
+  // Calculate totals for current list
+  const totals = useMemo(() => {
+    const totalAmount = sortedPurchases.reduce((sum, p: any) => sum + Number(p.totalPrice || 0), 0);
+    const totalQuantity = sortedPurchases.reduce((sum, p: any) => sum + (p.quantity || 0), 0);
+    return { totalAmount, totalQuantity, count: sortedPurchases.length };
+  }, [sortedPurchases]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -259,6 +267,29 @@ export default function Purchases() {
               </CardContent>
             </Card>
           ))}
+
+          {/* Total Summary */}
+          <Card className="bg-card border-primary/30 border-2">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-primary">Tổng kết</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totals.count} giao dịch • {totals.totalQuantity} sản phẩm
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg text-primary">¥{totals.totalAmount.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Tổng tiền mua</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

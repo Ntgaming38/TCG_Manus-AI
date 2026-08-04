@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 const PLATFORMS = [
@@ -71,6 +72,13 @@ export default function Sales() {
     });
     return sorted;
   }, [sales, sortField, sortDirection]);
+
+  // Calculate totals for current list
+  const totals = useMemo(() => {
+    const totalRevenue = sortedSales.reduce((sum, s: any) => sum + Number(s.totalRevenue || 0), 0);
+    const totalProfit = sortedSales.reduce((sum, s: any) => sum + Number(s.profit || 0), 0);
+    return { totalRevenue, totalProfit, count: sortedSales.length };
+  }, [sortedSales]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -256,6 +264,32 @@ export default function Sales() {
               </CardContent>
             </Card>
           ))}
+
+          {/* Total Summary */}
+          <Card className="bg-card border-primary/30 border-2">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-primary">Tổng kết</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totals.count} giao dịch
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg text-primary">¥{totals.totalRevenue.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
+                  <p className={`text-sm font-bold mt-0.5 ${totals.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {totals.totalProfit >= 0 ? '+' : ''}¥{totals.totalProfit.toLocaleString()} lợi nhuận
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
