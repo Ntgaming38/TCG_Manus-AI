@@ -38,7 +38,7 @@ export default function Home() {
       {/* Full background image - the Pokemon artwork */}
       <div className="absolute inset-0">
         <img
-          src="/manus-storage/pokemon-login-bg_f461bbf3.png"
+          src="/manus-storage/pokemon-login-bg_e32eb1ad.png"
           alt="Pokemon Trading Manager"
           className="w-full h-full object-cover"
         />
@@ -99,4 +99,3 @@ export default function Home() {
     </div>
   );
 }
-

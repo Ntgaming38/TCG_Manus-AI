@@ -42,79 +42,89 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: 'Inter', 'Outfit', system-ui, sans-serif;
   --color-pokemon-yellow: oklch(0.88 0.18 90);
-  --color-pokemon-blue: oklch(0.35 0.15 260);
-  --color-pokemon-red: oklch(0.55 0.22 25);
+  --color-pokemon-blue: oklch(0.30 0.12 240);
+  --color-pokemon-red: oklch(0.50 0.22 25);
+  --color-pokemon-dark-blue: oklch(0.18 0.06 240);
+  --color-pokemon-deep-red: oklch(0.25 0.10 20);
 }
 
 :root {
   --radius: 0.625rem;
-  --primary: oklch(0.88 0.18 90);
-  --primary-foreground: oklch(0.15 0.02 260);
-  --sidebar-primary: oklch(0.88 0.18 90);
-  --sidebar-primary-foreground: oklch(0.15 0.02 260);
-  --chart-1: oklch(0.88 0.18 90);
-  --chart-2: oklch(0.55 0.15 260);
+  /* Primary: Pokémon red for accents */
+  --primary: oklch(0.55 0.22 25);
+  --primary-foreground: oklch(0.98 0 0);
+  /* Sidebar: Deep blue (Pokémon GO team Mystic blue) */
+  --sidebar-primary: oklch(0.55 0.22 25);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --chart-1: oklch(0.55 0.22 25);
+  --chart-2: oklch(0.45 0.15 240);
   --chart-3: oklch(0.65 0.18 150);
-  --chart-4: oklch(0.55 0.22 25);
+  --chart-4: oklch(0.88 0.18 90);
   --chart-5: oklch(0.7 0.12 200);
-  --background: oklch(0.12 0.02 260);
+  /* Main background: dark with subtle red tint */
+  --background: oklch(0.14 0.04 20);
   --foreground: oklch(0.93 0.005 90);
-  --card: oklch(0.17 0.025 260);
+  --card: oklch(0.18 0.04 20);
   --card-foreground: oklch(0.93 0.005 90);
-  --popover: oklch(0.17 0.025 260);
+  --popover: oklch(0.18 0.04 20);
   --popover-foreground: oklch(0.93 0.005 90);
-  --secondary: oklch(0.22 0.03 260);
+  --secondary: oklch(0.22 0.04 20);
   --secondary-foreground: oklch(0.85 0.01 90);
-  --muted: oklch(0.22 0.025 260);
-  --muted-foreground: oklch(0.65 0.02 260);
-  --accent: oklch(0.22 0.03 260);
+  --muted: oklch(0.22 0.03 20);
+  --muted-foreground: oklch(0.65 0.02 20);
+  --accent: oklch(0.25 0.06 25);
   --accent-foreground: oklch(0.93 0.005 90);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.03 260);
-  --input: oklch(0.25 0.03 260);
-  --ring: oklch(0.88 0.18 90);
-  --sidebar: oklch(0.14 0.025 260);
-  --sidebar-foreground: oklch(0.85 0.01 90);
-  --sidebar-accent: oklch(0.22 0.035 260);
+  --border: oklch(0.28 0.05 25);
+  --input: oklch(0.22 0.04 20);
+  --ring: oklch(0.55 0.22 25);
+  /* Sidebar: Deep dark blue */
+  --sidebar: oklch(0.13 0.06 240);
+  --sidebar-foreground: oklch(0.85 0.01 220);
+  --sidebar-accent: oklch(0.20 0.08 240);
   --sidebar-accent-foreground: oklch(0.93 0.005 90);
-  --sidebar-border: oklch(0.25 0.03 260);
-  --sidebar-ring: oklch(0.88 0.18 90);
+  --sidebar-border: oklch(0.22 0.06 240);
+  --sidebar-ring: oklch(0.55 0.22 25);
 }
 
 .dark {
-  --primary: oklch(0.88 0.18 90);
-  --primary-foreground: oklch(0.15 0.02 260);
-  --sidebar-primary: oklch(0.88 0.18 90);
-  --sidebar-primary-foreground: oklch(0.15 0.02 260);
-  --chart-1: oklch(0.88 0.18 90);
-  --chart-2: oklch(0.55 0.15 260);
+  /* Primary: Pokémon red for accents */
+  --primary: oklch(0.55 0.22 25);
+  --primary-foreground: oklch(0.98 0 0);
+  /* Sidebar: Deep blue (Pokémon GO team Mystic blue) */
+  --sidebar-primary: oklch(0.55 0.22 25);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --chart-1: oklch(0.55 0.22 25);
+  --chart-2: oklch(0.45 0.15 240);
   --chart-3: oklch(0.65 0.18 150);
-  --chart-4: oklch(0.55 0.22 25);
+  --chart-4: oklch(0.88 0.18 90);
   --chart-5: oklch(0.7 0.12 200);
-  --background: oklch(0.12 0.02 260);
+  /* Main background: dark with subtle red tint */
+  --background: oklch(0.14 0.04 20);
   --foreground: oklch(0.93 0.005 90);
-  --card: oklch(0.17 0.025 260);
+  --card: oklch(0.18 0.04 20);
   --card-foreground: oklch(0.93 0.005 90);
-  --popover: oklch(0.17 0.025 260);
+  --popover: oklch(0.18 0.04 20);
   --popover-foreground: oklch(0.93 0.005 90);
-  --secondary: oklch(0.22 0.03 260);
+  --secondary: oklch(0.22 0.04 20);
   --secondary-foreground: oklch(0.85 0.01 90);
-  --muted: oklch(0.22 0.025 260);
-  --muted-foreground: oklch(0.65 0.02 260);
-  --accent: oklch(0.22 0.03 260);
+  --muted: oklch(0.22 0.03 20);
+  --muted-foreground: oklch(0.65 0.02 20);
+  --accent: oklch(0.25 0.06 25);
   --accent-foreground: oklch(0.93 0.005 90);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.03 260);
-  --input: oklch(0.25 0.03 260);
-  --ring: oklch(0.88 0.18 90);
-  --sidebar: oklch(0.14 0.025 260);
-  --sidebar-foreground: oklch(0.85 0.01 90);
-  --sidebar-accent: oklch(0.22 0.035 260);
+  --border: oklch(0.28 0.05 25);
+  --input: oklch(0.22 0.04 20);
+  --ring: oklch(0.55 0.22 25);
+  /* Sidebar: Deep dark blue */
+  --sidebar: oklch(0.13 0.06 240);
+  --sidebar-foreground: oklch(0.85 0.01 220);
+  --sidebar-accent: oklch(0.20 0.08 240);
   --sidebar-accent-foreground: oklch(0.93 0.005 90);
-  --sidebar-border: oklch(0.25 0.03 260);
-  --sidebar-ring: oklch(0.88 0.18 90);
+  --sidebar-border: oklch(0.22 0.06 240);
+  --sidebar-ring: oklch(0.55 0.22 25);
 }
 
 @layer base {

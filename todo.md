@@ -126,3 +126,7 @@
 ## Fix hiển thị giá vốn trong Kho Hàng
 - [x] Kho Hàng card: "Giá vốn" hiển thị = buyPrice × quantity (tổng giá vốn cả lô)
 - [x] Form sửa: "Tổng giá vốn (¥)" nhập tổng giá lô, hệ thống tự chia ra giá/SP khi lưu
+
+## Đổi giao diện Pokémon GO
+- [x] Thay hình nền login bằng hình Red + Pikachu
+- [x] Đổi theme bên trong: nửa xanh trời đậm + nửa đỏ (Pokémon GO style)
