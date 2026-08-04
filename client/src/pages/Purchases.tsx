@@ -10,7 +10,7 @@ import { Plus, Search, ShoppingCart, Calendar } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const DEFAULT_SHOPS = ["Joshin", "Geo", "Yamada Denki", "Bic Camera", "Pokemon Center", "Book Off", "Hard Off", "Fruichi", "COMG", "Mercari", "SNKRDUNK", "Khác"];
+const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
 
 export default function Purchases() {
   const [search, setSearch] = useState("");
