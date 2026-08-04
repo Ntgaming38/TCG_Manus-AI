@@ -66,3 +66,8 @@
 - [x] Vitest tests (9 tests passing)
 - [x] Product image display on cards
 - [x] User profile in sidebar footer with logout
+- [x] Hiệu ứng phát sáng cho chữ POKÉMON trên trang login
+- [x] Hiệu ứng nhấp nháy nhẹ cho nút Bắt đầu
+- [x] Hiệu ứng chuyển cảnh mượt mà khi bấm Bắt đầu
+- [x] Điều chỉnh kích thước chữ POKÉMON to hơn và căn giữa hoàn hảo
+- [x] Tạo skill tái sử dụng cho quy trình Pokemon login page

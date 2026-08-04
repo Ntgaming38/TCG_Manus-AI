@@ -180,6 +180,92 @@
       0 4px 0 #1a5a9e,
       0 5px 10px rgba(0, 0, 0, 0.5);
     letter-spacing: 2px;
+    animation: pokemon-glow 2.5s ease-in-out infinite alternate;
+  }
+
+  /* Glow animation for POKÉMON text */
+  @keyframes pokemon-glow {
+    0% {
+      text-shadow:
+        -2px -2px 0 #2A75BB,
+        2px -2px 0 #2A75BB,
+        -2px 2px 0 #2A75BB,
+        2px 2px 0 #2A75BB,
+        0 4px 0 #1a5a9e,
+        0 5px 10px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(255, 203, 5, 0.3);
+    }
+    100% {
+      text-shadow:
+        -2px -2px 0 #2A75BB,
+        2px -2px 0 #2A75BB,
+        -2px 2px 0 #2A75BB,
+        2px 2px 0 #2A75BB,
+        0 4px 0 #1a5a9e,
+        0 5px 10px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(255, 203, 5, 0.8),
+        0 0 60px rgba(255, 203, 5, 0.4),
+        0 0 90px rgba(255, 203, 5, 0.2);
+    }
+  }
+
+  /* Subtle pulse animation for the Bắt đầu button */
+  @keyframes btn-pulse {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.4), 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(74, 222, 128, 0.7), 0 4px 20px rgba(22, 163, 74, 0.5);
+    }
+  }
+
+  .btn-start-pulse {
+    animation: btn-pulse 2s ease-in-out infinite;
+  }
+
+  /* Page transition overlay */
+  @keyframes page-fade-out {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .page-transition-overlay {
+    animation: page-fade-out 600ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  /* Entrance animations */
+  @keyframes slide-down-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes slide-up-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-slide-down {
+    animation: slide-down-fade 800ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up-fade 800ms cubic-bezier(0.23, 1, 0.32, 1) 200ms forwards;
+    opacity: 0;
   }
 }
-
