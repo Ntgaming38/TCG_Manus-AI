@@ -89,8 +89,8 @@ export default function Inventory() {
       name: product.name || "",
       series: product.series || "",
       quantity: product.quantity || 0,
-      buyPrice: Number(product.buyPrice) || 0,
-      marketPrice: Number(product.marketPrice) || 0,
+      buyPrice: (Number(product.buyPrice) || 0) * (product.quantity || 1),
+      marketPrice: (Number(product.marketPrice) || 0) * (product.quantity || 1),
     });
     setShowEditDialog(true);
   };
@@ -111,13 +111,15 @@ export default function Inventory() {
 
   const handleEdit = () => {
     if (!selectedProduct) return;
+    const unitBuyPrice = editForm.quantity > 0 ? editForm.buyPrice / editForm.quantity : 0;
+    const unitMarketPrice = editForm.quantity > 0 ? editForm.marketPrice / editForm.quantity : 0;
     updateProduct.mutate({
       id: selectedProduct.id,
       name: editForm.name,
       series: editForm.series,
       quantity: editForm.quantity,
-      buyPrice: editForm.buyPrice,
-      marketPrice: editForm.marketPrice,
+      buyPrice: unitBuyPrice,
+      marketPrice: unitMarketPrice,
     });
   };
 
@@ -258,11 +260,11 @@ export default function Inventory() {
                     )}
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Giá vốn:</span>
-                      <span className="font-medium">¥{Number(product.buyPrice).toLocaleString()}</span>
+                      <span className="font-medium">¥{(Number(product.buyPrice) * (product.quantity || 1)).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Giá TT:</span>
-                      <span className="font-medium">¥{Number(product.marketPrice).toLocaleString()}</span>
+                      <span className="font-medium">¥{(Number(product.marketPrice) * (product.quantity || 1)).toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -388,18 +390,18 @@ export default function Inventory() {
                   <Input type="number" min={0} value={editForm.quantity} onChange={(e) => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 0 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá vốn/SP (¥)</Label>
+                  <Label>Tổng giá vốn (¥)</Label>
                   <Input type="number" min={0} value={editForm.buyPrice} onChange={(e) => setEditForm(f => ({ ...f, buyPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá TT/SP (¥)</Label>
+                  <Label>Tổng giá TT (¥)</Label>
                   <Input type="number" min={0} value={editForm.marketPrice} onChange={(e) => setEditForm(f => ({ ...f, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
 
               <div className="p-3 bg-secondary/50 rounded-lg text-xs text-muted-foreground space-y-1">
-                <p>Tổng giá vốn: <span className="font-medium text-foreground">¥{(editForm.buyPrice * editForm.quantity).toLocaleString()}</span></p>
-                <p>Tổng giá TT: <span className="font-medium text-foreground">¥{(editForm.marketPrice * editForm.quantity).toLocaleString()}</span></p>
+                <p>Giá vốn/SP: <span className="font-medium text-foreground">¥{editForm.quantity > 0 ? (editForm.buyPrice / editForm.quantity).toLocaleString() : 0}</span></p>
+                <p>Giá TT/SP: <span className="font-medium text-foreground">¥{editForm.quantity > 0 ? (editForm.marketPrice / editForm.quantity).toLocaleString() : 0}</span></p>
               </div>
 
               <Button

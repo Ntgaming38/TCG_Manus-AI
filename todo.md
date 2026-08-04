@@ -122,3 +122,7 @@
 - [x] Thêm chức năng SỬA sản phẩm trong Kho Hàng (tên, SL, giá, series...)
 - [x] Thêm chức năng XOÁ sản phẩm trong Kho Hàng (confirm dialog)
 - [x] Tự động cập nhật thống kê Dashboard sau mỗi lần sửa/xoá trong Kho
+
+## Fix hiển thị giá vốn trong Kho Hàng
+- [x] Kho Hàng card: "Giá vốn" hiển thị = buyPrice × quantity (tổng giá vốn cả lô)
+- [x] Form sửa: "Tổng giá vốn (¥)" nhập tổng giá lô, hệ thống tự chia ra giá/SP khi lưu
