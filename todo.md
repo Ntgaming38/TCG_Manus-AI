@@ -72,3 +72,4 @@
 - [x] Điều chỉnh kích thước chữ POKÉMON to hơn và căn giữa hoàn hảo
 - [x] Tạo skill tái sử dụng cho quy trình Pokemon login page
 - [x] Thêm danh sách cửa hàng cố định: Geo, Joshin, Fruichi, Toysrus, Lawson, Seven Eleven, Family Mart, Khác
+- [x] Fix lỗi Date object render trực tiếp trong Dashboard recentActivities

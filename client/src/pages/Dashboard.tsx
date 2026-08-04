@@ -170,7 +170,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground">{activity.createdAt}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
               ))}
