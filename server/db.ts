@@ -283,6 +283,275 @@ export async function createPurchase(userId: number, data: {
   return { productId };
 }
 
+// ========== UPDATE PURCHASE ==========
+
+export async function updatePurchase(userId: number, data: {
+  purchaseId: number; quantity?: number; price?: number; shop?: string; note?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get existing purchase
+  const [purchase] = await db.select().from(purchases)
+    .where(and(eq(purchases.id, data.purchaseId), eq(purchases.userId, userId)))
+    .limit(1);
+  if (!purchase) throw new Error("Giao dịch mua không tồn tại");
+
+  // Get associated product
+  const product = await getProductById(purchase.productId);
+  if (!product) throw new Error("Sản phẩm không tồn tại");
+
+  const oldQty = purchase.quantity;
+  const oldTotalPrice = Number(purchase.totalPrice || 0);
+  const newQty = data.quantity ?? oldQty;
+  const newTotalPrice = data.price ?? oldTotalPrice;
+  const newUnitPrice = newTotalPrice / newQty;
+
+  // Step 1: Reverse old purchase effect on product quantity
+  const currentProductQty = product.quantity || 0;
+  const qtyAfterReverse = currentProductQty - oldQty;
+
+  // Step 2: Apply new purchase quantity
+  const qtyAfterApply = qtyAfterReverse + newQty;
+
+  // Step 3: Recalculate average buy price
+  // Get all other purchases for this product (excluding current one)
+  const otherPurchases = await db.select().from(purchases)
+    .where(and(eq(purchases.productId, purchase.productId), eq(purchases.userId, userId)));
+  let totalCostOther = 0;
+  let totalQtyOther = 0;
+  for (const p of otherPurchases) {
+    if (p.id === data.purchaseId) continue;
+    totalCostOther += Number(p.totalPrice || 0);
+    totalQtyOther += p.quantity;
+  }
+  const totalCostAll = totalCostOther + newTotalPrice;
+  const totalQtyAll = totalQtyOther + newQty;
+  const newAvgPrice = totalQtyAll > 0 ? Math.round(totalCostAll / totalQtyAll) : 0;
+
+  // Update product
+  await db.update(products).set({
+    quantity: qtyAfterApply,
+    buyPrice: String(newAvgPrice),
+    status: qtyAfterApply > 0 ? "in_stock" : "sold",
+  }).where(eq(products.id, purchase.productId));
+
+  // Update purchase record
+  await db.update(purchases).set({
+    quantity: newQty,
+    price: String(Math.round(newUnitPrice)),
+    totalPrice: String(newTotalPrice),
+    shop: data.shop !== undefined ? (data.shop || null) : purchase.shop,
+    note: data.note !== undefined ? (data.note || null) : purchase.note,
+  }).where(eq(purchases.id, data.purchaseId));
+
+  await db.insert(activityLogs).values({
+    userId,
+    action: "purchase_updated",
+    description: `Sửa giao dịch mua #${data.purchaseId}: ${product.name}`,
+    entityType: "purchase",
+    entityId: purchase.productId,
+  });
+
+  return { success: true };
+}
+
+// ========== DELETE PURCHASE ==========
+
+export async function deletePurchase(userId: number, purchaseId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get existing purchase
+  const [purchase] = await db.select().from(purchases)
+    .where(and(eq(purchases.id, purchaseId), eq(purchases.userId, userId)))
+    .limit(1);
+  if (!purchase) throw new Error("Giao dịch mua không tồn tại");
+
+  // Check if product has any sales - if yes, cannot delete
+  const productSales = await db.select().from(sales)
+    .where(and(eq(sales.productId, purchase.productId), eq(sales.userId, userId)))
+    .limit(1);
+  if (productSales.length > 0) {
+    throw new Error("Không thể xóa vì sản phẩm đã phát sinh giao dịch bán.");
+  }
+
+  // Get product
+  const product = await getProductById(purchase.productId);
+  if (!product) throw new Error("Sản phẩm không tồn tại");
+
+  // Reverse quantity from product
+  const newQty = (product.quantity || 0) - purchase.quantity;
+
+  // Check if this is the only purchase for this product
+  const allPurchasesForProduct = await db.select().from(purchases)
+    .where(and(eq(purchases.productId, purchase.productId), eq(purchases.userId, userId)));
+
+  if (allPurchasesForProduct.length <= 1) {
+    // This is the only purchase - delete the product entirely
+    await db.delete(purchases).where(eq(purchases.id, purchaseId));
+    await db.delete(products).where(eq(products.id, purchase.productId));
+  } else {
+    // Other purchases exist - just reduce quantity and recalculate avg price
+    let totalCostOther = 0;
+    let totalQtyOther = 0;
+    for (const p of allPurchasesForProduct) {
+      if (p.id === purchaseId) continue;
+      totalCostOther += Number(p.totalPrice || 0);
+      totalQtyOther += p.quantity;
+    }
+    const newAvgPrice = totalQtyOther > 0 ? Math.round(totalCostOther / totalQtyOther) : 0;
+
+    await db.update(products).set({
+      quantity: newQty,
+      buyPrice: String(newAvgPrice),
+      status: newQty > 0 ? "in_stock" : "sold",
+    }).where(eq(products.id, purchase.productId));
+
+    await db.delete(purchases).where(eq(purchases.id, purchaseId));
+  }
+
+  await db.insert(activityLogs).values({
+    userId,
+    action: "purchase_deleted",
+    description: `Xóa giao dịch mua #${purchaseId}: ${product.name}`,
+    entityType: "purchase",
+    entityId: purchase.productId,
+  });
+
+  return { success: true };
+}
+
+// ========== UPDATE SALE ==========
+
+export async function updateSale(userId: number, data: {
+  saleId: number; quantity?: number; salePrice?: number; note?: string; // salePrice = TOTAL sale price for the lot
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get existing sale
+  const [sale] = await db.select().from(sales)
+    .where(and(eq(sales.id, data.saleId), eq(sales.userId, userId)))
+    .limit(1);
+  if (!sale) throw new Error("Giao dịch bán không tồn tại");
+
+  // Get product
+  const product = await getProductById(sale.productId);
+  if (!product) throw new Error("Sản phẩm không tồn tại");
+
+  const oldQty = sale.quantity;
+  const newQty = data.quantity ?? oldQty;
+  // salePrice passed in is TOTAL price for the lot
+  // If not provided, reconstruct from existing totalRevenue
+  const newTotalSalePrice = data.salePrice ?? Number(sale.totalRevenue);
+
+  // Step 1: Restore old quantity back to product (reverse old sale)
+  const restoredQty = (product.quantity || 0) + oldQty;
+
+  // Step 2: Check if new quantity is available
+  const isDamaged = sale.note?.startsWith('[HÀNG HỎNG]') || false;
+  if (isDamaged) {
+    const availableDamaged = (product.damagedQuantity || 0) + oldQty;
+    if (availableDamaged < newQty) throw new Error("Số lượng hàng hỏng không đủ");
+  } else {
+    const availableGood = restoredQty - (product.damagedQuantity || 0);
+    if (availableGood < newQty) throw new Error("Số lượng hàng tốt không đủ");
+  }
+
+  // Step 3: Apply new quantity deduction
+  const finalQty = restoredQty - newQty;
+
+  // Step 4: Recalculate profit (salePrice is total for the lot)
+  const totalRevenue = newTotalSalePrice;
+  const unitSalePrice = newTotalSalePrice / newQty;
+  const totalCost = Number(sale.fee || 0) + Number(sale.shippingFee || 0) + Number(sale.otherCost || 0);
+  const costBasis = Number(product.buyPrice) * newQty;
+  const profit = totalRevenue - totalCost - costBasis;
+
+  // Update product quantity
+  if (isDamaged) {
+    const newDamagedQty = (product.damagedQuantity || 0) + oldQty - newQty;
+    await db.update(products).set({
+      quantity: finalQty,
+      damagedQuantity: newDamagedQty,
+      status: finalQty <= 0 ? "sold" : "in_stock",
+    }).where(eq(products.id, sale.productId));
+  } else {
+    await db.update(products).set({
+      quantity: finalQty,
+      status: finalQty <= 0 ? "sold" : "in_stock",
+    }).where(eq(products.id, sale.productId));
+  }
+
+  // Update sale record
+  await db.update(sales).set({
+    quantity: newQty,
+    salePrice: String(Math.round(unitSalePrice)),
+    totalRevenue: String(totalRevenue),
+    profit: String(profit),
+    note: data.note !== undefined ? (data.note || null) : sale.note,
+  }).where(eq(sales.id, data.saleId));
+
+  await db.insert(activityLogs).values({
+    userId,
+    action: "sale_updated",
+    description: `Sửa giao dịch bán #${data.saleId}: ${product.name} - Lợi nhuận mới: ¥${profit.toLocaleString()}`,
+    entityType: "sale",
+    entityId: sale.productId,
+  });
+
+  return { success: true, profit };
+}
+
+// ========== DELETE SALE ==========
+
+export async function deleteSale(userId: number, saleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get existing sale
+  const [sale] = await db.select().from(sales)
+    .where(and(eq(sales.id, saleId), eq(sales.userId, userId)))
+    .limit(1);
+  if (!sale) throw new Error("Giao dịch bán không tồn tại");
+
+  // Get product
+  const product = await getProductById(sale.productId);
+  if (!product) throw new Error("Sản phẩm không tồn tại");
+
+  // Restore quantity back to product
+  const restoredQty = (product.quantity || 0) + sale.quantity;
+  const isDamaged = sale.note?.startsWith('[HÀNG HỎNG]') || false;
+
+  if (isDamaged) {
+    const restoredDamagedQty = (product.damagedQuantity || 0) + sale.quantity;
+    await db.update(products).set({
+      quantity: restoredQty,
+      damagedQuantity: restoredDamagedQty,
+      status: "in_stock",
+    }).where(eq(products.id, sale.productId));
+  } else {
+    await db.update(products).set({
+      quantity: restoredQty,
+      status: "in_stock",
+    }).where(eq(products.id, sale.productId));
+  }
+
+  // Delete sale record
+  await db.delete(sales).where(eq(sales.id, saleId));
+
+  await db.insert(activityLogs).values({
+    userId,
+    action: "sale_deleted",
+    description: `Xóa giao dịch bán #${saleId}: ${product.name} - Hoàn lại ${sale.quantity} sản phẩm`,
+    entityType: "sale",
+    entityId: sale.productId,
+  });
+
+  return { success: true };
+}
+
 // ========== SALES ==========
 
 export async function listSales(userId: number, opts?: { search?: string }) {
@@ -335,7 +604,9 @@ export async function createSale(userId: number, data: {
     if (availableGood < data.quantity) throw new Error("Số lượng hàng tốt không đủ");
   }
 
-  const totalRevenue = data.quantity * data.salePrice;
+  // salePrice is TOTAL sale price for the lot (not per-unit)
+  const totalRevenue = data.salePrice;
+  const unitSalePrice = data.salePrice / data.quantity;
   const totalCost = (data.fee || 0) + (data.shippingFee || 0) + (data.otherCost || 0);
   const costBasis = Number(product.buyPrice) * data.quantity;
   const profit = totalRevenue - totalCost - costBasis;
@@ -345,7 +616,7 @@ export async function createSale(userId: number, data: {
     userId,
     productId: data.productId,
     quantity: data.quantity,
-    salePrice: String(data.salePrice),
+    salePrice: String(Math.round(unitSalePrice)),
     totalRevenue: String(totalRevenue),
     platform: (data.platform as any) || "snkrdunk",
     fee: String(data.fee || 0),

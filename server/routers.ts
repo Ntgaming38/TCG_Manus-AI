@@ -148,6 +148,20 @@ export const appRouter = router({
         note: z.string().optional(),
       }))
       .mutation(({ ctx, input }) => db.createPurchase(ctx.user.id, input)),
+
+    update: protectedProcedure
+      .input(z.object({
+        purchaseId: z.number(),
+        quantity: z.number().min(1).optional(),
+        price: z.number().min(0).optional(),
+        shop: z.string().optional(),
+        note: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.updatePurchase(ctx.user.id, input)),
+
+    delete: protectedProcedure
+      .input(z.object({ purchaseId: z.number() }))
+      .mutation(({ ctx, input }) => db.deletePurchase(ctx.user.id, input.purchaseId)),
   }),
 
   sales: router({
@@ -168,6 +182,19 @@ export const appRouter = router({
         note: z.string().optional(),
       }))
       .mutation(({ ctx, input }) => db.createSale(ctx.user.id, input)),
+
+    update: protectedProcedure
+      .input(z.object({
+        saleId: z.number(),
+        quantity: z.number().min(1).optional(),
+        salePrice: z.number().min(0).optional(),
+        note: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.updateSale(ctx.user.id, input)),
+
+    delete: protectedProcedure
+      .input(z.object({ saleId: z.number() }))
+      .mutation(({ ctx, input }) => db.deleteSale(ctx.user.id, input.saleId)),
   }),
 
   dashboard: router({

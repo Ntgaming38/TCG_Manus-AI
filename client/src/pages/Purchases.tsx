@@ -2,13 +2,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
@@ -21,24 +21,58 @@ export default function Purchases() {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ quantity: 1, price: 0, shop: "", note: "" });
   const [newPurchase, setNewPurchase] = useState({
     productName: "", productType: "box" as "card" | "box" | "pack",
     series: "Pokemon", shop: "Joshin", purchaseType: "mua_le" as any,
     quantity: 1, price: 0, note: "",
   });
 
+  const utils = trpc.useUtils();
   const { data: purchases, refetch } = trpc.purchases.list.useQuery({ search: search || undefined });
   const { data: productSuggestions } = trpc.products.suggestions.useQuery(
     { search: newPurchase.productName },
     { enabled: newPurchase.productName.length >= 2 }
   );
 
+  const invalidateAll = () => {
+    utils.purchases.list.invalidate();
+    utils.products.list.invalidate();
+    utils.products.inStock.invalidate();
+    utils.sales.list.invalidate();
+    utils.dashboard.stats.invalidate();
+    utils.reports.overview.invalidate();
+  };
+
   const createPurchase = trpc.purchases.create.useMutation({
     onSuccess: () => {
       toast.success("Đã thêm giao dịch mua thành công!");
       setShowAddDialog(false);
       setNewPurchase({ productName: "", productType: "box", series: "Pokemon", shop: "Joshin", purchaseType: "mua_le", quantity: 1, price: 0, note: "" });
-      refetch();
+      invalidateAll();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updatePurchase = trpc.purchases.update.useMutation({
+    onSuccess: () => {
+      toast.success("Đã cập nhật giao dịch mua!");
+      setShowEditDialog(false);
+      setSelectedPurchase(null);
+      invalidateAll();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deletePurchase = trpc.purchases.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Đã xóa giao dịch mua!");
+      setShowDeleteConfirm(false);
+      setSelectedPurchase(null);
+      invalidateAll();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -85,6 +119,38 @@ export default function Purchases() {
     return sortDirection === "asc"
       ? <ArrowUp className="h-3.5 w-3.5 text-primary" />
       : <ArrowDown className="h-3.5 w-3.5 text-primary" />;
+  };
+
+  const handleEditClick = (purchase: any) => {
+    setSelectedPurchase(purchase);
+    setEditForm({
+      quantity: purchase.quantity,
+      price: Number(purchase.totalPrice),
+      shop: purchase.shop || "",
+      note: purchase.note || "",
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteClick = (purchase: any) => {
+    setSelectedPurchase(purchase);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (!selectedPurchase) return;
+    updatePurchase.mutate({
+      purchaseId: selectedPurchase.id,
+      quantity: editForm.quantity,
+      price: editForm.price,
+      shop: editForm.shop,
+      note: editForm.note,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedPurchase) return;
+    deletePurchase.mutate({ purchaseId: selectedPurchase.id });
   };
 
   return (
@@ -208,28 +274,13 @@ export default function Purchases() {
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground mr-1">Sắp xếp:</span>
-          <Button
-            variant={sortField === "date" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 px-2.5 text-xs gap-1"
-            onClick={() => toggleSort("date")}
-          >
+          <Button variant={sortField === "date" ? "secondary" : "ghost"} size="sm" className="h-8 px-2.5 text-xs gap-1" onClick={() => toggleSort("date")}>
             Ngày <SortIcon field="date" />
           </Button>
-          <Button
-            variant={sortField === "price" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 px-2.5 text-xs gap-1"
-            onClick={() => toggleSort("price")}
-          >
+          <Button variant={sortField === "price" ? "secondary" : "ghost"} size="sm" className="h-8 px-2.5 text-xs gap-1" onClick={() => toggleSort("price")}>
             Giá <SortIcon field="price" />
           </Button>
-          <Button
-            variant={sortField === "name" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 px-2.5 text-xs gap-1"
-            onClick={() => toggleSort("name")}
-          >
+          <Button variant={sortField === "name" ? "secondary" : "ghost"} size="sm" className="h-8 px-2.5 text-xs gap-1" onClick={() => toggleSort("name")}>
             Tên <SortIcon field="name" />
           </Button>
         </div>
@@ -262,11 +313,24 @@ export default function Purchases() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm">¥{Number(purchase.totalPrice).toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{purchase.quantity} x ¥{Number(purchase.price).toLocaleString()}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-bold text-sm">¥{Number(purchase.totalPrice).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{purchase.quantity} x ¥{Number(purchase.price).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-400" onClick={() => handleEditClick(purchase)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400" onClick={() => handleDeleteClick(purchase)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
+                {purchase.note && (
+                  <p className="text-xs text-muted-foreground mt-2 pl-13 italic">📝 {purchase.note}</p>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -295,6 +359,82 @@ export default function Purchases() {
           </Card>
         </div>
       )}
+
+      {/* Edit Purchase Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>✏️ Sửa giao dịch mua</DialogTitle>
+          </DialogHeader>
+          {selectedPurchase && (
+            <div className="space-y-4 mt-4">
+              <div className="p-3 bg-secondary/50 rounded-lg">
+                <p className="text-sm font-medium">{selectedPurchase.productName}</p>
+                <p className="text-xs text-muted-foreground">Ngày: {new Date(selectedPurchase.purchaseDate).toLocaleDateString('vi-VN')} (không thể sửa)</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Số lượng</Label>
+                  <Input type="number" min={1} value={editForm.quantity} onChange={(e) => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tổng giá mua (¥)</Label>
+                  <Input type="number" min={0} value={editForm.price} onChange={(e) => setEditForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              {editForm.quantity > 0 && editForm.price > 0 && (
+                <div className="p-2 bg-secondary/30 rounded text-xs text-muted-foreground">
+                  Giá vốn/SP: ¥{Math.round(editForm.price / editForm.quantity).toLocaleString()}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Shop mua</Label>
+                <Select value={editForm.shop} onValueChange={(v) => setEditForm(f => ({ ...f, shop: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {DEFAULT_SHOPS.map(shop => (
+                      <SelectItem key={shop} value={shop}>{shop}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Ghi chú</Label>
+                <Textarea value={editForm.note} onChange={(e) => setEditForm(f => ({ ...f, note: e.target.value }))} />
+              </div>
+              <Button className="w-full" onClick={handleEditSubmit} disabled={updatePurchase.isPending}>
+                {updatePurchase.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>🗑 Bạn có chắc muốn xóa sản phẩm này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedPurchase && (
+                <span>
+                  Giao dịch mua <strong>{selectedPurchase.productName}</strong> ({selectedPurchase.quantity} SP - ¥{Number(selectedPurchase.totalPrice).toLocaleString()}) sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteConfirm}
+              disabled={deletePurchase.isPending}
+            >
+              {deletePurchase.isPending ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -6,12 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, ToggleLeft, ToggleRight } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 const PLATFORMS = [
@@ -31,26 +31,91 @@ export default function Sales() {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ quantity: 1, salePrice: 0, note: "" });
   const [newSale, setNewSale] = useState({
     productId: 0, quantity: 1, salePrice: 0,
     platform: "snkrdunk" as any, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
   });
 
+  const utils = trpc.useUtils();
   const { data: sales, refetch } = trpc.sales.list.useQuery({ search: search || undefined });
   const { data: inventoryProducts } = trpc.products.inStock.useQuery();
+
+  const invalidateAll = () => {
+    utils.sales.list.invalidate();
+    utils.products.list.invalidate();
+    utils.products.inStock.invalidate();
+    utils.dashboard.stats.invalidate();
+    utils.reports.overview.invalidate();
+    utils.purchases.list.invalidate();
+  };
 
   const createSale = trpc.sales.create.useMutation({
     onSuccess: () => {
       toast.success("Đã tạo giao dịch bán thành công!");
       setShowAddDialog(false);
       setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "snkrdunk", fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false });
-      refetch();
+      invalidateAll();
     },
     onError: (err) => toast.error(err.message),
   });
 
+  const updateSale = trpc.sales.update.useMutation({
+    onSuccess: () => {
+      toast.success("Đã cập nhật giao dịch bán!");
+      setShowEditDialog(false);
+      setSelectedSale(null);
+      invalidateAll();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteSale = trpc.sales.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Đã xóa giao dịch bán!");
+      setShowDeleteConfirm(false);
+      setSelectedSale(null);
+      invalidateAll();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleEditClick = (sale: any) => {
+    setSelectedSale(sale);
+    setEditForm({
+      quantity: sale.quantity,
+      salePrice: Number(sale.totalRevenue),
+      note: sale.note || "",
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteClick = (sale: any) => {
+    setSelectedSale(sale);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (!selectedSale) return;
+    updateSale.mutate({
+      saleId: selectedSale.id,
+      quantity: editForm.quantity,
+      salePrice: editForm.salePrice,
+      note: editForm.note,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedSale) return;
+    deleteSale.mutate({ saleId: selectedSale.id });
+  };
+
   const selectedProduct = inventoryProducts?.find((p: any) => p.id === newSale.productId);
-  const totalRevenue = newSale.quantity * newSale.salePrice;
+  // salePrice is TOTAL price for the lot (not per-unit)
+  const totalRevenue = newSale.salePrice;
   const totalCost = newSale.fee + newSale.shippingFee + newSale.otherCost;
   const netRevenue = totalRevenue - totalCost;
   const profit = selectedProduct ? netRevenue - (Number(selectedProduct.buyPrice) * newSale.quantity) : 0;
@@ -165,8 +230,8 @@ export default function Sales() {
                   <Label>Số lượng bán</Label>
                   <Input type="number" min={1} max={newSale.isDamaged ? (selectedProduct?.damagedQuantity || 999) : ((selectedProduct?.quantity || 0) - (selectedProduct?.damagedQuantity || 0)) || 999} value={newSale.quantity} onChange={(e) => setNewSale(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Giá bán (¥/sp)</Label>
+               <div className="space-y-2">
+                  <Label>Tổng giá bán (¥)</Label>
                   <Input type="number" min={0} value={newSale.salePrice} onChange={(e) => setNewSale(p => ({ ...p, salePrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
@@ -195,10 +260,16 @@ export default function Sales() {
                   <Input type="number" min={0} value={newSale.otherCost} onChange={(e) => setNewSale(p => ({ ...p, otherCost: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
-              <div className="p-3 bg-secondary/50 rounded-lg space-y-1">
+             <div className="p-3 bg-secondary/50 rounded-lg space-y-1">
+                {newSale.quantity > 0 && newSale.salePrice > 0 && (
+                  <p className="text-xs text-muted-foreground">Giá bán/SP: ¥{Math.round(newSale.salePrice / newSale.quantity).toLocaleString()}</p>
+                )}
                 <p className="text-sm text-muted-foreground">Doanh thu: <span className="font-medium text-foreground">¥{totalRevenue.toLocaleString()}</span></p>
                 <p className="text-sm text-muted-foreground">Phí: <span className="font-medium text-foreground">-¥{totalCost.toLocaleString()}</span></p>
                 <p className="text-sm text-muted-foreground">Thực nhận: <span className="font-medium text-foreground">¥{netRevenue.toLocaleString()}</span></p>
+                {selectedProduct && (
+                  <p className="text-sm text-muted-foreground">Giá vốn: <span className="font-medium text-foreground">-¥{(Number(selectedProduct.buyPrice) * newSale.quantity).toLocaleString()}</span></p>
+                )}
                 <p className={`text-sm font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   Lợi nhuận: {profit >= 0 ? '+' : ''}¥{profit.toLocaleString()}
                 </p>
@@ -280,12 +351,22 @@ export default function Sales() {
                         {PLATFORMS.find(p => p.value === sale.platform)?.label || sale.platform}
                       </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm">¥{Number(sale.totalRevenue).toLocaleString()}</p>
-                    <p className={`text-xs font-medium ${Number(sale.profit) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {Number(sale.profit) >= 0 ? '+' : ''}¥{Number(sale.profit).toLocaleString()}
-                    </p>
+                 </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-bold text-sm">¥{Number(sale.totalRevenue).toLocaleString()}</p>
+                      <p className={`text-xs font-medium ${Number(sale.profit) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {Number(sale.profit) >= 0 ? '+' : ''}¥{Number(sale.profit).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-400" onClick={() => handleEditClick(sale)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400" onClick={() => handleDeleteClick(sale)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -317,8 +398,78 @@ export default function Sales() {
               </div>
             </CardContent>
           </Card>
-        </div>
+       </div>
       )}
+
+      {/* Edit Sale Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>✏️ Sửa giao dịch bán</DialogTitle>
+          </DialogHeader>
+          {selectedSale && (
+            <div className="space-y-4 mt-4">
+              <div className="p-3 bg-secondary/50 rounded-lg">
+                <p className="text-sm font-medium">{selectedSale.productName}</p>
+                <p className="text-xs text-muted-foreground">
+                  Ngày: {new Date(selectedSale.saleDate).toLocaleDateString('vi-VN')} (không thể sửa)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Nền tảng: {PLATFORMS.find(p => p.value === selectedSale.platform)?.label || selectedSale.platform} (không thể sửa)
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Số lượng bán</Label>
+                  <Input type="number" min={1} value={editForm.quantity} onChange={(e) => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tổng giá bán (¥)</Label>
+                  <Input type="number" min={0} value={editForm.salePrice} onChange={(e) => setEditForm(f => ({ ...f, salePrice: parseFloat(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              {editForm.quantity > 0 && editForm.salePrice > 0 && (
+                <div className="p-2 bg-secondary/30 rounded text-xs text-muted-foreground">
+                  Giá bán/SP: ¥{Math.round(editForm.salePrice / editForm.quantity).toLocaleString()}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Ghi chú</Label>
+                <Textarea value={editForm.note} onChange={(e) => setEditForm(f => ({ ...f, note: e.target.value }))} />
+              </div>
+              <Button className="w-full" onClick={handleEditSubmit} disabled={updateSale.isPending}>
+                {updateSale.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>🗑 Bạn có chắc muốn xóa giao dịch này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedSale && (
+                <span>
+                  Giao dịch bán <strong>{selectedSale.productName}</strong> ({selectedSale.quantity} SP - ¥{Number(selectedSale.totalRevenue).toLocaleString()}) sẽ bị xóa. Số lượng sẽ được hoàn lại vào kho.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteConfirm}
+              disabled={deleteSale.isPending}
+            >
+              {deleteSale.isPending ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

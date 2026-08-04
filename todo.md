@@ -80,15 +80,21 @@
 - [x] Sau khi bán, trừ số lượng tồn kho đúng
 - [x] Thêm tổng kết cuối danh sách Mua Hàng (tổng tiền mua)
 - [x] Thêm tổng kết cuối danh sách Bán Hàng (tổng tiền bán, tổng lợi nhuận)
-- [ ] Thêm trạng thái "damaged" (hỏng/rác) cho sản phẩm trong kho
 - [x] Thêm trạng thái "damaged" (hỏng/rác) cho sản phẩm trong kho
 - [x] Thêm tính năng chuyển số lượng từ bình thường sang hỏng/rác (tách sản phẩm)
 - [x] Ghi chú lý do hỏng khi chuyển trạng thái
 - [x] Cho phép bán sản phẩm hỏng riêng với giá thấp hơn
 - [x] Hiển thị rõ ràng sản phẩm hỏng trong kho (badge/label khác biệt)
-- [ ] Hiển thị rõ ràng sản phẩm hỏng trong kho (badge/label khác biệt)
-- [ ] Fix bug: giá mua là tổng giá cho cả lô (2000 yên cho 10 pack = 200 yên/pack), không nhân thêm quantity
 - [x] Fix bug: giá mua là tổng giá cho cả lô (2000 yên cho 10 pack = 200 yên/pack), không nhân thêm quantity
-- [ ] Cập nhật createSale để hỗ trợ bán từ damagedQuantity riêng (trừ damagedQuantity khi bán hàng hỏng)
 - [x] Cập nhật createSale để hỗ trợ bán từ damagedQuantity riêng (trừ damagedQuantity khi bán hàng hỏng)
 - [x] Thêm UI trang Bán Hàng cho phép chọn bán hàng tốt hoặc hàng hỏng/rác
+
+## Sửa/Xóa lịch sử mua hàng & bán hàng
+- [x] Backend: updatePurchase (sửa giá, SL, shop, chi phí, ghi chú - hoàn trả kho cũ rồi trừ mới)
+- [x] Backend: deletePurchase (chỉ xóa khi chưa có giao dịch bán, xóa product + cập nhật kho)
+- [x] Backend: updateSale (hoàn trả SL cũ → trừ SL mới, tính lại profit)
+- [x] Backend: deleteSale (hoàn trả SL về kho, xóa record)
+- [x] UI Purchases: nút Sửa/Xóa cho mỗi giao dịch mua, dialog sửa, confirm xóa
+- [x] UI Sales: nút Sửa/Xóa cho mỗi giao dịch bán, dialog sửa, confirm xóa
+- [x] Đồng bộ toàn bộ: invalidate tRPC queries sau mỗi thao tác (Dashboard, Inventory, Reports)
+- [x] FIX: Form bán hàng phải nhập TỔNG GIÁ BÁN (không phải giá/sp), giống logic mua hàng
