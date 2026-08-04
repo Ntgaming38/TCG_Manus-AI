@@ -42,10 +42,12 @@ export const products = mysqlTable("products", {
   releaseDate: varchar("releaseDate", { length: 20 }),
   // Common fields
   quantity: int("quantity").default(0).notNull(),
+  damagedQuantity: int("damagedQuantity").default(0).notNull(),
+  damageNote: text("damageNote"),
   buyPrice: decimal("buyPrice", { precision: 12, scale: 2 }).default("0"),
   marketPrice: decimal("marketPrice", { precision: 12, scale: 2 }).default("0"),
   sellPrice: decimal("sellPrice", { precision: 12, scale: 2 }).default("0"),
-  status: mysqlEnum("status", ["in_stock", "sold", "reserved", "traded"]).default("in_stock").notNull(),
+  status: mysqlEnum("status", ["in_stock", "sold", "reserved", "traded", "damaged"]).default("in_stock").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

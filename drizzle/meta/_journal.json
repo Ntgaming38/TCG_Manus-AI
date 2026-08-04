@@ -15,6 +15,13 @@
       "when": 1785812014647,
       "tag": "0001_fine_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1785815150919,
+      "tag": "0002_open_revanche",
+      "breakpoints": true
     }
   ]
 }

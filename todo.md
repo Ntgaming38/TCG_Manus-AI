@@ -80,3 +80,15 @@
 - [x] Sau khi bán, trừ số lượng tồn kho đúng
 - [x] Thêm tổng kết cuối danh sách Mua Hàng (tổng tiền mua)
 - [x] Thêm tổng kết cuối danh sách Bán Hàng (tổng tiền bán, tổng lợi nhuận)
+- [ ] Thêm trạng thái "damaged" (hỏng/rác) cho sản phẩm trong kho
+- [x] Thêm trạng thái "damaged" (hỏng/rác) cho sản phẩm trong kho
+- [x] Thêm tính năng chuyển số lượng từ bình thường sang hỏng/rác (tách sản phẩm)
+- [x] Ghi chú lý do hỏng khi chuyển trạng thái
+- [x] Cho phép bán sản phẩm hỏng riêng với giá thấp hơn
+- [x] Hiển thị rõ ràng sản phẩm hỏng trong kho (badge/label khác biệt)
+- [ ] Hiển thị rõ ràng sản phẩm hỏng trong kho (badge/label khác biệt)
+- [ ] Fix bug: giá mua là tổng giá cho cả lô (2000 yên cho 10 pack = 200 yên/pack), không nhân thêm quantity
+- [x] Fix bug: giá mua là tổng giá cho cả lô (2000 yên cho 10 pack = 200 yên/pack), không nhân thêm quantity
+- [ ] Cập nhật createSale để hỗ trợ bán từ damagedQuantity riêng (trừ damagedQuantity khi bán hàng hỏng)
+- [x] Cập nhật createSale để hỗ trợ bán từ damagedQuantity riêng (trừ damagedQuantity khi bán hàng hỏng)
+- [x] Thêm UI trang Bán Hàng cho phép chọn bán hàng tốt hoặc hàng hỏng/rác

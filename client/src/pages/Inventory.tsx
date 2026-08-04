@@ -1,24 +1,62 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Search, Filter, Package, Warehouse } from "lucide-react";
+import { Search, Package, Warehouse, AlertTriangle, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("in_stock");
+  const [showDamageDialog, setShowDamageDialog] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [damageQty, setDamageQty] = useState(1);
+  const [damageNote, setDamageNote] = useState("");
 
-  const { data: products } = trpc.products.list.useQuery({
+  const { data: products, refetch } = trpc.products.list.useQuery({
     type: typeFilter !== "all" ? typeFilter : undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
     search: search || undefined,
   });
 
+  const markDamaged = trpc.products.markDamaged.useMutation({
+    onSuccess: () => {
+      toast.success("Đã đánh dấu sản phẩm bị hỏng!");
+      setShowDamageDialog(false);
+      setSelectedProduct(null);
+      setDamageQty(1);
+      setDamageNote("");
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const totalItems = products?.reduce((sum: number, p: any) => sum + p.quantity, 0) ?? 0;
-  const totalValue = products?.reduce((sum: number, p: any) => sum + (Number(p.marketPrice) * p.quantity), 0) ?? 0;
+  const totalDamaged = products?.reduce((sum: number, p: any) => sum + (p.damagedQuantity || 0), 0) ?? 0;
+  const totalValue = products?.reduce((sum: number, p: any) => sum + (Number(p.marketPrice || p.buyPrice || 0) * (p.quantity - (p.damagedQuantity || 0))), 0) ?? 0;
+
+  const openDamageDialog = (product: any) => {
+    setSelectedProduct(product);
+    setDamageQty(1);
+    setDamageNote("");
+    setShowDamageDialog(true);
+  };
+
+  const handleMarkDamaged = () => {
+    if (!selectedProduct) return;
+    markDamaged.mutate({
+      productId: selectedProduct.id,
+      damagedQty: damageQty,
+      damageNote: damageNote || undefined,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -28,7 +66,7 @@ export default function Inventory() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -46,8 +84,19 @@ export default function Inventory() {
               <Warehouse className="h-5 w-5 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Giá trị kho</p>
+              <p className="text-sm text-muted-foreground">Giá trị kho (hàng tốt)</p>
               <p className="text-xl font-bold">¥{totalValue.toLocaleString()}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Hàng hỏng/rác</p>
+              <p className="text-xl font-bold text-red-400">{totalDamaged}</p>
             </div>
           </CardContent>
         </Card>
@@ -79,6 +128,7 @@ export default function Inventory() {
             <SelectItem value="in_stock">Trong kho</SelectItem>
             <SelectItem value="sold">Đã bán</SelectItem>
             <SelectItem value="reserved">Đang giữ</SelectItem>
+            <SelectItem value="damaged">Hỏng/Rác</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -92,42 +142,138 @@ export default function Inventory() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product: any) => (
-            <Card key={product.id} className="bg-card border-border hover:border-primary/30 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <Badge variant="secondary" className="text-xs capitalize">{product.type}</Badge>
-                  <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
-                    {product.status === 'in_stock' ? 'Trong kho' : product.status === 'sold' ? 'Đã bán' : product.status}
-                  </Badge>
-                </div>
-                <h3 className="font-semibold text-sm">{product.name}</h3>
-                <p className="text-xs text-muted-foreground">{product.series}</p>
-                <div className="mt-3 pt-3 border-t border-border/50 space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Số lượng:</span>
-                    <span className="font-medium">{product.quantity}</span>
+          {products.map((product: any) => {
+            const goodQty = (product.quantity || 0) - (product.damagedQuantity || 0);
+            const hasDamaged = (product.damagedQuantity || 0) > 0;
+            return (
+              <Card key={product.id} className={`bg-card border-border hover:border-primary/30 transition-colors ${hasDamaged ? 'border-red-500/30' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <Badge variant="secondary" className="text-xs capitalize">{product.type}</Badge>
+                    <div className="flex gap-1">
+                      {hasDamaged && (
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          {product.damagedQuantity} hỏng
+                        </Badge>
+                      )}
+                      <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
+                        {product.status === 'in_stock' ? 'Trong kho' : product.status === 'sold' ? 'Đã bán' : product.status === 'damaged' ? 'Hỏng' : product.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Giá vốn:</span>
-                    <span className="font-medium">¥{Number(product.buyPrice).toLocaleString()}</span>
+                  <h3 className="font-semibold text-sm">{product.name}</h3>
+                  <p className="text-xs text-muted-foreground">{product.series}</p>
+                  
+                  {product.damageNote && (
+                    <p className="text-xs text-red-400 mt-1 italic line-clamp-2">
+                      {product.damageNote}
+                    </p>
+                  )}
+
+                  <div className="mt-3 pt-3 border-t border-border/50 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Tổng SL:</span>
+                      <span className="font-medium">{product.quantity}</span>
+                    </div>
+                    {hasDamaged && (
+                      <>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Hàng tốt:</span>
+                          <span className="font-medium text-green-400">{goodQty}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Hàng hỏng:</span>
+                          <span className="font-medium text-red-400">{product.damagedQuantity}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Giá vốn:</span>
+                      <span className="font-medium">¥{Number(product.buyPrice).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Giá TT:</span>
+                      <span className="font-medium">¥{Number(product.marketPrice).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Giá TT:</span>
-                    <span className="font-medium">¥{Number(product.marketPrice).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Lợi nhuận:</span>
-                    <span className={`font-medium ${Number(product.marketPrice) - Number(product.buyPrice) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {Number(product.marketPrice) - Number(product.buyPrice) >= 0 ? '+' : ''}¥{((Number(product.marketPrice) - Number(product.buyPrice)) * product.quantity).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* Mark as damaged button */}
+                  {product.status === 'in_stock' && goodQty > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-3 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      onClick={() => openDamageDialog(product)}
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                      Đánh dấu hỏng/rác
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
+
+      {/* Mark as Damaged Dialog */}
+      <Dialog open={showDamageDialog} onOpenChange={setShowDamageDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              Đánh dấu sản phẩm hỏng/rác
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="space-y-4 mt-2">
+              <div className="p-3 bg-secondary/50 rounded-lg">
+                <p className="font-medium text-sm">{selectedProduct.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Loại: {selectedProduct.type} • Số lượng tốt còn lại: {(selectedProduct.quantity || 0) - (selectedProduct.damagedQuantity || 0)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Số lượng bị hỏng</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={(selectedProduct.quantity || 0) - (selectedProduct.damagedQuantity || 0)}
+                  value={damageQty}
+                  onChange={(e) => setDamageQty(parseInt(e.target.value) || 1)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Lý do hỏng</Label>
+                <Textarea
+                  value={damageNote}
+                  onChange={(e) => setDamageNote(e.target.value)}
+                  placeholder="VD: Rách bao bì, móp góc, ướt nước, bị trầy xước..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-xs text-red-400">
+                  <strong>Lưu ý:</strong> Sản phẩm hỏng vẫn nằm trong kho nhưng được tách riêng. 
+                  Bạn có thể bán chúng dưới dạng "hàng rác" với giá thấp hơn.
+                </p>
+              </div>
+
+              <Button
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleMarkDamaged}
+                disabled={markDamaged.isPending}
+              >
+                {markDamaged.isPending ? "Đang xử lý..." : `Đánh dấu ${damageQty} sản phẩm hỏng`}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

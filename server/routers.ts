@@ -94,7 +94,7 @@ export const appRouter = router({
         psaGrade: z.string().optional(),
         releaseDate: z.string().optional(),
         image: z.string().optional(),
-        status: z.enum(["in_stock", "sold", "reserved", "traded"]).optional(),
+        status: z.enum(["in_stock", "sold", "reserved", "traded", "damaged"]).optional(),
       }))
       .mutation(({ ctx, input }) => {
         const { id, ...data } = input;
@@ -118,6 +118,17 @@ export const appRouter = router({
     updateMarketPrice: protectedProcedure
       .input(z.object({ id: z.number(), marketPrice: z.number() }))
       .mutation(({ ctx, input }) => db.updateMarketPrice(input.id, ctx.user.id, String(input.marketPrice))),
+
+    markDamaged: protectedProcedure
+      .input(z.object({
+        productId: z.number(),
+        damagedQty: z.number().min(1),
+        damageNote: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.markProductAsDamaged(ctx.user.id, input)),
+
+    damaged: protectedProcedure
+      .query(({ ctx }) => db.getDamagedProducts(ctx.user.id)),
   }),
 
   purchases: router({
@@ -149,6 +160,7 @@ export const appRouter = router({
         productId: z.number(),
         quantity: z.number().min(1).default(1),
         salePrice: z.number().min(0),
+        isDamaged: z.boolean().optional(),
         platform: z.string().optional(),
         fee: z.number().optional(),
         shippingFee: z.number().optional(),

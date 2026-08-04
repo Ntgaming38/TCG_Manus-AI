@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, ToggleLeft, ToggleRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
@@ -30,7 +33,7 @@ export default function Sales() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newSale, setNewSale] = useState({
     productId: 0, quantity: 1, salePrice: 0,
-    platform: "snkrdunk" as any, fee: 0, shippingFee: 0, otherCost: 0, note: "",
+    platform: "snkrdunk" as any, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
   });
 
   const { data: sales, refetch } = trpc.sales.list.useQuery({ search: search || undefined });
@@ -40,7 +43,7 @@ export default function Sales() {
     onSuccess: () => {
       toast.success("Đã tạo giao dịch bán thành công!");
       setShowAddDialog(false);
-      setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "snkrdunk", fee: 0, shippingFee: 0, otherCost: 0, note: "" });
+      setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "snkrdunk", fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false });
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -122,21 +125,45 @@ export default function Sales() {
                   <SelectContent>
                     {inventoryProducts?.map((p: any) => (
                       <SelectItem key={p.id} value={String(p.id)}>
-                        {p.name} ({p.type}) - SL: {p.quantity}
+                        {p.name} ({p.type}) - SL: {p.quantity}{p.damagedQuantity > 0 ? ` (${p.damagedQuantity} hỏng)` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedProduct && (
-                  <p className="text-xs text-muted-foreground">
-                    Đang có: {selectedProduct.quantity} | Giá vốn: ¥{Number(selectedProduct.buyPrice).toLocaleString()}
-                  </p>
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <p>Đang có: {selectedProduct.quantity} | Giá vốn: ¥{Number(selectedProduct.buyPrice).toLocaleString()}</p>
+                    {selectedProduct.damagedQuantity > 0 && (
+                      <p className="text-red-400 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Hàng hỏng: {selectedProduct.damagedQuantity} (có thể bán dạng rác với giá thấp hơn)
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
+              {/* Toggle for selling damaged products */}
+              {selectedProduct && selectedProduct.damagedQuantity > 0 && (
+                <div className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                    <span className="text-sm text-red-400 font-medium">Bán hàng hỏng/rác</span>
+                  </div>
+                  <Switch
+                    checked={newSale.isDamaged}
+                    onCheckedChange={(checked) => setNewSale(p => ({ ...p, isDamaged: checked }))}
+                  />
+                </div>
+              )}
+              {newSale.isDamaged && selectedProduct && (
+                <p className="text-xs text-red-400">
+                  Đang bán từ kho hàng hỏng. Số lượng hỏng có sẵn: {selectedProduct.damagedQuantity}
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Số lượng bán</Label>
-                  <Input type="number" min={1} max={selectedProduct?.quantity || 999} value={newSale.quantity} onChange={(e) => setNewSale(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
+                  <Input type="number" min={1} max={newSale.isDamaged ? (selectedProduct?.damagedQuantity || 999) : ((selectedProduct?.quantity || 0) - (selectedProduct?.damagedQuantity || 0)) || 999} value={newSale.quantity} onChange={(e) => setNewSale(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Giá bán (¥/sp)</Label>

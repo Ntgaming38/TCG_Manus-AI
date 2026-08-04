@@ -140,6 +140,53 @@ export async function updateMarketPrice(id: number, userId: number, marketPrice:
   }
 }
 
+// ========== DAMAGED PRODUCTS ==========
+
+export async function markProductAsDamaged(userId: number, data: {
+  productId: number; damagedQty: number; damageNote?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const product = await getProductById(data.productId);
+  if (!product || product.userId !== userId) throw new Error("Product not found");
+  
+  const availableQty = (product.quantity || 0) - (product.damagedQuantity || 0);
+  if (data.damagedQty > availableQty) throw new Error("Số lượng hỏng vượt quá số lượng còn tốt");
+
+  const newDamagedQty = (product.damagedQuantity || 0) + data.damagedQty;
+  const existingNote = product.damageNote || "";
+  const newNote = data.damageNote 
+    ? (existingNote ? `${existingNote}\n[${new Date().toLocaleDateString('vi-VN')}] ${data.damageNote}` : `[${new Date().toLocaleDateString('vi-VN')}] ${data.damageNote}`)
+    : existingNote;
+
+  await db.update(products).set({
+    damagedQuantity: newDamagedQty,
+    damageNote: newNote || null,
+  }).where(and(eq(products.id, data.productId), eq(products.userId, userId)));
+
+  await db.insert(activityLogs).values({
+    userId,
+    action: "product_damaged",
+    description: `Đánh dấu ${data.damagedQty}x ${product.name} bị hỏng${data.damageNote ? ': ' + data.damageNote : ''}`,
+    entityType: "product",
+    entityId: data.productId,
+  });
+
+  return { newDamagedQty };
+}
+
+export async function getDamagedProducts(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(products)
+    .where(and(
+      eq(products.userId, userId),
+      sql`${products.damagedQuantity} > 0`
+    ))
+    .orderBy(desc(products.updatedAt));
+}
+
 // ========== PURCHASES ==========
 
 export async function listPurchases(userId: number, opts?: { search?: string }) {
@@ -177,6 +224,10 @@ export async function createPurchase(userId: number, data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // price is TOTAL price for the lot, unitPrice is per-item
+  const totalPrice = data.price;
+  const unitPrice = data.price / data.quantity;
+
   // Check if product exists or create new one
   let productId: number;
   const existingProducts = await db.select().from(products)
@@ -188,9 +239,12 @@ export async function createPurchase(userId: number, data: {
     // Update quantity and buy price
     const currentQty = existingProducts[0].quantity || 0;
     const newQty = currentQty + data.quantity;
+    // Weighted average buy price per unit
+    const oldTotal = Number(existingProducts[0].buyPrice || 0) * currentQty;
+    const newAvgPrice = (oldTotal + totalPrice) / newQty;
     await db.update(products).set({
       quantity: newQty,
-      buyPrice: String(data.price),
+      buyPrice: String(Math.round(newAvgPrice)),
     }).where(eq(products.id, productId));
   } else {
     const result = await db.insert(products).values({
@@ -199,21 +253,20 @@ export async function createPurchase(userId: number, data: {
       type: data.productType as any,
       series: data.series || "Pokemon",
       quantity: data.quantity,
-      buyPrice: String(data.price),
+      buyPrice: String(Math.round(unitPrice)),
       status: "in_stock",
     });
     productId = result[0].insertId;
   }
 
   // Create purchase record
-  const totalPrice = data.quantity * data.price;
   await db.insert(purchases).values({
     userId,
     productId,
     shop: data.shop || null,
     purchaseType: (data.purchaseType as any) || "mua_le",
     quantity: data.quantity,
-    price: String(data.price),
+    price: String(Math.round(unitPrice)),
     totalPrice: String(totalPrice),
     note: data.note || null,
     status: "received",
@@ -263,7 +316,7 @@ export async function listSales(userId: number, opts?: { search?: string }) {
 }
 
 export async function createSale(userId: number, data: {
-  productId: number; quantity: number; salePrice: number;
+  productId: number; quantity: number; salePrice: number; isDamaged?: boolean;
   platform?: string; fee?: number; shippingFee?: number; otherCost?: number; note?: string;
 }) {
   const db = await getDb();
@@ -272,7 +325,15 @@ export async function createSale(userId: number, data: {
   // Get product info for profit calculation
   const product = await getProductById(data.productId);
   if (!product || product.userId !== userId) throw new Error("Product not found");
-  if (product.quantity < data.quantity) throw new Error("Insufficient quantity");
+
+  // Validate quantity based on whether selling damaged or good stock
+  if (data.isDamaged) {
+    const availableDamaged = product.damagedQuantity || 0;
+    if (availableDamaged < data.quantity) throw new Error("Số lượng hàng hỏng không đủ");
+  } else {
+    const availableGood = (product.quantity || 0) - (product.damagedQuantity || 0);
+    if (availableGood < data.quantity) throw new Error("Số lượng hàng tốt không đủ");
+  }
 
   const totalRevenue = data.quantity * data.salePrice;
   const totalCost = (data.fee || 0) + (data.shippingFee || 0) + (data.otherCost || 0);
@@ -291,20 +352,29 @@ export async function createSale(userId: number, data: {
     shippingFee: String(data.shippingFee || 0),
     otherCost: String(data.otherCost || 0),
     profit: String(profit),
-    note: data.note || null,
+    note: data.isDamaged ? `[HÀNG HỎNG] ${data.note || ''}`.trim() : (data.note || null),
   });
 
-  // Update product quantity
+  // Update product quantity and damagedQuantity
   const newQty = product.quantity - data.quantity;
-  await db.update(products).set({
-    quantity: newQty,
-    status: newQty <= 0 ? "sold" : "in_stock",
-  }).where(eq(products.id, data.productId));
+  if (data.isDamaged) {
+    const newDamagedQty = (product.damagedQuantity || 0) - data.quantity;
+    await db.update(products).set({
+      quantity: newQty,
+      damagedQuantity: newDamagedQty,
+      status: newQty <= 0 ? "sold" : "in_stock",
+    }).where(eq(products.id, data.productId));
+  } else {
+    await db.update(products).set({
+      quantity: newQty,
+      status: newQty <= 0 ? "sold" : "in_stock",
+    }).where(eq(products.id, data.productId));
+  }
 
   await db.insert(activityLogs).values({
     userId,
     action: "sale_created",
-    description: `Bán ${data.quantity}x ${product.name} - Lợi nhuận: ¥${profit.toLocaleString()}`,
+    description: `Bán ${data.quantity}x ${product.name}${data.isDamaged ? ' (hàng hỏng)' : ''} - Lợi nhuận: ¥${profit.toLocaleString()}`,
     entityType: "sale",
     entityId: data.productId,
   });
