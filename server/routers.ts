@@ -1,28 +1,190 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import * as db from "./db";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  products: router({
+    list: protectedProcedure
+      .input(z.object({
+        type: z.string().optional(),
+        status: z.string().optional(),
+        search: z.string().optional(),
+      }).optional())
+      .query(({ ctx, input }) => db.listProducts(ctx.user.id, input)),
+
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(({ input }) => db.getProductById(input.id)),
+
+    suggestions: protectedProcedure
+      .input(z.object({ search: z.string() }))
+      .query(({ ctx, input }) => db.getProductSuggestions(ctx.user.id, input.search)),
+
+    inStock: protectedProcedure
+      .query(({ ctx }) => db.getInStockProducts(ctx.user.id)),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        type: z.enum(["card", "box", "pack"]),
+        series: z.string().optional(),
+        setName: z.string().optional(),
+        quantity: z.number().min(0).default(1),
+        buyPrice: z.number().min(0).default(0),
+        marketPrice: z.number().min(0).optional(),
+        sellPrice: z.number().min(0).optional(),
+        description: z.string().optional(),
+        cardNumber: z.string().optional(),
+        language: z.string().optional(),
+        rarity: z.string().optional(),
+        condition: z.string().optional(),
+        psaGrade: z.string().optional(),
+        releaseDate: z.string().optional(),
+        image: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.createProduct({
+        userId: ctx.user.id,
+        name: input.name,
+        type: input.type,
+        series: input.series || "Pokemon",
+        setName: input.setName,
+        quantity: input.quantity,
+        buyPrice: String(input.buyPrice),
+        marketPrice: input.marketPrice ? String(input.marketPrice) : undefined,
+        sellPrice: input.sellPrice ? String(input.sellPrice) : undefined,
+        description: input.description,
+        cardNumber: input.cardNumber,
+        language: input.language || "Japanese",
+        rarity: input.rarity,
+        condition: input.condition || "New",
+        psaGrade: input.psaGrade,
+        releaseDate: input.releaseDate,
+        image: input.image,
+        status: "in_stock",
+      })),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        series: z.string().optional(),
+        setName: z.string().optional(),
+        quantity: z.number().optional(),
+        buyPrice: z.number().optional(),
+        marketPrice: z.number().optional(),
+        sellPrice: z.number().optional(),
+        description: z.string().optional(),
+        cardNumber: z.string().optional(),
+        language: z.string().optional(),
+        rarity: z.string().optional(),
+        condition: z.string().optional(),
+        psaGrade: z.string().optional(),
+        releaseDate: z.string().optional(),
+        image: z.string().optional(),
+        status: z.enum(["in_stock", "sold", "reserved", "traded"]).optional(),
+      }))
+      .mutation(({ ctx, input }) => {
+        const { id, ...data } = input;
+        const updateData: any = {};
+        Object.entries(data).forEach(([key, val]) => {
+          if (val !== undefined) {
+            if (['buyPrice', 'marketPrice', 'sellPrice'].includes(key)) {
+              updateData[key] = String(val);
+            } else {
+              updateData[key] = val;
+            }
+          }
+        });
+        return db.updateProduct(id, ctx.user.id, updateData);
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => db.deleteProduct(input.id, ctx.user.id)),
+
+    updateMarketPrice: protectedProcedure
+      .input(z.object({ id: z.number(), marketPrice: z.number() }))
+      .mutation(({ ctx, input }) => db.updateMarketPrice(input.id, ctx.user.id, String(input.marketPrice))),
+  }),
+
+  purchases: router({
+    list: protectedProcedure
+      .input(z.object({ search: z.string().optional() }).optional())
+      .query(({ ctx, input }) => db.listPurchases(ctx.user.id, input)),
+
+    create: protectedProcedure
+      .input(z.object({
+        productName: z.string().min(1),
+        productType: z.string().default("card"),
+        series: z.string().optional(),
+        shop: z.string().optional(),
+        purchaseType: z.string().optional(),
+        quantity: z.number().min(1).default(1),
+        price: z.number().min(0),
+        note: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.createPurchase(ctx.user.id, input)),
+  }),
+
+  sales: router({
+    list: protectedProcedure
+      .input(z.object({ search: z.string().optional() }).optional())
+      .query(({ ctx, input }) => db.listSales(ctx.user.id, input)),
+
+    create: protectedProcedure
+      .input(z.object({
+        productId: z.number(),
+        quantity: z.number().min(1).default(1),
+        salePrice: z.number().min(0),
+        platform: z.string().optional(),
+        fee: z.number().optional(),
+        shippingFee: z.number().optional(),
+        otherCost: z.number().optional(),
+        note: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.createSale(ctx.user.id, input)),
+  }),
+
+  dashboard: router({
+    stats: protectedProcedure
+      .query(({ ctx }) => db.getDashboardStats(ctx.user.id)),
+  }),
+
+  reports: router({
+    overview: protectedProcedure
+      .query(({ ctx }) => db.getReportsOverview(ctx.user.id)),
+  }),
+
+  shops: router({
+    list: protectedProcedure
+      .query(({ ctx }) => db.listShops(ctx.user.id)),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        location: z.string().optional(),
+        note: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.createShop({
+        userId: ctx.user.id,
+        name: input.name,
+        location: input.location,
+        note: input.note,
+      })),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

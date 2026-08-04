@@ -5,31 +5,65 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Products from "./pages/Products";
+import Purchases from "./pages/Purchases";
+import Sales from "./pages/Sales";
+import Inventory from "./pages/Inventory";
+import Marketplace from "./pages/Marketplace";
+import Reports from "./pages/Reports";
+import DashboardLayout from "./components/DashboardLayout";
+
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  return (
+    <DashboardLayout>
+      <Component />
+    </DashboardLayout>
+  );
+}
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/thong-ke"}>
+        <ProtectedRoute component={Dashboard} />
+      </Route>
+      <Route path={"/san-pham"}>
+        <ProtectedRoute component={Products} />
+      </Route>
+      <Route path={"/san-pham/:type"}>
+        {(params) => (
+          <DashboardLayout>
+            <Products />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/mua-hang"}>
+        <ProtectedRoute component={Purchases} />
+      </Route>
+      <Route path={"/ban-hang"}>
+        <ProtectedRoute component={Sales} />
+      </Route>
+      <Route path={"/kho-hang"}>
+        <ProtectedRoute component={Inventory} />
+      </Route>
+      <Route path={"/marketplace"}>
+        <ProtectedRoute component={Marketplace} />
+      </Route>
+      <Route path={"/bao-cao"}>
+        <ProtectedRoute component={Reports} />
+      </Route>
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark" switchable>
         <TooltipProvider>
           <Toaster />
           <Router />
