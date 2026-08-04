@@ -116,3 +116,9 @@
 - [x] Backend updateSale: salePrice = TỔNG GIÁ BÁN CẢ LÔ
 - [x] Frontend Purchases form: label "Tổng giá mua (¥)" + hiển thị giá/SP tự tính
 - [x] Frontend Sales form: label "Tổng giá bán (¥)" + hiển thị lợi nhuận = tổng bán - tổng mua - phí
+
+## Sửa thống kê + Sửa/Xoá trong Kho Hàng
+- [x] Thống kê Dashboard trừ đúng tổng SP khi bán hàng hoặc xoá sản phẩm
+- [x] Thêm chức năng SỬA sản phẩm trong Kho Hàng (tên, SL, giá, series...)
+- [x] Thêm chức năng XOÁ sản phẩm trong Kho Hàng (confirm dialog)
+- [x] Tự động cập nhật thống kê Dashboard sau mỗi lần sửa/xoá trong Kho

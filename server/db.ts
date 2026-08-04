@@ -95,13 +95,53 @@ export async function createProduct(data: InsertProduct) {
 export async function updateProduct(id: number, userId: number, data: Partial<InsertProduct>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Validation: if quantity is being updated, ensure consistency
+  const product = await getProductById(id);
+  if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+  if (data.quantity !== undefined) {
+    const newQty = data.quantity as number;
+    if (newQty < 0) throw new Error("Số lượng không thể âm");
+    if (newQty < (product.damagedQuantity || 0)) {
+      throw new Error("Số lượng không thể nhỏ hơn số lượng hàng hỏng");
+    }
+    // Auto-update status based on quantity
+    if (newQty <= 0) {
+      data.status = "sold" as any;
+    } else if (product.status === "sold") {
+      data.status = "in_stock" as any;
+    }
+  }
   await db.update(products).set(data).where(and(eq(products.id, id), eq(products.userId, userId)));
+  // Log activity
+  if (product) {
+    await db.insert(activityLogs).values({
+      userId,
+      action: "product_updated",
+      description: `Sửa sản phẩm: ${product.name}`,
+      entityType: "product",
+      entityId: id,
+    });
+  }
 }
 
 export async function deleteProduct(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Get product info before deleting for logging
+  const product = await getProductById(id);
+  if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+  // Delete related sales and purchases first
+  await db.delete(sales).where(and(eq(sales.productId, id), eq(sales.userId, userId)));
+  await db.delete(purchases).where(and(eq(purchases.productId, id), eq(purchases.userId, userId)));
   await db.delete(products).where(and(eq(products.id, id), eq(products.userId, userId)));
+  // Log activity
+  await db.insert(activityLogs).values({
+    userId,
+    action: "product_deleted",
+    description: `Xoá sản phẩm: ${product.name} (${product.type})`,
+    entityType: "product",
+    entityId: id,
+  });
 }
 
 export async function getProductSuggestions(userId: number, search: string) {
@@ -679,11 +719,19 @@ export async function getDashboardStats(userId: number) {
   const inStockPacks = inStockProducts.filter(p => p.type === "pack").reduce((sum, p) => sum + (p.quantity || 0), 0);
 
   // Sold products
-  const soldProducts = userProducts.filter(p => p.status === "sold");
-  const totalSold = soldProducts.length;
-  const soldCards = soldProducts.filter(p => p.type === "card").length;
-  const soldBoxes = soldProducts.filter(p => p.type === "box").length;
-  const soldPacks = soldProducts.filter(p => p.type === "pack").length;
+  // Sold quantity: count from actual sales records (sum of quantities sold)
+  const userSalesForCount = await db.select().from(sales).where(eq(sales.userId, userId));
+  const totalSold = userSalesForCount.reduce((sum, s) => sum + s.quantity, 0);
+  const productMap = new Map(userProducts.map(p => [p.id, p]));
+  let soldCards = 0, soldBoxes = 0, soldPacks = 0;
+  for (const s of userSalesForCount) {
+    const prod = productMap.get(s.productId);
+    if (prod) {
+      if (prod.type === "card") soldCards += s.quantity;
+      else if (prod.type === "box") soldBoxes += s.quantity;
+      else if (prod.type === "pack") soldPacks += s.quantity;
+    }
+  }
 
   // Calculate totals
   let totalCapital = 0;
@@ -694,8 +742,7 @@ export async function getDashboardStats(userId: number) {
   });
 
   // Get total profit from sales
-  const userSales = await db.select().from(sales).where(eq(sales.userId, userId));
-  const totalProfit = userSales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+  const totalProfit = userSalesForCount.reduce((sum, s) => sum + Number(s.profit || 0), 0);
 
   // Chart data - last 6 months
   const chartData: { month: string; revenue: number; profit: number }[] = [];
@@ -704,7 +751,7 @@ export async function getDashboardStats(userId: number) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const monthLabel = `T${d.getMonth() + 1}/${d.getFullYear()}`;
-    const monthSales = userSales.filter(s => {
+    const monthSales = userSalesForCount.filter(s => {
       const sd = new Date(s.saleDate);
       return sd.getFullYear() === d.getFullYear() && sd.getMonth() === d.getMonth();
     });

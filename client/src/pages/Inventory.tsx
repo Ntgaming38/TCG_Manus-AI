@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Search, Package, Warehouse, AlertTriangle, Trash2 } from "lucide-react";
+import { Search, Package, Warehouse, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -16,11 +16,25 @@ export default function Inventory() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("in_stock");
   const [showDamageDialog, setShowDamageDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [damageQty, setDamageQty] = useState(1);
   const [damageNote, setDamageNote] = useState("");
+  const [editForm, setEditForm] = useState({ name: "", series: "", quantity: 0, buyPrice: 0, marketPrice: 0 });
 
-  const { data: products, refetch } = trpc.products.list.useQuery({
+  const utils = trpc.useUtils();
+
+  const invalidateAll = () => {
+    utils.products.list.invalidate();
+    utils.products.inStock.invalidate();
+    utils.dashboard.stats.invalidate();
+    utils.reports.overview.invalidate();
+    utils.purchases.list.invalidate();
+    utils.sales.list.invalidate();
+  };
+
+  const { data: products } = trpc.products.list.useQuery({
     type: typeFilter !== "all" ? typeFilter : undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
     search: search || undefined,
@@ -33,7 +47,27 @@ export default function Inventory() {
       setSelectedProduct(null);
       setDamageQty(1);
       setDamageNote("");
-      refetch();
+      invalidateAll();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateProduct = trpc.products.update.useMutation({
+    onSuccess: () => {
+      toast.success("Đã cập nhật sản phẩm!");
+      setShowEditDialog(false);
+      setSelectedProduct(null);
+      invalidateAll();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteProduct = trpc.products.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Đã xoá sản phẩm!");
+      setShowDeleteDialog(false);
+      setSelectedProduct(null);
+      invalidateAll();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -49,6 +83,23 @@ export default function Inventory() {
     setShowDamageDialog(true);
   };
 
+  const openEditDialog = (product: any) => {
+    setSelectedProduct(product);
+    setEditForm({
+      name: product.name || "",
+      series: product.series || "",
+      quantity: product.quantity || 0,
+      buyPrice: Number(product.buyPrice) || 0,
+      marketPrice: Number(product.marketPrice) || 0,
+    });
+    setShowEditDialog(true);
+  };
+
+  const openDeleteDialog = (product: any) => {
+    setSelectedProduct(product);
+    setShowDeleteDialog(true);
+  };
+
   const handleMarkDamaged = () => {
     if (!selectedProduct) return;
     markDamaged.mutate({
@@ -56,6 +107,23 @@ export default function Inventory() {
       damagedQty: damageQty,
       damageNote: damageNote || undefined,
     });
+  };
+
+  const handleEdit = () => {
+    if (!selectedProduct) return;
+    updateProduct.mutate({
+      id: selectedProduct.id,
+      name: editForm.name,
+      series: editForm.series,
+      quantity: editForm.quantity,
+      buyPrice: editForm.buyPrice,
+      marketPrice: editForm.marketPrice,
+    });
+  };
+
+  const handleDelete = () => {
+    if (!selectedProduct) return;
+    deleteProduct.mutate({ id: selectedProduct.id });
   };
 
   return (
@@ -198,18 +266,38 @@ export default function Inventory() {
                     </div>
                   </div>
 
-                  {/* Mark as damaged button */}
-                  {product.status === 'in_stock' && goodQty > 0 && (
+                  {/* Action buttons */}
+                  <div className="mt-3 pt-3 border-t border-border/50 flex gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full mt-3 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      onClick={() => openDamageDialog(product)}
+                      className="flex-1 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      onClick={() => openEditDialog(product)}
                     >
-                      <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
-                      Đánh dấu hỏng/rác
+                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                      Sửa
                     </Button>
-                  )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      onClick={() => openDeleteDialog(product)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      Xoá
+                    </Button>
+                    {product.status === 'in_stock' && goodQty > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 text-xs text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                        onClick={() => openDamageDialog(product)}
+                      >
+                        <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                        Hỏng
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -270,6 +358,99 @@ export default function Inventory() {
               >
                 {markDamaged.isPending ? "Đang xử lý..." : `Đánh dấu ${damageQty} sản phẩm hỏng`}
               </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-blue-400" />
+              Sửa sản phẩm
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label>Tên sản phẩm</Label>
+                <Input value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Series</Label>
+                <Input value={editForm.series} onChange={(e) => setEditForm(f => ({ ...f, series: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label>Số lượng</Label>
+                  <Input type="number" min={0} value={editForm.quantity} onChange={(e) => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 0 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Giá vốn/SP (¥)</Label>
+                  <Input type="number" min={0} value={editForm.buyPrice} onChange={(e) => setEditForm(f => ({ ...f, buyPrice: parseFloat(e.target.value) || 0 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Giá TT/SP (¥)</Label>
+                  <Input type="number" min={0} value={editForm.marketPrice} onChange={(e) => setEditForm(f => ({ ...f, marketPrice: parseFloat(e.target.value) || 0 }))} />
+                </div>
+              </div>
+
+              <div className="p-3 bg-secondary/50 rounded-lg text-xs text-muted-foreground space-y-1">
+                <p>Tổng giá vốn: <span className="font-medium text-foreground">¥{(editForm.buyPrice * editForm.quantity).toLocaleString()}</span></p>
+                <p>Tổng giá TT: <span className="font-medium text-foreground">¥{(editForm.marketPrice * editForm.quantity).toLocaleString()}</span></p>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleEdit}
+                disabled={updateProduct.isPending || !editForm.name}
+              >
+                {updateProduct.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Product Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <Trash2 className="h-5 w-5" />
+              Xác nhận xoá sản phẩm
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="space-y-4 mt-2">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="font-medium text-sm">{selectedProduct.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Loại: {selectedProduct.type} • SL: {selectedProduct.quantity} • Giá vốn: ¥{Number(selectedProduct.buyPrice).toLocaleString()}
+                </p>
+                <p className="text-xs text-red-400 mt-2">
+                  <strong>Cảnh báo:</strong> Xoá sản phẩm sẽ xoá luôn tất cả lịch sử mua/bán liên quan. Thao tác này không thể hoàn tác.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowDeleteDialog(false)}
+                >
+                  Huỷ
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleDelete}
+                  disabled={deleteProduct.isPending}
+                >
+                  {deleteProduct.isPending ? "Đang xoá..." : "Xoá sản phẩm"}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
