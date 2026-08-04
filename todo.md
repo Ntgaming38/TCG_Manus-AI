@@ -73,3 +73,9 @@
 - [x] Tạo skill tái sử dụng cho quy trình Pokemon login page
 - [x] Thêm danh sách cửa hàng cố định: Geo, Joshin, Fruichi, Toysrus, Lawson, Seven Eleven, Family Mart, Khác
 - [x] Fix lỗi Date object render trực tiếp trong Dashboard recentActivities
+- [ ] Thêm tính năng sắp xếp danh sách mua hàng theo ngày, giá, tên sản phẩm
+- [ ] Thêm tính năng sắp xếp danh sách bán hàng theo ngày, giá, tên sản phẩm
+- [x] Đổi "Tổng sản phẩm" thành "Tổng sản phẩm trong kho" (chỉ đếm in_stock)
+- [x] Thêm mục "Tổng sản phẩm đã bán" trên Dashboard
+- [x] Sau khi bán, trừ số lượng tồn kho đúng
+- [x] Thêm tính năng sắp xếp danh sách bán hàng theo ngày, giá, tên sản phẩm

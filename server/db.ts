@@ -318,21 +318,32 @@ export async function getDashboardStats(userId: number) {
   const db = await getDb();
   if (!db) return {
     totalCapital: 0, currentValue: 0, totalProfit: 0,
-    totalProducts: 0, totalCards: 0, totalBoxes: 0, totalPacks: 0,
+    totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
+    totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
     chartData: [], recentActivities: [],
   };
 
   // Get all user products
   const userProducts = await db.select().from(products).where(eq(products.userId, userId));
-  const totalProducts = userProducts.length;
-  const totalCards = userProducts.filter(p => p.type === "card").length;
-  const totalBoxes = userProducts.filter(p => p.type === "box").length;
-  const totalPacks = userProducts.filter(p => p.type === "pack").length;
+
+  // In-stock products (quantity > 0 and status is in_stock)
+  const inStockProducts = userProducts.filter(p => p.status === "in_stock" && (p.quantity || 0) > 0);
+  const totalInStock = inStockProducts.reduce((sum, p) => sum + (p.quantity || 0), 0);
+  const inStockCards = inStockProducts.filter(p => p.type === "card").reduce((sum, p) => sum + (p.quantity || 0), 0);
+  const inStockBoxes = inStockProducts.filter(p => p.type === "box").reduce((sum, p) => sum + (p.quantity || 0), 0);
+  const inStockPacks = inStockProducts.filter(p => p.type === "pack").reduce((sum, p) => sum + (p.quantity || 0), 0);
+
+  // Sold products
+  const soldProducts = userProducts.filter(p => p.status === "sold");
+  const totalSold = soldProducts.length;
+  const soldCards = soldProducts.filter(p => p.type === "card").length;
+  const soldBoxes = soldProducts.filter(p => p.type === "box").length;
+  const soldPacks = soldProducts.filter(p => p.type === "pack").length;
 
   // Calculate totals
   let totalCapital = 0;
   let currentValue = 0;
-  userProducts.forEach(p => {
+  inStockProducts.forEach(p => {
     totalCapital += Number(p.buyPrice || 0) * (p.quantity || 0);
     currentValue += Number(p.marketPrice || p.buyPrice || 0) * (p.quantity || 0);
   });
@@ -365,7 +376,8 @@ export async function getDashboardStats(userId: number) {
 
   return {
     totalCapital, currentValue, totalProfit,
-    totalProducts, totalCards, totalBoxes, totalPacks,
+    totalInStock, inStockCards, inStockBoxes, inStockPacks,
+    totalSold, soldCards, soldBoxes, soldPacks,
     chartData, recentActivities,
   };
 }

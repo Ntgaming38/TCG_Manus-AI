@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 // Sample chart data - will be replaced with real data from API
@@ -21,10 +21,14 @@ export default function Dashboard() {
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
   const totalProfit = stats?.totalProfit ?? 0;
-  const totalProducts = stats?.totalProducts ?? 0;
-  const totalCards = stats?.totalCards ?? 0;
-  const totalBoxes = stats?.totalBoxes ?? 0;
-  const totalPacks = stats?.totalPacks ?? 0;
+  const totalInStock = stats?.totalInStock ?? 0;
+  const inStockCards = stats?.inStockCards ?? 0;
+  const inStockBoxes = stats?.inStockBoxes ?? 0;
+  const inStockPacks = stats?.inStockPacks ?? 0;
+  const totalSold = stats?.totalSold ?? 0;
+  const soldCards = stats?.soldCards ?? 0;
+  const soldBoxes = stats?.soldBoxes ?? 0;
+  const soldPacks = stats?.soldPacks ?? 0;
   const recentActivities = stats?.recentActivities ?? [];
   const chartData = stats?.chartData ?? monthlyData;
 
@@ -36,7 +40,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
@@ -85,14 +89,31 @@ export default function Dashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Tổng sản phẩm</p>
-                <p className="text-2xl font-bold text-foreground mt-1">{totalProducts}</p>
+                <p className="text-sm text-muted-foreground">Tổng sản phẩm trong kho</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{totalInStock}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Card: {totalCards} | Box: {totalBoxes} | Pack: {totalPacks}
+                  Card: {inStockCards} | Box: {inStockBoxes} | Pack: {inStockPacks}
                 </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
                 <Package className="h-5 w-5 text-purple-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Tổng sản phẩm đã bán</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{totalSold}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Card: {soldCards} | Box: {soldBoxes} | Pack: {soldPacks}
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <PackageCheck className="h-5 w-5 text-orange-400" />
               </div>
             </div>
           </CardContent>

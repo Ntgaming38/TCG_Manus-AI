@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, DollarSign, Calendar, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const PLATFORMS = [
@@ -19,8 +19,13 @@ const PLATFORMS = [
   { value: "other", label: "Khác" },
 ];
 
+type SortField = "date" | "price" | "name";
+type SortDirection = "asc" | "desc";
+
 export default function Sales() {
   const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newSale, setNewSale] = useState({
     productId: 0, quantity: 1, salePrice: 0,
@@ -45,6 +50,43 @@ export default function Sales() {
   const totalCost = newSale.fee + newSale.shippingFee + newSale.otherCost;
   const netRevenue = totalRevenue - totalCost;
   const profit = selectedProduct ? netRevenue - (Number(selectedProduct.buyPrice) * newSale.quantity) : 0;
+
+  // Sort sales
+  const sortedSales = useMemo(() => {
+    if (!sales || sales.length === 0) return [];
+    const sorted = [...sales].sort((a: any, b: any) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "date":
+          cmp = new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime();
+          break;
+        case "price":
+          cmp = Number(a.totalRevenue) - Number(b.totalRevenue);
+          break;
+        case "name":
+          cmp = (a.productName || "").localeCompare(b.productName || "", "vi");
+          break;
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [sales, sortField, sortDirection]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection(field === "name" ? "asc" : "desc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />;
+    return sortDirection === "asc"
+      ? <ArrowUp className="h-3.5 w-3.5 text-primary" />
+      : <ArrowDown className="h-3.5 w-3.5 text-primary" />;
+  };
 
   return (
     <div className="space-y-6">
@@ -142,14 +184,43 @@ export default function Sales() {
         </Dialog>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Tìm kiếm giao dịch bán..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+      {/* Search + Sort */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Tìm kiếm giao dịch bán..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground mr-1">Sắp xếp:</span>
+          <Button
+            variant={sortField === "date" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 px-2.5 text-xs gap-1"
+            onClick={() => toggleSort("date")}
+          >
+            Ngày <SortIcon field="date" />
+          </Button>
+          <Button
+            variant={sortField === "price" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 px-2.5 text-xs gap-1"
+            onClick={() => toggleSort("price")}
+          >
+            Giá <SortIcon field="price" />
+          </Button>
+          <Button
+            variant={sortField === "name" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 px-2.5 text-xs gap-1"
+            onClick={() => toggleSort("name")}
+          >
+            Tên <SortIcon field="name" />
+          </Button>
+        </div>
       </div>
 
       {/* Sales List */}
-      {!sales || sales.length === 0 ? (
+      {sortedSales.length === 0 ? (
         <div className="text-center py-16">
           <DollarSign className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-medium text-muted-foreground">Chưa có giao dịch bán nào</h3>
@@ -157,7 +228,7 @@ export default function Sales() {
         </div>
       ) : (
         <div className="space-y-3">
-          {sales.map((sale: any) => (
+          {sortedSales.map((sale: any) => (
             <Card key={sale.id} className="bg-card border-border">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
