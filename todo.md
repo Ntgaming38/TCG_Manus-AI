@@ -130,3 +130,4 @@
 ## Đổi giao diện Pokémon GO
 - [x] Thay hình nền login bằng hình Red + Pikachu
 - [x] Đổi theme bên trong: nửa xanh trời đậm + nửa đỏ (Pokémon GO style)
+- [x] Thay nền content bằng hình Zoroark đen, chữ trắng, nút đỏ

@@ -214,8 +214,16 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        {/* Zoroark background image */}
+        <div className="fixed inset-0 pointer-events-none z-0" style={{ left: 'var(--sidebar-width, 260px)' }}>
+          <img
+            src="/manus-storage/zoroark-bg_24781c9e.png"
+            alt=""
+            className="w-full h-full object-cover opacity-40"
+          />
+        </div>
         {isMobile && (
-          <div className="flex border-b border-border h-14 items-center justify-between bg-background/95 px-3 backdrop-blur sticky top-0 z-40">
+          <div className="flex border-b border-border h-14 items-center justify-between bg-background/90 px-3 backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg" />
               <span className="text-sm font-medium text-foreground">
@@ -224,7 +232,7 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6 relative z-10">{children}</main>
       </SidebarInset>
     </>
   );
