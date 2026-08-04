@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { storagePut } from "../storage";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -36,6 +37,25 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+
+  // Image upload endpoint
+  app.post("/api/upload-image", async (req, res) => {
+    try {
+      const { base64, filename, contentType } = req.body;
+      if (!base64 || !filename) {
+        return res.status(400).json({ error: "Missing base64 or filename" });
+      }
+      const buffer = Buffer.from(base64, "base64");
+      const ext = filename.split(".").pop() || "png";
+      const key = `products/${Date.now()}.${ext}`;
+      const result = await storagePut(key, buffer, contentType || "image/png");
+      res.json({ url: result.url, key: result.key });
+    } catch (error: any) {
+      console.error("[Upload] Error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

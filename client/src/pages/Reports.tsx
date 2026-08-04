@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { BarChart3, TrendingUp, Package, DollarSign } from "lucide-react";
+import { BarChart3, TrendingUp, Package, DollarSign, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { toast } from "sonner";
 
 export default function Reports() {
   const { data: report } = trpc.reports.overview.useQuery();
@@ -13,11 +15,60 @@ export default function Reports() {
   const topProducts = report?.topProducts ?? [];
   const monthlyData = report?.monthlyData ?? [];
 
+  const exportCSV = () => {
+    if (!report) {
+      toast.error("Chưa có dữ liệu để xuất");
+      return;
+    }
+
+    // Build CSV content
+    let csv = "\uFEFF"; // BOM for Excel UTF-8
+    csv += "BÁO CÁO KINH DOANH POKÉMON TRADING\n\n";
+    csv += "TỔNG QUAN\n";
+    csv += `Tổng đã mua,¥${totalBought.toLocaleString()}\n`;
+    csv += `Tổng đã bán,¥${totalSold.toLocaleString()}\n`;
+    csv += `Lợi nhuận,¥${totalProfit.toLocaleString()}\n`;
+    csv += `ROI,${roi.toFixed(1)}%\n\n`;
+
+    if (monthlyData.length > 0) {
+      csv += "LỢI NHUẬN THEO THÁNG\n";
+      csv += "Tháng,Lợi nhuận (¥)\n";
+      monthlyData.forEach((item: any) => {
+        csv += `${item.month},${item.profit}\n`;
+      });
+      csv += "\n";
+    }
+
+    if (topProducts.length > 0) {
+      csv += "TOP SẢN PHẨM SINH LỜI\n";
+      csv += "STT,Tên sản phẩm,Loại,Lợi nhuận (¥)\n";
+      topProducts.forEach((p: any, i: number) => {
+        csv += `${i + 1},${p.name},${p.type},${Number(p.profit).toLocaleString()}\n`;
+      });
+    }
+
+    // Download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `bao-cao-pokemon-trading-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Đã xuất báo cáo CSV!");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Báo Cáo</h1>
-        <p className="text-muted-foreground text-sm mt-1">Phân tích hiệu quả kinh doanh</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Báo Cáo</h1>
+          <p className="text-muted-foreground text-sm mt-1">Phân tích hiệu quả kinh doanh</p>
+        </div>
+        <Button onClick={exportCSV} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Xuất CSV
+        </Button>
       </div>
 
       {/* Summary */}

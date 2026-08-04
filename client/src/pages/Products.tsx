@@ -6,9 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Filter, Package, CreditCard, Box, Gift } from "lucide-react";
-import { useState } from "react";
+import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -17,6 +18,10 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [newProduct, setNewProduct] = useState({
     name: "", type: "box" as "card" | "box" | "pack", series: "Pokemon",
     setName: "", quantity: 1, buyPrice: 0, marketPrice: 0, description: "",
@@ -41,6 +46,76 @@ export default function Products() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const updateProduct = trpc.products.update.useMutation({
+    onSuccess: () => {
+      toast.success("Đã cập nhật sản phẩm!");
+      setShowEditDialog(false);
+      setEditingProduct(null);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteProduct = trpc.products.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Đã xóa sản phẩm!");
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleImageUpload = async (productId: number, file: File) => {
+    setUploadingId(productId);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(",")[1];
+        const response = await fetch("/api/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ base64, filename: file.name, contentType: file.type }),
+        });
+        if (response.ok) {
+          const { url } = await response.json();
+          await updateProduct.mutateAsync({ id: productId, image: url });
+          toast.success("Đã upload ảnh!");
+        } else {
+          toast.error("Upload ảnh thất bại");
+        }
+        setUploadingId(null);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      toast.error("Upload ảnh thất bại");
+      setUploadingId(null);
+    }
+  };
+
+  const handleDelete = (id: number, name: string) => {
+    if (confirm(`Bạn có chắc muốn xóa "${name}"?`)) {
+      deleteProduct.mutate({ id });
+    }
+  };
+
+  const openEdit = (product: any) => {
+    setEditingProduct({
+      id: product.id,
+      name: product.name,
+      series: product.series || "Pokemon",
+      setName: product.setName || "",
+      quantity: product.quantity,
+      buyPrice: Number(product.buyPrice),
+      marketPrice: Number(product.marketPrice) || 0,
+      description: product.description || "",
+      cardNumber: product.cardNumber || "",
+      language: product.language || "Japanese",
+      rarity: product.rarity || "",
+      condition: product.condition || "New",
+      psaGrade: product.psaGrade || "",
+    });
+    setShowEditDialog(true);
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -193,6 +268,73 @@ export default function Products() {
         </Dialog>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Sửa sản phẩm</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Tên sản phẩm</Label>
+                <Input value={editingProduct.name} onChange={(e) => setEditingProduct((p: any) => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Series</Label>
+                  <Input value={editingProduct.series} onChange={(e) => setEditingProduct((p: any) => ({ ...p, series: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Set</Label>
+                  <Input value={editingProduct.setName} onChange={(e) => setEditingProduct((p: any) => ({ ...p, setName: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Số lượng</Label>
+                  <Input type="number" min={0} value={editingProduct.quantity} onChange={(e) => setEditingProduct((p: any) => ({ ...p, quantity: parseInt(e.target.value) || 0 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Giá mua (¥)</Label>
+                  <Input type="number" min={0} value={editingProduct.buyPrice} onChange={(e) => setEditingProduct((p: any) => ({ ...p, buyPrice: parseFloat(e.target.value) || 0 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Giá thị trường (¥)</Label>
+                  <Input type="number" min={0} value={editingProduct.marketPrice} onChange={(e) => setEditingProduct((p: any) => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Ghi chú</Label>
+                <Textarea value={editingProduct.description} onChange={(e) => setEditingProduct((p: any) => ({ ...p, description: e.target.value }))} />
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => updateProduct.mutate(editingProduct)}
+                disabled={updateProduct.isPending}
+              >
+                {updateProduct.isPending ? "Đang lưu..." : "Cập nhật"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden file input for image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && uploadingId) {
+            handleImageUpload(uploadingId, file);
+          }
+          e.target.value = "";
+        }}
+      />
+
       {/* Search and Filter */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
@@ -230,17 +372,49 @@ export default function Products() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.map((product: any) => (
-            <Card key={product.id} className="bg-card border-border hover:border-primary/30 transition-colors">
+            <Card key={product.id} className="bg-card border-border hover:border-primary/30 transition-colors group">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <Badge variant="secondary" className="text-xs">
                     {getTypeIcon(product.type)}
                     <span className="ml-1 capitalize">{product.type}</span>
                   </Badge>
-                  <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
-                    {product.status === 'in_stock' ? 'Trong kho' : product.status}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
+                      {product.status === 'in_stock' ? 'Trong kho' : product.status === 'sold' ? 'Đã bán' : product.status}
+                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEdit(product)}>
+                          <Pencil className="h-3 w-3 mr-2" />
+                          Sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setUploadingId(product.id);
+                          fileInputRef.current?.click();
+                        }}>
+                          <ImagePlus className="h-3 w-3 mr-2" />
+                          Upload ảnh
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-400" onClick={() => handleDelete(product.id, product.name)}>
+                          <Trash2 className="h-3 w-3 mr-2" />
+                          Xóa
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
+                {/* Product image */}
+                {product.image && (
+                  <div className="mb-3 rounded-lg overflow-hidden bg-secondary/30 aspect-[4/3]">
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <h3 className="font-semibold text-sm truncate">{product.name}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{product.series} - {product.setName || 'N/A'}</p>
                 <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 gap-2 text-xs">

@@ -26,8 +26,8 @@
 - [x] Products listing page with search and filters
 - [x] Add product form with type, series, set, quantity, prices
 - [x] Card-specific fields (rarity, PSA grade, card number, condition, language)
-- [ ] Image upload for products
-- [ ] Edit/Delete product inline
+- [x] Image upload for products (S3 upload via /api/upload-image)
+- [x] Edit/Delete product inline (dropdown menu with edit dialog and delete confirm)
 
 ## Inventory (Kho Hàng)
 - [x] Inventory listing with filters (type, status)
@@ -59,10 +59,10 @@
 - [x] Overview report (total bought, sold, profit, ROI)
 - [x] Monthly profit chart
 - [x] Top profitable products
-- [ ] Export to Excel/CSV
+- [x] Export to CSV (client-side CSV export with BOM for Excel)
 
 ## Additional Features
 - [x] Responsive design for mobile
 - [x] Vitest tests (9 tests passing)
-- [ ] Image gallery (Thư Viện)
-- [ ] User settings page
+- [x] Product image display on cards
+- [x] User profile in sidebar footer with logout
