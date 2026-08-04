@@ -98,3 +98,13 @@
 - [x] UI Sales: nút Sửa/Xóa cho mỗi giao dịch bán, dialog sửa, confirm xóa
 - [x] Đồng bộ toàn bộ: invalidate tRPC queries sau mỗi thao tác (Dashboard, Inventory, Reports)
 - [x] FIX: Form bán hàng phải nhập TỔNG GIÁ BÁN (không phải giá/sp), giống logic mua hàng
+- [x] FIX: Form bán hàng phải nhập TỔNG GIÁ BÁN (không phải giá/sp), giống logic mua hàng
+
+## Sửa quy tắc tính giá (giá/SP thay vì tổng giá lô)
+- [x] Backend createPurchase: price = giá mua/SP, tổng vốn = price × quantity
+- [x] Backend createSale: salePrice = giá bán/SP, doanh thu = salePrice × quantity, lợi nhuận = doanh thu - (buyPrice × quantity) - phí
+- [x] Backend updatePurchase: price = giá mua/SP
+- [x] Backend updateSale: salePrice = giá bán/SP
+- [x] Frontend Purchases form: label "Giá mua (¥/SP)", hiển thị tổng vốn = giá × SL
+- [x] Frontend Sales form: label "Giá bán (¥/SP)", hiển thị doanh thu = giá × SL, vốn = buyPrice × SL, lợi nhuận
+- [x] Dashboard/Reports: đảm bảo tính đúng theo quy tắc mới
