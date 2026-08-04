@@ -224,9 +224,9 @@ export async function createPurchase(userId: number, data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // price is PER UNIT (per SP), totalPrice = price × quantity
-  const unitPrice = data.price;
-  const totalPrice = data.price * data.quantity;
+  // price is TOTAL price for the lot, unitPrice = price / quantity
+  const totalPrice = data.price;
+  const unitPrice = data.quantity > 0 ? data.price / data.quantity : data.price;
 
   // Check if product exists or create new one
   let productId: number;
@@ -286,7 +286,7 @@ export async function createPurchase(userId: number, data: {
 // ========== UPDATE PURCHASE ==========
 
 export async function updatePurchase(userId: number, data: {
-  purchaseId: number; quantity?: number; price?: number; shop?: string; note?: string; // price = per unit (per SP)
+  purchaseId: number; quantity?: number; price?: number; shop?: string; note?: string; // price = TOTAL lot price
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -304,10 +304,9 @@ export async function updatePurchase(userId: number, data: {
   const oldQty = purchase.quantity;
   const oldTotalPrice = Number(purchase.totalPrice || 0);
   const newQty = data.quantity ?? oldQty;
-  // price param is per-unit; if not provided, use existing unit price
-  const oldUnitPrice = Number(purchase.price || 0);
-  const newUnitPrice = data.price ?? oldUnitPrice;
-  const newTotalPrice = newUnitPrice * newQty;
+  // price param is TOTAL lot price; if not provided, use existing totalPrice
+  const newTotalPrice = data.price ?? oldTotalPrice;
+  const newUnitPrice = newQty > 0 ? newTotalPrice / newQty : newTotalPrice;
 
   // Step 1: Reverse old purchase effect on product quantity
   const currentProductQty = product.quantity || 0;
@@ -427,7 +426,7 @@ export async function deletePurchase(userId: number, purchaseId: number) {
 // ========== UPDATE SALE ==========
 
 export async function updateSale(userId: number, data: {
-  saleId: number; quantity?: number; salePrice?: number; note?: string; // salePrice = per unit (per SP)
+  saleId: number; quantity?: number; salePrice?: number; note?: string; // salePrice = TOTAL sale price for the lot
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -444,10 +443,12 @@ export async function updateSale(userId: number, data: {
 
   const oldQty = sale.quantity;
   const newQty = data.quantity ?? oldQty;
-  // salePrice is per unit; if not provided, use existing unit price
-  const oldUnitSalePrice = Number(sale.salePrice || 0);
-  const newUnitSalePrice = data.salePrice ?? oldUnitSalePrice;
-  const newTotalSalePrice = newUnitSalePrice * newQty;
+  // salePrice is TOTAL lot price; if not provided, use existing totalRevenue
+  const newTotalSalePrice = data.salePrice ?? Number(sale.totalRevenue);
+
+
+
+
 
   // Step 1: Restore old quantity back to product (reverse old sale)
   const restoredQty = (product.quantity || 0) + oldQty;
@@ -465,8 +466,9 @@ export async function updateSale(userId: number, data: {
   // Step 3: Apply new quantity deduction
   const finalQty = restoredQty - newQty;
 
-  // Step 4: Recalculate profit (salePrice is per unit)
+  // Step 4: Recalculate profit (salePrice is total for the lot)
   const totalRevenue = newTotalSalePrice;
+  const newUnitSalePrice = newQty > 0 ? newTotalSalePrice / newQty : newTotalSalePrice;
   const totalCost = Number(sale.fee || 0) + Number(sale.shippingFee || 0) + Number(sale.otherCost || 0);
   const costBasis = Number(product.buyPrice) * newQty;
   const profit = totalRevenue - totalCost - costBasis;
@@ -587,7 +589,7 @@ export async function listSales(userId: number, opts?: { search?: string }) {
 }
 
 export async function createSale(userId: number, data: {
-  productId: number; quantity: number; salePrice: number; isDamaged?: boolean; // salePrice = per unit (per SP)
+  productId: number; quantity: number; salePrice: number; isDamaged?: boolean; // salePrice = TOTAL sale price for the lot
   platform?: string; fee?: number; shippingFee?: number; otherCost?: number; note?: string;
 }) {
   const db = await getDb();
@@ -606,9 +608,9 @@ export async function createSale(userId: number, data: {
     if (availableGood < data.quantity) throw new Error("Số lượng hàng tốt không đủ");
   }
 
-  // salePrice is PER UNIT (per SP), totalRevenue = salePrice × quantity
-  const unitSalePrice = data.salePrice;
-  const totalRevenue = data.salePrice * data.quantity;
+  // salePrice is TOTAL sale price for the lot (not per-unit)
+  const totalRevenue = data.salePrice;
+  const unitSalePrice = data.quantity > 0 ? data.salePrice / data.quantity : data.salePrice;
   const totalCost = (data.fee || 0) + (data.shippingFee || 0) + (data.otherCost || 0);
   const costBasis = Number(product.buyPrice) * data.quantity;
   const profit = totalRevenue - totalCost - costBasis;

@@ -125,7 +125,7 @@ export default function Purchases() {
     setSelectedPurchase(purchase);
     setEditForm({
       quantity: purchase.quantity,
-      price: Number(purchase.price),
+      price: Number(purchase.totalPrice),
       shop: purchase.shop || "",
       note: purchase.note || "",
     });
@@ -212,7 +212,7 @@ export default function Purchases() {
                         className="w-full text-left px-3 py-2 hover:bg-accent text-sm flex items-center gap-2"
                         onClick={() => setNewPurchase(p => ({
                           ...p, productName: s.name, productType: s.type, series: s.series || "Pokemon",
-                          price: Number(s.buyPrice) || 0,
+                          price: (Number(s.buyPrice) || 0) * p.quantity,
                         }))}
                       >
                         <span className="capitalize text-xs text-muted-foreground">{s.type}</span>
@@ -240,12 +240,15 @@ export default function Purchases() {
                   <Input type="number" min={1} value={newPurchase.quantity} onChange={(e) => setNewPurchase(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá mua (¥/SP)</Label>
+                  <Label>Tổng giá mua (¥)</Label>
                   <Input type="number" min={0} value={newPurchase.price} onChange={(e) => setNewPurchase(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
               <div className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Tổng vốn = giá × SL: <span className="font-bold text-foreground">¥{(newPurchase.price * newPurchase.quantity).toLocaleString()}</span></p>
+                <p className="text-sm text-muted-foreground">Tổng tiền: <span className="font-bold text-foreground">¥{newPurchase.price.toLocaleString()}</span></p>
+                {newPurchase.quantity > 0 && newPurchase.price > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">Giá vốn/SP: <span className="font-medium text-foreground">¥{Math.round(newPurchase.price / newPurchase.quantity).toLocaleString()}</span></p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
@@ -375,13 +378,13 @@ export default function Purchases() {
                   <Input type="number" min={1} value={editForm.quantity} onChange={(e) => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá mua (¥/SP)</Label>
+                  <Label>Tổng giá mua (¥)</Label>
                   <Input type="number" min={0} value={editForm.price} onChange={(e) => setEditForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
               {editForm.quantity > 0 && editForm.price > 0 && (
                 <div className="p-2 bg-secondary/30 rounded text-xs text-muted-foreground">
-                  Tổng vốn = giá × SL: ¥{(editForm.price * editForm.quantity).toLocaleString()}
+                  Giá vốn/SP: ¥{Math.round(editForm.price / editForm.quantity).toLocaleString()}
                 </div>
               )}
               <div className="space-y-2">

@@ -87,7 +87,7 @@ export default function Sales() {
     setSelectedSale(sale);
     setEditForm({
       quantity: sale.quantity,
-      salePrice: Number(sale.salePrice),
+      salePrice: Number(sale.totalRevenue),
       note: sale.note || "",
     });
     setShowEditDialog(true);
@@ -114,8 +114,8 @@ export default function Sales() {
   };
 
   const selectedProduct = inventoryProducts?.find((p: any) => p.id === newSale.productId);
-  // salePrice is PER UNIT (per SP), totalRevenue = salePrice × quantity
-  const totalRevenue = newSale.salePrice * newSale.quantity;
+  // salePrice is TOTAL price for the lot (not per-unit)
+  const totalRevenue = newSale.salePrice;
   const totalCost = newSale.fee + newSale.shippingFee + newSale.otherCost;
   const netRevenue = totalRevenue - totalCost;
   const profit = selectedProduct ? netRevenue - (Number(selectedProduct.buyPrice) * newSale.quantity) : 0;
@@ -231,7 +231,7 @@ export default function Sales() {
                   <Input type="number" min={1} max={newSale.isDamaged ? (selectedProduct?.damagedQuantity || 999) : ((selectedProduct?.quantity || 0) - (selectedProduct?.damagedQuantity || 0)) || 999} value={newSale.quantity} onChange={(e) => setNewSale(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
              <div className="space-y-2">
-                  <Label>Giá bán (¥/SP)</Label>
+                  <Label>Tổng giá bán (¥)</Label>
                   <Input type="number" min={0} value={newSale.salePrice} onChange={(e) => setNewSale(p => ({ ...p, salePrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
@@ -262,9 +262,11 @@ export default function Sales() {
               </div>
             <div className="p-3 bg-secondary/50 rounded-lg space-y-1">
                 {newSale.quantity > 0 && newSale.salePrice > 0 && (
-                  <p className="text-xs text-muted-foreground">Doanh thu = giá × SL: ¥{totalRevenue.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Giá bán/SP: ¥{Math.round(newSale.salePrice / newSale.quantity).toLocaleString()}</p>
                 )}
+                <p className="text-sm text-muted-foreground">Doanh thu: <span className="font-medium text-foreground">¥{totalRevenue.toLocaleString()}</span></p>
                 <p className="text-sm text-muted-foreground">Phí: <span className="font-medium text-foreground">-¥{totalCost.toLocaleString()}</span></p>
+                <p className="text-sm text-muted-foreground">Thực nhận: <span className="font-medium text-foreground">¥{netRevenue.toLocaleString()}</span></p>
                 {selectedProduct && (
                   <p className="text-sm text-muted-foreground">Giá vốn: <span className="font-medium text-foreground">-¥{(Number(selectedProduct.buyPrice) * newSale.quantity).toLocaleString()}</span></p>
                 )}
@@ -422,13 +424,13 @@ export default function Sales() {
                   <Input type="number" min={1} value={editForm.quantity} onChange={(e) => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                <div className="space-y-2">
-                  <Label>Giá bán (¥/SP)</Label>
+                  <Label>Tổng giá bán (¥)</Label>
                   <Input type="number" min={0} value={editForm.salePrice} onChange={(e) => setEditForm(f => ({ ...f, salePrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
               {editForm.quantity > 0 && editForm.salePrice > 0 && (
                 <div className="p-2 bg-secondary/30 rounded text-xs text-muted-foreground">
-                  Doanh thu = giá × SL: ¥{(editForm.salePrice * editForm.quantity).toLocaleString()}
+                  Giá bán/SP: ¥{Math.round(editForm.salePrice / editForm.quantity).toLocaleString()}
                 </div>
               )}
               <div className="space-y-2">

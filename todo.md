@@ -108,3 +108,11 @@
 - [x] Frontend Purchases form: label "Giá mua (¥/SP)", hiển thị tổng vốn = giá × SL
 - [x] Frontend Sales form: label "Giá bán (¥/SP)", hiển thị doanh thu = giá × SL, vốn = buyPrice × SL, lợi nhuận
 - [x] Dashboard/Reports: đảm bảo tính đúng theo quy tắc mới
+
+## Sửa lại quy tắc tính giá (TỔNG GIÁ LÔ, không phải giá/SP)
+- [x] Backend createPurchase: price = TỔNG GIÁ CẢ LÔ, unitPrice = price / quantity
+- [x] Backend createSale: salePrice = TỔNG GIÁ BÁN CẢ LÔ, profit = salePrice - buyPrice*qty - fees
+- [x] Backend updatePurchase: price = TỔNG GIÁ CẢ LÔ
+- [x] Backend updateSale: salePrice = TỔNG GIÁ BÁN CẢ LÔ
+- [x] Frontend Purchases form: label "Tổng giá mua (¥)" + hiển thị giá/SP tự tính
+- [x] Frontend Sales form: label "Tổng giá bán (¥)" + hiển thị lợi nhuận = tổng bán - tổng mua - phí
