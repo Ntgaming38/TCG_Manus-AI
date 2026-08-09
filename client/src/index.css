@@ -283,6 +283,36 @@
     transform: scale(0.97);
   }
 
+  /* Red button for login */
+  .red-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(220, 38, 38, 0.3);
+    transition: all 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .red-btn:hover {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.7), 0 4px 20px rgba(220, 38, 38, 0.5);
+    transform: translateY(-1px);
+  }
+  .red-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* Red pulse animation for login button */
+  @keyframes btn-red-pulse-anim {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.7), 0 4px 20px rgba(220, 38, 38, 0.5);
+    }
+  }
+
+  .btn-red-pulse {
+    animation: btn-red-pulse-anim 2s ease-in-out infinite;
+  }
+
   /* Glow animation for POKÉMON text */
   @keyframes pokemon-glow {
     0% {

@@ -78,7 +78,7 @@ export default function Home() {
             onClick={handleStart}
             disabled={transitioning}
             size="lg"
-            className="w-full max-w-[220px] neon-btn text-xl rounded-lg py-7 border-0 btn-start-pulse disabled:opacity-70"
+            className="w-full max-w-[220px] red-btn text-xl rounded-lg py-7 border-0 btn-red-pulse disabled:opacity-70"
           >
             {transitioning ? (
               <Loader2 className="h-5 w-5 animate-spin" />
