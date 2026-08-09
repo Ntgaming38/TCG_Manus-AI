@@ -35,7 +35,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-      <h1 className="text-2xl font-bold text-foreground">TCG Trading Manager</h1>
+      <h1 className="text-2xl font-bold text-foreground">TCG Manager</h1>
         <p className="text-muted-foreground text-sm mt-1">Tổng quan tình hình kinh doanh của bạn</p>
       </div>
 

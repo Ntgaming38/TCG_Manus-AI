@@ -61,7 +61,7 @@ export default function Home() {
         {/* Top area - POKÉMON logo - larger and perfectly centered */}
         <div className="flex flex-col items-center justify-center mt-2 w-full animate-slide-down">
           <h1 className="pokemon-logo-text text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider select-none text-center leading-none">
-            TCG Trading Manager
+            TCG Manager
           </h1>
         </div>
 
@@ -69,7 +69,7 @@ export default function Home() {
         <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
           {/* Server info bar */}
           <div className="w-full bg-black/60 backdrop-blur-sm border border-yellow-500/30 rounded-lg px-4 py-3 flex items-center justify-between shadow-[0_0_10px_rgba(255,203,5,0.1)]">
-            <span className="text-white/80 text-sm">TCG Trading Manager</span>
+            <span className="text-white/80 text-sm">TCG Manager</span>
             <span className="text-yellow-400 text-sm font-semibold">v1.0</span>
           </div>
 
