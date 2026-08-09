@@ -136,3 +136,9 @@
 - [x] CSS theme: nền đen/xanh đậm, viền neon xanh lá, card phát sáng
 - [x] Sidebar: neon style với viền phát sáng
 - [x] Login page: phù hợp phong cách gaming neon
+
+## Đổi tên TCG Trading Manager + nền trắng
+- [x] Đổi "Thống kê chi tiết" heading → "TCG Trading Manager"
+- [x] Đổi logo sidebar POKÉMON → "TCG Manager" màu vàng
+- [x] Đổi login page text → "TCG Trading Manager" màu vàng
+- [x] Đổi nền giao diện từ đen sang trắng

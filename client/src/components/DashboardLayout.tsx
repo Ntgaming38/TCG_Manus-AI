@@ -31,7 +31,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Thống kê chi tiết", path: "/thong-ke" },
+  { icon: LayoutDashboard, label: "TCG Trading Manager", path: "/thong-ke" },
   { icon: CreditCard, label: "Card", path: "/san-pham/card" },
   { icon: Box, label: "Box", path: "/san-pham/box" },
   { icon: Gift, label: "Pack", path: "/san-pham/pack" },
@@ -73,7 +73,7 @@ export default function DashboardLayout({
           <div className="flex flex-col items-center gap-4">
             <h1 className="pokemon-logo-text text-4xl">POKÉMON</h1>
             <p className="text-sm text-muted-foreground text-center">
-              Đăng nhập để tiếp tục sử dụng Pokémon Trading Manager
+              Đăng nhập để tiếp tục sử dụng TCG Trading Manager
             </p>
           </div>
           <Button
@@ -156,7 +156,7 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-primary" />
               </button>
               {!isCollapsed && (
-                <span className="neon-logo-text text-lg tracking-wider font-black">POKÉMON</span>
+                <span className="tcg-logo-text text-lg tracking-wider font-black">TCG Manager</span>
               )}
             </div>
           </SidebarHeader>

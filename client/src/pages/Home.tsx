@@ -27,7 +27,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0f1a]">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <Loader2 className="h-8 w-8 animate-spin text-green-400" />
       </div>
     );
@@ -46,7 +46,7 @@ export default function Home() {
 
       {/* Transition overlay - fades to black when starting */}
       {transitioning && (
-        <div className="absolute inset-0 z-50 bg-[#0a0f1a] page-transition-overlay flex items-center justify-center">
+        <div className="absolute inset-0 z-50 bg-black page-transition-overlay flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-green-400" />
             <p className="text-green-400 font-bold text-lg tracking-wider animate-pulse">
@@ -60,20 +60,17 @@ export default function Home() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-between py-8">
         {/* Top area - POKÉMON logo - larger and perfectly centered */}
         <div className="flex flex-col items-center justify-center mt-2 w-full animate-slide-down">
-          <h1 className="pokemon-logo-text text-8xl sm:text-9xl md:text-[10rem] lg:text-[12rem] tracking-wider select-none text-center leading-none">
-            POKÉMON
+          <h1 className="pokemon-logo-text text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider select-none text-center leading-none">
+            TCG Trading Manager
           </h1>
-          <p className="text-white/90 text-sm md:text-lg font-bold tracking-[0.4em] uppercase mt-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
-            Trading Manager
-          </p>
         </div>
 
         {/* Bottom area - Login section */}
         <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
           {/* Server info bar */}
-          <div className="w-full bg-black/60 backdrop-blur-sm border border-green-500/30 rounded-lg px-4 py-3 flex items-center justify-between shadow-[0_0_10px_rgba(74,222,128,0.1)]">
-            <span className="text-white/80 text-sm">Pokémon Trading Manager</span>
-            <span className="text-green-400 text-sm font-semibold">v1.0</span>
+          <div className="w-full bg-black/60 backdrop-blur-sm border border-yellow-500/30 rounded-lg px-4 py-3 flex items-center justify-between shadow-[0_0_10px_rgba(255,203,5,0.1)]">
+            <span className="text-white/80 text-sm">TCG Trading Manager</span>
+            <span className="text-yellow-400 text-sm font-semibold">v1.0</span>
           </div>
 
           {/* Login button with pulse animation */}
