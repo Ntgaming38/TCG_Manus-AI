@@ -146,17 +146,17 @@ function DashboardLayoutContent({
     <>
       <div className="relative" ref={sidebarRef}>
         <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
-          <SidebarHeader className="h-16 justify-center">
+          <SidebarHeader className="h-16 justify-center border-b border-primary/30">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
                 className="h-8 w-8 flex items-center justify-center hover:bg-sidebar-accent rounded-lg transition-colors focus:outline-none shrink-0"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                <PanelLeft className="h-4 w-4 text-primary" />
               </button>
               {!isCollapsed && (
-                <span className="pokemon-logo-text text-lg tracking-wider">POKÉMON</span>
+                <span className="neon-logo-text text-lg tracking-wider font-black">POKÉMON</span>
               )}
             </div>
           </SidebarHeader>
@@ -171,9 +171,9 @@ function DashboardLayoutContent({
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
-                      className="h-10 transition-all font-normal"
+                      className={`h-10 transition-all font-normal ${isActive ? "neon-active-item" : "hover:text-primary"}`}
                     >
-                      <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                      <item.icon className={`h-4 w-4 ${isActive ? "text-primary drop-shadow-[0_0_6px_rgba(74,222,128,0.8)]" : ""}`} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -214,16 +214,8 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
-        {/* Zoroark background image */}
-        <div className="fixed inset-0 pointer-events-none z-0" style={{ left: 'var(--sidebar-width, 260px)' }}>
-          <img
-            src="/manus-storage/zoroark-bg_24781c9e.png"
-            alt=""
-            className="w-full h-full object-cover opacity-40"
-          />
-        </div>
         {isMobile && (
-          <div className="flex border-b border-border h-14 items-center justify-between bg-background/90 px-3 backdrop-blur sticky top-0 z-40">
+          <div className="flex border-b border-primary/30 h-14 items-center justify-between bg-background/95 px-3 backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg" />
               <span className="text-sm font-medium text-foreground">
@@ -232,7 +224,7 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-4 md:p-6 relative z-10">{children}</main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </>
   );

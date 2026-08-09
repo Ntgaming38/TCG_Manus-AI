@@ -41,7 +41,7 @@ export default function Dashboard() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -55,7 +55,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -69,7 +69,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -85,7 +85,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -102,7 +102,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -122,7 +122,7 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Doanh thu theo tháng</CardTitle>
           </CardHeader>
@@ -144,7 +144,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Lợi nhuận theo tháng</CardTitle>
           </CardHeader>
@@ -168,7 +168,7 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Activities */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card neon-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />

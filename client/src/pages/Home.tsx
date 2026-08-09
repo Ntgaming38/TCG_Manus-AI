@@ -27,8 +27,8 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1a0a2e]">
-        <Loader2 className="h-8 w-8 animate-spin text-yellow-400" />
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0f1a]">
+        <Loader2 className="h-8 w-8 animate-spin text-green-400" />
       </div>
     );
   }
@@ -46,10 +46,10 @@ export default function Home() {
 
       {/* Transition overlay - fades to black when starting */}
       {transitioning && (
-        <div className="absolute inset-0 z-50 bg-[#1a0a2e] page-transition-overlay flex items-center justify-center">
+        <div className="absolute inset-0 z-50 bg-[#0a0f1a] page-transition-overlay flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-10 w-10 animate-spin text-yellow-400" />
-            <p className="text-yellow-400 font-bold text-lg tracking-wider animate-pulse">
+            <Loader2 className="h-10 w-10 animate-spin text-green-400" />
+            <p className="text-green-400 font-bold text-lg tracking-wider animate-pulse">
               Đang kết nối...
             </p>
           </div>
@@ -71,9 +71,9 @@ export default function Home() {
         {/* Bottom area - Login section */}
         <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
           {/* Server info bar */}
-          <div className="w-full bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-3 flex items-center justify-between">
+          <div className="w-full bg-black/60 backdrop-blur-sm border border-green-500/30 rounded-lg px-4 py-3 flex items-center justify-between shadow-[0_0_10px_rgba(74,222,128,0.1)]">
             <span className="text-white/80 text-sm">Pokémon Trading Manager</span>
-            <span className="text-yellow-400 text-sm font-semibold">v1.0</span>
+            <span className="text-green-400 text-sm font-semibold">v1.0</span>
           </div>
 
           {/* Login button with pulse animation */}
@@ -81,7 +81,7 @@ export default function Home() {
             onClick={handleStart}
             disabled={transitioning}
             size="lg"
-            className="w-full max-w-[220px] bg-gradient-to-b from-green-400 to-green-600 hover:from-green-300 hover:to-green-500 text-white font-bold text-xl shadow-lg border border-green-300/30 rounded-lg py-7 transition-all duration-150 active:scale-[0.97] btn-start-pulse disabled:opacity-70"
+            className="w-full max-w-[220px] neon-btn text-xl rounded-lg py-7 border-0 btn-start-pulse disabled:opacity-70"
           >
             {transitioning ? (
               <Loader2 className="h-5 w-5 animate-spin" />

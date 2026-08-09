@@ -296,7 +296,7 @@ export default function Purchases() {
       ) : (
         <div className="space-y-3">
           {sortedPurchases.map((purchase: any) => (
-            <Card key={purchase.id} className="bg-card border-border">
+            <Card key={purchase.id} className="bg-card neon-card">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

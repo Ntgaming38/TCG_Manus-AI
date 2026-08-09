@@ -41,90 +41,91 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: 'Inter', 'Outfit', system-ui, sans-serif;
-  --color-pokemon-yellow: oklch(0.88 0.18 90);
-  --color-pokemon-blue: oklch(0.30 0.12 240);
-  --color-pokemon-red: oklch(0.50 0.22 25);
-  --color-pokemon-dark-blue: oklch(0.18 0.06 240);
-  --color-pokemon-deep-red: oklch(0.25 0.10 20);
+  --color-neon-green: oklch(0.80 0.25 145);
+  --color-neon-blue: oklch(0.70 0.20 230);
+  --color-neon-red: oklch(0.60 0.25 25);
+  --color-neon-yellow: oklch(0.88 0.18 90);
+  --color-gaming-dark: oklch(0.10 0.03 240);
+  --color-gaming-card: oklch(0.14 0.04 240);
 }
 
 :root {
   --radius: 0.625rem;
-  /* Primary: Pokémon red for buttons/active */
-  --primary: oklch(0.50 0.22 25);
-  --primary-foreground: oklch(0.98 0 0);
-  /* Sidebar: Deep blue (Pokémon GO team Mystic blue) */
-  --sidebar-primary: oklch(0.50 0.22 25);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --chart-1: oklch(0.50 0.22 25);
-  --chart-2: oklch(0.45 0.15 240);
-  --chart-3: oklch(0.65 0.18 150);
-  --chart-4: oklch(0.88 0.18 90);
-  --chart-5: oklch(0.7 0.12 200);
-  /* Main background: pure black */
-  --background: oklch(0.05 0 0);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.10 0.01 0);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.10 0.01 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --secondary: oklch(0.15 0.01 0);
-  --secondary-foreground: oklch(0.90 0 0);
-  --muted: oklch(0.15 0.01 0);
-  --muted-foreground: oklch(0.60 0 0);
-  --accent: oklch(0.18 0.04 25);
-  --accent-foreground: oklch(0.95 0 0);
-  --destructive: oklch(0.6 0.22 25);
+  /* Primary: Neon green (like genpkm) */
+  --primary: oklch(0.80 0.25 145);
+  --primary-foreground: oklch(0.10 0.03 240);
+  /* Charts: neon palette */
+  --chart-1: oklch(0.80 0.25 145);
+  --chart-2: oklch(0.70 0.20 230);
+  --chart-3: oklch(0.88 0.18 90);
+  --chart-4: oklch(0.60 0.25 25);
+  --chart-5: oklch(0.75 0.15 300);
+  /* Background: very dark blue-black */
+  --background: oklch(0.08 0.03 240);
+  --foreground: oklch(0.92 0.01 220);
+  --card: oklch(0.12 0.04 240);
+  --card-foreground: oklch(0.92 0.01 220);
+  --popover: oklch(0.12 0.04 240);
+  --popover-foreground: oklch(0.92 0.01 220);
+  --secondary: oklch(0.16 0.04 240);
+  --secondary-foreground: oklch(0.88 0.01 220);
+  --muted: oklch(0.16 0.03 240);
+  --muted-foreground: oklch(0.58 0.02 220);
+  --accent: oklch(0.18 0.05 240);
+  --accent-foreground: oklch(0.92 0.01 220);
+  --destructive: oklch(0.60 0.25 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.22 0.02 0);
-  --input: oklch(0.15 0.01 0);
-  --ring: oklch(0.50 0.22 25);
-  /* Sidebar: Deep dark blue */
-  --sidebar: oklch(0.13 0.06 240);
+  --border: oklch(0.25 0.06 145);
+  --input: oklch(0.14 0.04 240);
+  --ring: oklch(0.80 0.25 145);
+  /* Sidebar: dark with neon accents */
+  --sidebar: oklch(0.10 0.04 240);
   --sidebar-foreground: oklch(0.85 0.01 220);
-  --sidebar-accent: oklch(0.20 0.08 240);
-  --sidebar-accent-foreground: oklch(0.93 0.005 90);
-  --sidebar-border: oklch(0.22 0.06 240);
-  --sidebar-ring: oklch(0.50 0.22 25);
+  --sidebar-primary: oklch(0.80 0.25 145);
+  --sidebar-primary-foreground: oklch(0.10 0.03 240);
+  --sidebar-accent: oklch(0.16 0.06 240);
+  --sidebar-accent-foreground: oklch(0.80 0.25 145);
+  --sidebar-border: oklch(0.22 0.06 145);
+  --sidebar-ring: oklch(0.80 0.25 145);
 }
 
 .dark {
-  /* Primary: Pokémon red for buttons/active */
-  --primary: oklch(0.50 0.22 25);
-  --primary-foreground: oklch(0.98 0 0);
-  /* Sidebar: Deep blue (Pokémon GO team Mystic blue) */
-  --sidebar-primary: oklch(0.50 0.22 25);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --chart-1: oklch(0.50 0.22 25);
-  --chart-2: oklch(0.45 0.15 240);
-  --chart-3: oklch(0.65 0.18 150);
-  --chart-4: oklch(0.88 0.18 90);
-  --chart-5: oklch(0.7 0.12 200);
-  /* Main background: pure black */
-  --background: oklch(0.05 0 0);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.10 0.01 0);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.10 0.01 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --secondary: oklch(0.15 0.01 0);
-  --secondary-foreground: oklch(0.90 0 0);
-  --muted: oklch(0.15 0.01 0);
-  --muted-foreground: oklch(0.60 0 0);
-  --accent: oklch(0.18 0.04 25);
-  --accent-foreground: oklch(0.95 0 0);
-  --destructive: oklch(0.6 0.22 25);
+  /* Primary: Neon green */
+  --primary: oklch(0.80 0.25 145);
+  --primary-foreground: oklch(0.10 0.03 240);
+  /* Charts: neon palette */
+  --chart-1: oklch(0.80 0.25 145);
+  --chart-2: oklch(0.70 0.20 230);
+  --chart-3: oklch(0.88 0.18 90);
+  --chart-4: oklch(0.60 0.25 25);
+  --chart-5: oklch(0.75 0.15 300);
+  /* Background: very dark blue-black */
+  --background: oklch(0.08 0.03 240);
+  --foreground: oklch(0.92 0.01 220);
+  --card: oklch(0.12 0.04 240);
+  --card-foreground: oklch(0.92 0.01 220);
+  --popover: oklch(0.12 0.04 240);
+  --popover-foreground: oklch(0.92 0.01 220);
+  --secondary: oklch(0.16 0.04 240);
+  --secondary-foreground: oklch(0.88 0.01 220);
+  --muted: oklch(0.16 0.03 240);
+  --muted-foreground: oklch(0.58 0.02 220);
+  --accent: oklch(0.18 0.05 240);
+  --accent-foreground: oklch(0.92 0.01 220);
+  --destructive: oklch(0.60 0.25 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.22 0.02 0);
-  --input: oklch(0.15 0.01 0);
-  --ring: oklch(0.50 0.22 25);
-  /* Sidebar: Deep dark blue */
-  --sidebar: oklch(0.13 0.06 240);
+  --border: oklch(0.25 0.06 145);
+  --input: oklch(0.14 0.04 240);
+  --ring: oklch(0.80 0.25 145);
+  /* Sidebar: dark with neon accents */
+  --sidebar: oklch(0.10 0.04 240);
   --sidebar-foreground: oklch(0.85 0.01 220);
-  --sidebar-accent: oklch(0.20 0.08 240);
-  --sidebar-accent-foreground: oklch(0.93 0.005 90);
-  --sidebar-border: oklch(0.22 0.06 240);
-  --sidebar-ring: oklch(0.50 0.22 25);
+  --sidebar-primary: oklch(0.80 0.25 145);
+  --sidebar-primary-foreground: oklch(0.10 0.03 240);
+  --sidebar-accent: oklch(0.16 0.06 240);
+  --sidebar-accent-foreground: oklch(0.80 0.25 145);
+  --sidebar-border: oklch(0.22 0.06 145);
+  --sidebar-ring: oklch(0.80 0.25 145);
 }
 
 @layer base {
@@ -191,6 +192,67 @@
       0 5px 10px rgba(0, 0, 0, 0.5);
     letter-spacing: 2px;
     animation: pokemon-glow 2.5s ease-in-out infinite alternate;
+  }
+
+  /* Neon logo text for sidebar */
+  .neon-logo-text {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    color: #4ade80;
+    text-shadow:
+      0 0 7px rgba(74, 222, 128, 0.8),
+      0 0 15px rgba(74, 222, 128, 0.5),
+      0 0 30px rgba(74, 222, 128, 0.3);
+    letter-spacing: 2px;
+    animation: neon-pulse 2s ease-in-out infinite alternate;
+  }
+
+  /* Neon pulse animation */
+  @keyframes neon-pulse {
+    0% {
+      text-shadow:
+        0 0 5px rgba(74, 222, 128, 0.6),
+        0 0 10px rgba(74, 222, 128, 0.3);
+    }
+    100% {
+      text-shadow:
+        0 0 10px rgba(74, 222, 128, 1),
+        0 0 20px rgba(74, 222, 128, 0.7),
+        0 0 40px rgba(74, 222, 128, 0.4),
+        0 0 60px rgba(74, 222, 128, 0.2);
+    }
+  }
+
+  /* Neon active menu item */
+  .neon-active-item {
+    border-left: 3px solid #4ade80;
+    box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.15);
+  }
+
+  /* Neon card glow on hover */
+  .neon-card {
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    transition: all 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .neon-card:hover {
+    border-color: rgba(74, 222, 128, 0.6);
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.2), inset 0 0 15px rgba(74, 222, 128, 0.05);
+  }
+
+  /* Neon button glow */
+  .neon-btn {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    color: #0a0f1a;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.4), 0 4px 12px rgba(34, 197, 94, 0.3);
+    transition: all 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .neon-btn:hover {
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.7), 0 4px 20px rgba(34, 197, 94, 0.5);
+    transform: translateY(-1px);
+  }
+  .neon-btn:active {
+    transform: scale(0.97);
   }
 
   /* Glow animation for POKÉMON text */

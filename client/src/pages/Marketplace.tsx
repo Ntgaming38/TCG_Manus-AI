@@ -48,7 +48,7 @@ export default function Marketplace() {
             const diffPercent = buyPrice > 0 ? ((diff / buyPrice) * 100).toFixed(1) : '0';
 
             return (
-              <Card key={product.id} className="bg-card border-border">
+              <Card key={product.id} className="bg-card neon-card">
                 <CardContent className="p-4 space-y-3">
                   <div>
                     <h3 className="font-semibold text-sm">{product.name}</h3>

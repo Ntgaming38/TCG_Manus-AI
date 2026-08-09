@@ -137,7 +137,7 @@ export default function Inventory() {
 
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
               <Package className="h-5 w-5 text-blue-400" />
@@ -148,7 +148,7 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
               <Warehouse className="h-5 w-5 text-green-400" />
@@ -159,7 +159,7 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
               <AlertTriangle className="h-5 w-5 text-red-400" />
@@ -216,7 +216,7 @@ export default function Inventory() {
             const goodQty = (product.quantity || 0) - (product.damagedQuantity || 0);
             const hasDamaged = (product.damagedQuantity || 0) > 0;
             return (
-              <Card key={product.id} className={`bg-card border-border hover:border-primary/30 transition-colors ${hasDamaged ? 'border-red-500/30' : ''}`}>
+              <Card key={product.id} className={`bg-card neon-card hover:border-primary/30 transition-colors ${hasDamaged ? 'border-red-500/30' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="secondary" className="text-xs capitalize">{product.type}</Badge>

@@ -73,7 +73,7 @@ export default function Reports() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -86,7 +86,7 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -99,7 +99,7 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
@@ -114,7 +114,7 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-card neon-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -130,7 +130,7 @@ export default function Reports() {
       </div>
 
       {/* Monthly Chart */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card neon-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Lợi nhuận theo tháng</CardTitle>
         </CardHeader>
@@ -156,7 +156,7 @@ export default function Reports() {
       </Card>
 
       {/* Top Products */}
-      <Card className="bg-card border-border">
+      <Card className="bg-card neon-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Top sản phẩm sinh lời</CardTitle>
         </CardHeader>

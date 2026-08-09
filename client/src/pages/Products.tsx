@@ -372,7 +372,7 @@ export default function Products() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.map((product: any) => (
-            <Card key={product.id} className="bg-card border-border hover:border-primary/30 transition-colors group">
+            <Card key={product.id} className="bg-card neon-card hover:border-primary/30 transition-colors group">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <Badge variant="secondary" className="text-xs">

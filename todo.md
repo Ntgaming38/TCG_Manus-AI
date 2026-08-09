@@ -131,3 +131,8 @@
 - [x] Thay hình nền login bằng hình Red + Pikachu
 - [x] Đổi theme bên trong: nửa xanh trời đậm + nửa đỏ (Pokémon GO style)
 - [x] Thay nền content bằng hình Zoroark đen, chữ trắng, nút đỏ
+
+## Giao diện Gaming Neon (giống genpkm.com/shop)
+- [x] CSS theme: nền đen/xanh đậm, viền neon xanh lá, card phát sáng
+- [x] Sidebar: neon style với viền phát sáng
+- [x] Login page: phù hợp phong cách gaming neon
