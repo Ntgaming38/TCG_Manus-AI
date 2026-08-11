@@ -503,3 +503,19 @@ Khi sửa số lượng bán (VD: từ 5 → 8):
 ---
 
 *Tài liệu này mô tả đầy đủ dự án TCG Manager tính đến phiên bản hiện tại (v92cc77f3). Mọi thay đổi trong tương lai cần được cập nhật vào tài liệu này.*
+
+
+## 15. Đồng bộ giá SNKRDUNK tự động
+
+Marketplace hiện hỗ trợ liên kết từng sản phẩm trong kho với **URL trang sản phẩm cụ thể** trên SNKRDUNK. Hệ thống chỉ chấp nhận URL HTTPS của SNKRDUNK và từ chối URL danh mục như `/categories/...`. Khi người dùng bấm đồng bộ, backend tải HTML công khai của đúng trang sản phẩm và đọc giá thực tế từ JSON-LD/JSON hoặc vùng giá của lựa chọn đầu tiên. Hệ thống không dùng `Math.random()`, giá mua, giá mặc định hay giá hardcode để thay thế.
+
+| Chức năng | Mô tả |
+|-----------|-------|
+| Gắn link | Lưu URL SNKRDUNK cho từng Card/Box/Pack |
+| Đồng bộ từng sản phẩm | Cập nhật giá công khai thật và thời điểm đồng bộ gần nhất |
+| Đồng bộ tất cả | Đồng bộ toàn bộ sản phẩm đã gắn link, trả về số cập nhật và danh sách lỗi |
+| Lịch sử giá | Ghi vào `price_history` với nguồn `snkrdunk_auto` khi giá thay đổi |
+| Activity log | Ghi lại thao tác gắn link và đồng bộ giá |
+| Không có giá | Báo lỗi và giữ nguyên `marketPrice` cũ |
+
+Các trường mới trong `products` là `snkrdunkUrl` và `snkrdunkLastSyncedAt`. Marketplace vẫn giữ tùy chọn nhập giá thủ công cho trường hợp trang SNKRDUNK render giá bằng JavaScript, yêu cầu đăng nhập hoặc không cung cấp giá công khai trong HTML.

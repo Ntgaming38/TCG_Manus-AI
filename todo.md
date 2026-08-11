@@ -142,3 +142,14 @@
 - [x] Đổi logo sidebar POKÉMON → "TCG Manager" màu vàng
 - [x] Đổi login page text → "TCG Trading Manager" màu vàng
 - [x] Đổi nền giao diện từ đen sang trắng
+
+## Đồng bộ giá SNKRDUNK
+- [x] Thêm snkrdunkUrl và snkrdunkLastSyncedAt vào products, tạo và áp dụng migration
+- [x] Tạo adapter SNKRDUNK: validate URL sản phẩm, fetch HTML, parse giá công khai không giả lập
+- [x] Thêm backend lưu URL, đồng bộ marketPrice, price_history và activity_logs
+- [x] Thêm tRPC updateSnkrdunkUrl, syncSnkrdunkPrice và syncAllSnkrdunk
+- [x] Cập nhật Marketplace UI: gắn URL, đồng bộ riêng/tất cả, mở link, trạng thái và lỗi rõ ràng
+- [x] Viết test parser, URL danh mục/không hợp lệ và trường hợp không có giá
+- [x] Chạy typecheck, test, build và xác minh luồng đồng bộ trước khi lưu checkpoint
+- [x] Kiểm thử adapter với URL SNKRDUNK công khai: trang chỉ có USD bị từ chối, không ghi giá giả lập
+- [x] Xác nhận bulk sync không có URL trả về skippedCount và không làm thay đổi dữ liệu hiện có

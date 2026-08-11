@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -178,6 +179,101 @@ export async function updateMarketPrice(id: number, userId: number, marketPrice:
       source: "manual",
     });
   }
+}
+
+export async function updateSnkrdunkUrl(id: number, userId: number, snkrdunkUrl: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (!isValidSnkrdunkUrl(snkrdunkUrl)) {
+    throw new Error("Link phải là trang sản phẩm https://snkrdunk.com, không phải link danh mục.");
+  }
+
+  const product = await getProductById(id);
+  if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+
+  await db.update(products)
+    .set({ snkrdunkUrl })
+    .where(and(eq(products.id, id), eq(products.userId, userId)));
+  await db.insert(activityLogs).values({
+    userId,
+    action: "snkrdunk_url_updated",
+    description: `Gắn link SNKRDUNK cho sản phẩm: ${product.name}`,
+    entityType: "product",
+    entityId: id,
+  });
+  return { success: true, snkrdunkUrl };
+}
+
+export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const product = await getProductById(id);
+  if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+  if (!product.snkrdunkUrl) {
+    throw new Error("Chưa có link sản phẩm SNKRDUNK. Hãy gắn link sản phẩm cụ thể trước khi đồng bộ.");
+  }
+
+  const result = await fetchSnkrdunkPrice(product.snkrdunkUrl);
+  const newPrice = String(result.price);
+  const syncedAt = new Date();
+
+  await db.update(products)
+    .set({ marketPrice: newPrice, snkrdunkLastSyncedAt: syncedAt })
+    .where(and(eq(products.id, id), eq(products.userId, userId)));
+
+  if (Number(product.marketPrice || 0) !== result.price) {
+    await db.insert(priceHistory).values({
+      productId: id,
+      oldPrice: product.marketPrice,
+      newPrice,
+      source: "snkrdunk_auto",
+    });
+  }
+
+  await db.insert(activityLogs).values({
+    userId,
+    action: "snkrdunk_price_synced",
+    description: `Đồng bộ giá SNKRDUNK: ${product.name} - ¥${result.price.toLocaleString("ja-JP")}`,
+    entityType: "product",
+    entityId: id,
+  });
+
+  return {
+    productId: id,
+    productName: product.name,
+    marketPrice: result.price,
+    snkrdunkLastSyncedAt: syncedAt,
+    snkrdunkUrl: product.snkrdunkUrl,
+  };
+}
+
+export async function syncAllSnkrdunkPrices(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const userProducts = await db.select().from(products).where(eq(products.userId, userId));
+  const linkedProducts = userProducts.filter((product) => Boolean(product.snkrdunkUrl));
+  const errors: Array<{ productId: number; productName: string; message: string }> = [];
+  let updatedCount = 0;
+
+  for (const product of linkedProducts) {
+    try {
+      await syncSnkrdunkPriceForProduct(product.id, userId);
+      updatedCount += 1;
+    } catch (error) {
+      errors.push({
+        productId: product.id,
+        productName: product.name,
+        message: error instanceof Error ? error.message : "Không thể đồng bộ giá.",
+      });
+    }
+  }
+
+  return {
+    updatedCount,
+    skippedCount: userProducts.length - updatedCount,
+    errors,
+  };
 }
 
 // ========== DAMAGED PRODUCTS ==========

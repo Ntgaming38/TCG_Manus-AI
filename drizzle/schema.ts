@@ -46,6 +46,8 @@ export const products = mysqlTable("products", {
   damageNote: text("damageNote"),
   buyPrice: decimal("buyPrice", { precision: 12, scale: 2 }).default("0"),
   marketPrice: decimal("marketPrice", { precision: 12, scale: 2 }).default("0"),
+  snkrdunkUrl: text("snkrdunkUrl"),
+  snkrdunkLastSyncedAt: timestamp("snkrdunkLastSyncedAt"),
   sellPrice: decimal("sellPrice", { precision: 12, scale: 2 }).default("0"),
   status: mysqlEnum("status", ["in_stock", "sold", "reserved", "traded", "damaged"]).default("in_stock").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
