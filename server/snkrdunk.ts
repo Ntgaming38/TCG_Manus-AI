@@ -48,11 +48,14 @@ function parseJpyNumber(value: unknown): number | null {
   return Number.isFinite(number) && number > 0 ? Math.round(number) : null;
 }
 
-function collectJsonPrices(value: unknown, prices: number[], inheritedCurrency?: string): void {
-  if (!value || typeof value !== "object") return;
+function findFirstJsonPrice(value: unknown, inheritedCurrency?: string): number | null {
+  if (!value || typeof value !== "object") return null;
   if (Array.isArray(value)) {
-    value.forEach((item) => collectJsonPrices(item, prices, inheritedCurrency));
-    return;
+    for (const item of value) {
+      const price = findFirstJsonPrice(item, inheritedCurrency);
+      if (price !== null) return price;
+    }
+    return null;
   }
 
   const objectValue = value as Record<string, unknown>;
@@ -64,36 +67,37 @@ function collectJsonPrices(value: unknown, prices: number[], inheritedCurrency?:
     const normalizedKey = key.toLowerCase();
     if (isJpy && ["lowestprice", "lowprice", "minprice", "price"].includes(normalizedKey)) {
       const price = parseJpyNumber(nestedValue);
-      if (price !== null) prices.push(price);
+      if (price !== null) return price;
     }
-    collectJsonPrices(nestedValue, prices, currency || inheritedCurrency);
+    const nestedPrice = findFirstJsonPrice(nestedValue, currency || inheritedCurrency);
+    if (nestedPrice !== null) return nestedPrice;
   }
+  return null;
 }
 
-function collectScriptJsonPrices(html: string, prices: number[]): void {
+function findFirstScriptJsonPrice(html: string): number | null {
   const scriptPattern = /<script[^>]*>([\s\S]*?)<\/script>/gi;
   let match: RegExpExecArray | null;
   while ((match = scriptPattern.exec(html)) !== null) {
     const content = decodeHtmlEntities(match[1].trim());
     if (!content) continue;
     try {
-      collectJsonPrices(JSON.parse(content), prices);
+      const price = findFirstJsonPrice(JSON.parse(content));
+      if (price !== null) return price;
     } catch {
       const currencyMatch = content.match(/["'](?:priceCurrency|currency)["']\s*:\s*["']?([A-Za-z¥円]+)/i);
       const currency = currencyMatch?.[1]?.toUpperCase();
       const isJpy = !currency || currency === "JPY" || currency === "¥" || currency === "円";
       if (!isJpy) continue;
-      const pricePattern = /["'](?:lowestPrice|lowPrice|minPrice|price)["']\s*:\s*["']?([\d,]+(?:\.\d+)?)/gi;
-      let priceMatch: RegExpExecArray | null;
-      while ((priceMatch = pricePattern.exec(content)) !== null) {
-        const price = parseJpyNumber(priceMatch[1]);
-        if (price !== null) prices.push(price);
-      }
+      const priceMatch = content.match(/["'](?:lowestPrice|lowPrice|minPrice|price)["']\s*:\s*["']?([\d,]+(?:\.\d+)?)/i);
+      const price = priceMatch ? parseJpyNumber(priceMatch[1]) : null;
+      if (price !== null) return price;
     }
   }
+  return null;
 }
 
-function collectFirstChoiceMarkupPrices(html: string, prices: number[]): void {
+function parseFirstChoiceMarkupPrice(html: string): number | null {
   const decoded = decodeHtmlEntities(html);
   const firstChoicePatterns = [
     /1個\s*\(\s*99\+\s*\)[\s\S]{0,180}?¥\s*([\d,]+)/i,
@@ -103,20 +107,14 @@ function collectFirstChoiceMarkupPrices(html: string, prices: number[]): void {
 
   for (const pattern of firstChoicePatterns) {
     const match = decoded.match(pattern);
-    if (!match) continue;
-    const price = parseJpyNumber(match[1]);
-    if (price !== null) {
-      prices.push(price);
-      return;
-    }
+    const price = match ? parseJpyNumber(match[1]) : null;
+    if (price !== null) return price;
   }
+  return null;
 }
 
 export function parseSnkrdunkPrice(html: string): number | null {
-  const prices: number[] = [];
-  collectScriptJsonPrices(html, prices);
-  if (prices.length === 0) collectFirstChoiceMarkupPrices(html, prices);
-  return prices.length > 0 ? Math.min(...prices) : null;
+  return findFirstScriptJsonPrice(html) ?? parseFirstChoiceMarkupPrice(html);
 }
 
 export async function fetchSnkrdunkPrice(sourceUrl: string): Promise<SnkrdunkPriceResult> {

@@ -153,3 +153,9 @@
 - [x] Chạy typecheck, test, build và xác minh luồng đồng bộ trước khi lưu checkpoint
 - [x] Kiểm thử adapter với URL SNKRDUNK công khai: trang chỉ có USD bị từ chối, không ghi giá giả lập
 - [x] Xác nhận bulk sync không có URL trả về skippedCount và không làm thay đổi dữ liệu hiện có
+
+## Quy tắc lấy giá lựa chọn đầu tiên SNKRDUNK
+- [x] Parser phải lấy đúng giá lựa chọn đầu tiên, ví dụ 1個 (99+) ¥13.300, không lấy giá lựa chọn 2, 3 hoặc giá thấp nhất khác
+- [x] Thêm test HTML/JSON có nhiều lựa chọn để xác nhận luôn trả về lựa chọn đầu tiên
+- [x] Chạy typecheck, test, build và lưu checkpoint sau khi sửa
+- [x] Lưu checkpoint mới sau khi sửa quy tắc lấy giá lựa chọn đầu tiên SNKRDUNK

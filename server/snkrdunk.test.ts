@@ -13,6 +13,20 @@ describe("SNKRDUNK adapter", () => {
     expect(parseSnkrdunkPrice("<div>1個 (99+) ¥13,300~</div>")).toBe(13300);
   });
 
+  it("chooses the first visible option before later quantities", () => {
+    expect(parseSnkrdunkPrice("<div>1個 (99+) ¥13,300~</div><div>2個 (99+) ¥28,000~</div>")).toBe(13300);
+  });
+
+  it("chooses the first JPY JSON offer before later offers", () => {
+    const html = `<script type="application/ld+json">${JSON.stringify({
+      offers: [
+        { priceCurrency: "JPY", price: "13,300" },
+        { priceCurrency: "JPY", price: "28,000" },
+      ],
+    })}</script>`;
+    expect(parseSnkrdunkPrice(html)).toBe(13300);
+  });
+
   it("does not create a price when the page has no public price", () => {
     expect(parseSnkrdunkPrice("<div>Loading...</div>")).toBeNull();
   });
