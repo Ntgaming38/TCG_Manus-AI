@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { isValidSnkrdunkUrl, parseSnkrdunkPrice } from "./snkrdunk";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseSnkrdunkPrice } from "./snkrdunk";
 
 describe("SNKRDUNK adapter", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("parses a JPY price from JSON-LD", () => {
     const html = `<script type="application/ld+json">${JSON.stringify({
       offers: { priceCurrency: "JPY", price: "13,300" },
@@ -36,6 +40,77 @@ describe("SNKRDUNK adapter", () => {
       offers: { priceCurrency: "USD", price: "84" },
     })}</script>`;
     expect(parseSnkrdunkPrice(html)).toBeNull();
+  });
+
+  it("reads the first JPY choice from the official sizes API", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '<script>{"productCode":"SW---721913"}</script>',
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          sizes: [
+            { currency: "JPY", price: 13300, size: { text: "1 box" } },
+            { currency: "JPY", price: 28000, size: { text: "2 boxes" } },
+          ],
+        }),
+      } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSnkrdunkPrice("https://snkrdunk.com/en/trading-cards/721913"))
+      .resolves.toMatchObject({ price: 13300 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back to the Japanese product page when the English API is USD-only", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '<script>{"productCode":"SW---721913"}</script>',
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          sizes: [{ currency: "USD", price: 84, size: { text: "1 box" } }],
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => 'quantity_1\\",\\"minNewListingPrice\\":13300,quantity_2\\",\\"minNewListingPrice\\":28000',
+      } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSnkrdunkPrice("https://snkrdunk.com/en/trading-cards/721913"))
+      .resolves.toMatchObject({ price: 13300 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not convert a USD first choice into JPY", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '<script>{"productCode":"SW---721913"}</script>',
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          sizes: [{ currency: "USD", price: 84, size: { text: "1 box" } }],
+        }),
+      } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSnkrdunkPrice("https://snkrdunk.com/en/trading-cards/721913"))
+      .rejects.toThrow("USD");
   });
 
   it("accepts a specific HTTPS product URL", () => {
