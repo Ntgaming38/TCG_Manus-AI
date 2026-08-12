@@ -1,4 +1,4 @@
-import { Bot, Loader2, Sparkles, Trash2, ArrowUpRight, ArrowDownRight, Check } from "lucide-react";
+import { Bot, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useMemo } from "react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
@@ -12,9 +12,7 @@ const STORAGE_KEY = "tcg-manager-ai-assistant-history";
 export function SidebarAIAssistant() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [updatingProductId, setUpdatingProductId] = useState<number | null>(null);
 
-  const utils = trpc.useUtils();
   const { data: analysisContext } = trpc.ai.analysisChartData.useQuery(undefined, { enabled: open });
 
   useEffect(() => {
@@ -61,24 +59,6 @@ export function SidebarAIAssistant() {
     return prompts;
   }, [analysisContext]);
 
-  const updateMarketPriceMutation = trpc.products.updateMarketPrice.useMutation({
-    onSuccess: () => {
-      toast.success("Đã cập nhật giá thị trường thành công từ Trợ lý AI!");
-      setUpdatingProductId(null);
-      utils.products.list.invalidate();
-      utils.dashboard.stats.invalidate();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Không thể cập nhật giá.");
-      setUpdatingProductId(null);
-    },
-  });
-
-  const handleUpdatePrice = (productId: number, newPrice: number) => {
-    setUpdatingProductId(productId);
-    updateMarketPriceMutation.mutate({ id: productId, marketPrice: newPrice });
-  };
-
   const assistantMutation = trpc.ai.chat.useMutation({
     onSuccess: (answer: string) => setMessages((current): Message[] => [...current, { role: "assistant" as const, content: answer }].slice(-12)),
     onError: (error: any) => {
@@ -120,12 +100,12 @@ export function SidebarAIAssistant() {
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl gap-4 border-primary/25 p-0 sm:rounded-2xl">
+      <DialogContent className="max-w-2xl gap-4 border-primary/25 p-0 sm:rounded-2xl">
         <DialogHeader className="border-b border-border bg-primary/5 px-5 py-4 text-left">
           <div className="flex items-center justify-between gap-3">
             <DialogTitle className="flex items-center gap-2 text-lg">
               <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary"><Bot className="size-4" /></span>
-              Trợ lý AI TCG Manager & Cập nhật giá
+              Trợ lý AI TCG Manager
             </DialogTitle>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -147,54 +127,9 @@ export function SidebarAIAssistant() {
             </AlertDialog>
           </div>
           <DialogDescription>
-            Phân tích sâu về xu hướng giá, tỷ suất ROI và lợi nhuận thẻ bài trong kho. Bạn có thể bấm cập nhật giá trực tiếp vào kho từ các gợi ý của trợ lý.
+            Phân tích sâu về xu hướng giá, tỷ suất ROI và lợi nhuận chưa thực hiện của các thẻ bài trong kho.
           </DialogDescription>
-          {assistantMutation.isPending && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-background/70 px-3 py-2 text-xs text-primary" role="status" aria-live="polite">
-              <Loader2 className="size-4 animate-spin" />
-              <span className="font-semibold">Trợ lý AI đang phân tích dữ liệu</span>
-              <span className="flex gap-1" aria-hidden="true"><i className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.2s]" /><i className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.1s]" /><i className="size-1 animate-bounce rounded-full bg-primary" /></span>
-            </div>
-          )}
         </DialogHeader>
-
-        {/* Quick Price Update Suggestions Bar */}
-        {analysisContext?.topCardsAnalysis && analysisContext.topCardsAnalysis.length > 0 && (
-          <div className="mx-5 rounded-xl border border-primary/20 bg-card/60 p-3">
-            <p className="mb-2 text-xs font-bold text-foreground">💡 Đề xuất cập nhật giá nhanh từ kho (SNKRDUNK vs Giá hiện tại):</p>
-            <div className="flex flex-wrap gap-2">
-              {analysisContext.topCardsAnalysis.slice(0, 4).map((card: any) => {
-                const currentPrice = Number(card.marketPrice || card.buyPrice || 0);
-                const suggestedPrice = Number(card.suggestedMarketPrice || card.marketPrice || card.buyPrice || 0);
-                const diff = suggestedPrice - currentPrice;
-                const isUp = diff > 0;
-                const isDown = diff < 0;
-
-                return (
-                  <div key={card.id} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-xs shadow-xs">
-                    <div>
-                      <p className="font-semibold text-foreground">{card.name}</p>
-                      <p className="text-[11px] text-muted-foreground">Hiện: ¥{currentPrice.toLocaleString()} → Đề xuất: <span className="font-medium text-primary">¥{suggestedPrice.toLocaleString()}</span></p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {isUp && <span className="flex items-center text-green-500 font-bold" title="Tăng giá"><ArrowUpRight className="size-3.5" />+{diff.toLocaleString()}</span>}
-                      {isDown && <span className="flex items-center text-red-500 font-bold" title="Giảm giá"><ArrowDownRight className="size-3.5" />{diff.toLocaleString()}</span>}
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="h-7 px-2 text-[11px] bg-red-600 hover:bg-red-700 text-white"
-                        disabled={updatingProductId === card.id}
-                        onClick={() => handleUpdatePrice(card.id, suggestedPrice)}
-                      >
-                        {updatingProductId === card.id ? <Loader2 className="size-3 animate-spin" /> : "Áp dụng"}
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         <div className="px-4 pb-4 sm:px-5">
           <AIChatBox
@@ -202,7 +137,7 @@ export function SidebarAIAssistant() {
             onSendMessage={handleSendMessage}
             isLoading={assistantMutation.isPending}
             placeholder={placeholder}
-            height="min(50vh, 400px)"
+            height="min(70vh, 580px)"
             emptyStateMessage="Tôi có thể phân tích xu hướng giá, ROI và lợi nhuận thẻ bài dựa trên kho hàng thực tế của bạn."
             suggestedPrompts={dynamicPrompts}
             className="border-primary/20 shadow-none"
