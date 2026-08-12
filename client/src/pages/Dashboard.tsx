@@ -158,21 +158,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Chyusen reminders */}
-      <Card className="border-orange-200 bg-orange-50/60 shadow-sm">
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-orange-100 p-2.5 text-orange-700"><BellRing className="h-5 w-5" /></div>
-              <div><CardTitle className="text-base font-bold text-orange-950">Nhắc nhở Chyusen</CardTitle><p className="mt-1 text-sm text-orange-800/80">Chương trình chưa đăng ký sắp hết hạn đăng ký.</p></div>
-            </div>
-            <div className="flex items-center gap-2"><Badge className="bg-orange-600 text-white hover:bg-orange-600">{expiringChyusen.length} cảnh báo</Badge><Button asChild size="sm" variant="outline" className="border-orange-300 text-orange-800 hover:bg-orange-100"><a href="/chyusen">Xem Chyusen <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></a></Button></div>
-          </div>
-          {isChyusenLoading ? <div className="mt-4 rounded-lg border border-dashed border-orange-200 bg-white/70 px-4 py-3 text-sm text-orange-900/70">Đang tải thông báo...</div> : expiringChyusen.length === 0 ? <div className="mt-4 rounded-lg border border-dashed border-orange-200 bg-white/70 px-4 py-3 text-sm text-orange-900/70">Hiện không có chương trình chưa đăng ký nào sắp hết hạn.</div> : <div className="mt-4 grid gap-2 lg:grid-cols-3">{expiringChyusen.map((entry) => <div key={entry.id} className="flex min-w-0 flex-col gap-2 rounded-xl border border-orange-200 bg-white p-3"><div className="flex items-start justify-between gap-2"><p className="min-w-0 truncate font-semibold text-foreground">{entry.title}</p><DashboardUrgencyBadge entry={entry} /></div><p className="text-xs text-muted-foreground">Hạn: <span className="font-medium text-orange-700">{formatReminderDate(entry.registrationDeadline)}</span></p><div className="flex items-center justify-between gap-2"><span className="text-sm font-bold text-orange-700">{formatRemaining(entry.registrationDeadline!)}</span>{entry.sourceUrl ? <a href={entry.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs font-semibold text-primary hover:underline">Mở link <ExternalLink className="ml-1 h-3 w-3" /></a> : <span className="text-xs text-muted-foreground">Chưa có link</span>}</div></div>)}</div>}
-        </CardContent>
-      </Card>
-
-      {unreadChyusenNotifications.length > 0 && <Card className="border-emerald-200 bg-emerald-50/60 shadow-sm"><CardContent className="p-4 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><div className="rounded-xl bg-emerald-100 p-2.5 text-emerald-700"><BellRing className="h-5 w-5" /></div><div><CardTitle className="text-base font-bold text-emerald-950">Phát hiện Chyusen mới</CardTitle><p className="mt-1 text-sm text-emerald-800/80">Thông tin được tìm thấy từ các link P-Bandai bạn đang theo dõi.</p></div></div><Badge className="w-fit bg-emerald-600 text-white hover:bg-emerald-600">{unreadChyusenNotifications.length} mới</Badge></div><div className="mt-4 grid gap-2 lg:grid-cols-2">{unreadChyusenNotifications.slice(0, 4).map((item) => <div key={item.id} className="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate font-semibold text-foreground">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.message}</p></div><Button size="sm" variant="outline" className="shrink-0 border-emerald-300 text-emerald-700 hover:bg-emerald-100" onClick={() => markChyusenNotificationRead.mutate({ id: item.id })}>Đã xem</Button></div>)}</div></CardContent></Card>}
+      {/* Chyusen reminders hidden */}
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="bg-card neon-card">

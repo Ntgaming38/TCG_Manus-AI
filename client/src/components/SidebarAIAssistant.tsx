@@ -12,7 +12,7 @@ const STORAGE_KEY = "tcg-manager-ai-assistant-history";
 const suggestedPrompts = [
   "Tóm tắt tình hình kho của tôi",
   "Lợi nhuận hiện tại là bao nhiêu?",
-  "Có Chyusen nào sắp hết hạn không?",
+  "Thống kê số lượng sản phẩm",
 ];
 
 export function SidebarAIAssistant() {
@@ -42,7 +42,7 @@ export function SidebarAIAssistant() {
     },
   });
 
-  const placeholder = useMemo(() => "Hỏi về kho, lãi hoặc Chyusen...", []);
+  const placeholder = useMemo(() => "Hỏi về kho, lợi nhuận hoặc sản phẩm...", []);
 
   const handleSendMessage = (content: string) => {
     const nextMessages: Message[] = [...messages, { role: "user" as const, content }].slice(-12);
@@ -71,7 +71,7 @@ export function SidebarAIAssistant() {
           </span>
           <span className="min-w-0 group-data-[collapsible=icon]:hidden">
             <span className="block text-sm font-bold">Trợ lý AI</span>
-            <span className="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground">Hỏi kho, lợi nhuận, Chyusen</span>
+            <span className="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground">Hỏi kho, lợi nhuận, thống kê</span>
           </span>
         </Button>
       </DialogTrigger>
@@ -102,7 +102,7 @@ export function SidebarAIAssistant() {
             </AlertDialog>
           </div>
           <DialogDescription>
-            Hỏi về kho, lợi nhuận và các chương trình Chyusen của bạn. Tôi không tự thay đổi dữ liệu.
+            Hỏi về kho, lợi nhuận và các sản phẩm của bạn. Tôi không tự thay đổi dữ liệu.
           </DialogDescription>
           {assistantMutation.isPending && (
             <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-background/70 px-3 py-2 text-xs text-primary" role="status" aria-live="polite">
@@ -119,7 +119,7 @@ export function SidebarAIAssistant() {
             isLoading={assistantMutation.isPending}
             placeholder={placeholder}
             height="min(62vh, 520px)"
-            emptyStateMessage="Tôi có thể tóm tắt kho, lợi nhuận và nhắc Chyusen cho bạn."
+            emptyStateMessage="Tôi có thể tóm tắt kho, lợi nhuận và hỗ trợ thông tin sản phẩm cho bạn."
             suggestedPrompts={suggestedPrompts}
             className="border-primary/20 shadow-none"
           />
