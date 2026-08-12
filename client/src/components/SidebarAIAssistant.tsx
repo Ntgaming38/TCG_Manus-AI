@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bot, Sparkles } from "lucide-react";
+import { Bot, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
@@ -51,6 +52,12 @@ export function SidebarAIAssistant() {
     });
   };
 
+  const clearHistory = () => {
+    setMessages([]);
+    sessionStorage.removeItem(STORAGE_KEY);
+    toast.success("Đã xóa lịch sử trò chuyện của phiên này.");
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -70,13 +77,40 @@ export function SidebarAIAssistant() {
       </DialogTrigger>
       <DialogContent className="max-w-2xl gap-4 border-primary/25 p-0 sm:rounded-2xl">
         <DialogHeader className="border-b border-border bg-primary/5 px-5 py-4 text-left">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary"><Bot className="size-4" /></span>
-            Trợ lý AI TCG Manager
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary"><Bot className="size-4" /></span>
+              Trợ lý AI TCG Manager
+            </DialogTitle>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={messages.length === 0 || assistantMutation.isPending} className="gap-1.5 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="size-3.5" />
+                  Xóa lịch sử
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xóa lịch sử trò chuyện?</AlertDialogTitle>
+                  <AlertDialogDescription>Lịch sử chat của phiên hiện tại sẽ bị xóa khỏi thiết bị này. Dữ liệu kho, mua bán và Chyusen sẽ không bị ảnh hưởng.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction onClick={clearHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Xóa lịch sử</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
           <DialogDescription>
             Hỏi về kho, lợi nhuận và các chương trình Chyusen của bạn. Tôi không tự thay đổi dữ liệu.
           </DialogDescription>
+          {assistantMutation.isPending && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-background/70 px-3 py-2 text-xs text-primary" role="status" aria-live="polite">
+              <Loader2 className="size-4 animate-spin" />
+              <span className="font-semibold">Trợ lý AI đang suy nghĩ</span>
+              <span className="flex gap-1" aria-hidden="true"><i className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.2s]" /><i className="size-1 animate-bounce rounded-full bg-primary [animation-delay:-0.1s]" /><i className="size-1 animate-bounce rounded-full bg-primary" /></span>
+            </div>
+          )}
         </DialogHeader>
         <div className="px-4 pb-4 sm:px-5">
           <AIChatBox

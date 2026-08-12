@@ -272,3 +272,8 @@
 - [x] Tạo tRPC server-side để trả lời câu hỏi theo ngữ cảnh dữ liệu của đúng người dùng
 - [x] Thêm Trợ lý AI phía trên thông tin người dùng trong sidebar, có trạng thái mở/đóng và lịch sử phiên
 - [x] Viết test, kiểm tra responsive, typecheck, build và lưu checkpoint
+
+## Trợ lý AI: lịch sử và loading
+- [x] Thêm nút xóa lịch sử chat theo phiên, có xác nhận và trạng thái trống rõ ràng
+- [x] Hiển thị trạng thái “đang suy nghĩ” trực quan khi AI xử lý câu trả lời
+- [x] Kiểm tra responsive, typecheck, test, build và lưu checkpoint
