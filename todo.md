@@ -254,4 +254,4 @@
 - [x] Mở rộng bộ đọc để hỗ trợ nguồn landing page/thông báo công khai, không dùng cách vượt chặn vùng
 - [x] Cập nhật giao diện để phân biệt link sản phẩm và link thông báo chính thức
 - [x] Thêm test, kiểm tra, build và lưu checkpoint cho nguồn thông báo công khai
-- [ ] Xác minh Heartbeat đang bật sau khi publish bản fallback mới
+- [x] Xác minh Heartbeat đang bật sau khi publish bản fallback mới và callback chạy thành công (HTTP 200)
