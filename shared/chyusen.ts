@@ -1,5 +1,6 @@
 export type ChyusenResultStatus = "pending" | "won" | "lost" | "not_entered" | "cancelled";
 export type ChyusenTimelineStatus = "upcoming" | "open" | "deadline" | "expired" | "draw_pending" | "result";
+export type ChyusenDeadlineUrgency = "notice" | "urgent" | "critical";
 
 export type ChyusenDateFields = {
   registrationStartAt: Date | string | null | undefined;
@@ -19,4 +20,12 @@ export function getChyusenTimelineStatus(entry: ChyusenDateFields, nowMs = Date.
   if (deadline !== null && deadline - nowMs <= 3 * day) return "deadline";
   if (draw !== null && nowMs > draw) return "draw_pending";
   return "open";
+}
+
+export function getChyusenDeadlineUrgency(entry: ChyusenDateFields, nowMs = Date.now()): ChyusenDeadlineUrgency | null {
+  if (getChyusenTimelineStatus(entry, nowMs) !== "deadline" || !entry.registrationDeadline) return null;
+  const remaining = new Date(entry.registrationDeadline).getTime() - nowMs;
+  if (remaining <= 6 * 60 * 60 * 1000) return "critical";
+  if (remaining <= 24 * 60 * 60 * 1000) return "urgent";
+  return "notice";
 }

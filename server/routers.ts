@@ -250,6 +250,7 @@ export const appRouter = router({
         registrationDeadline: z.coerce.date().optional(),
         drawAt: z.coerce.date().optional(),
         resultStatus: z.enum(["pending", "won", "lost", "not_entered", "cancelled"]).default("pending"),
+        isRegistered: z.boolean().default(false),
         notes: z.string().optional(),
       }))
       .mutation(({ ctx, input }) => db.createChyusenEntry({
@@ -262,6 +263,7 @@ export const appRouter = router({
         registrationDeadline: input.registrationDeadline,
         drawAt: input.drawAt,
         resultStatus: input.resultStatus,
+        isRegistered: input.isRegistered,
         notes: input.notes,
       })),
 
@@ -276,6 +278,7 @@ export const appRouter = router({
         registrationDeadline: z.coerce.date().optional(),
         drawAt: z.coerce.date().optional(),
         resultStatus: z.enum(["pending", "won", "lost", "not_entered", "cancelled"]).optional(),
+        isRegistered: z.boolean().optional(),
         notes: z.string().optional(),
       }))
       .mutation(({ ctx, input }) => {

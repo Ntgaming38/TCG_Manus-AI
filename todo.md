@@ -218,3 +218,12 @@
 - [x] Hiển thị số lượng cảnh báo, thời hạn còn lại và nút mở chương trình
 - [x] Giữ đồng bộ với dữ liệu Chyusen theo từng user và có trạng thái rỗng/loading
 - [x] Kiểm tra responsive, typecheck, test, build và lưu checkpoint mới
+
+## Đăng ký Chyusen và mức cảnh báo
+- [x] Lưu trạng thái Đã đăng ký theo từng chương trình, có migration an toàn và API cập nhật
+- [x] Thêm nút Đã đăng ký/Chưa đăng ký và ẩn chương trình đã đăng ký khỏi các khu vực nhắc nhở
+- [x] Hiển thị badge số lượng Chyusen sắp hết hạn chưa đăng ký trên menu sidebar
+- [x] Dùng màu cảnh báo khác nhau cho mốc còn 72 giờ, 24 giờ và 6 giờ trên Dashboard và Chyusen
+- [x] Viết test, kiểm tra responsive, typecheck, build và lưu checkpoint mới
+- [x] Kiểm tra riêng giao diện mobile cho Chyusen và Dashboard sau khi thêm Đã đăng ký và các mức cảnh báo
+- [x] Lưu checkpoint mới sau khi hoàn tất Đã đăng ký Chyusen, badge sidebar và màu cảnh báo 72/24/6 giờ

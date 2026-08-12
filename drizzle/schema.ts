@@ -1,4 +1,4 @@
-import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { bigint, boolean, int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -161,6 +161,7 @@ export const chyusenEntries = mysqlTable("chyusen_entries", {
   registrationDeadline: timestamp("registrationDeadline"),
   drawAt: timestamp("drawAt"),
   resultStatus: mysqlEnum("resultStatus", ["pending", "won", "lost", "not_entered", "cancelled"]).default("pending").notNull(),
+  isRegistered: boolean("isRegistered").default(false).notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

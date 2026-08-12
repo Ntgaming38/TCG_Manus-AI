@@ -974,10 +974,13 @@ export async function updateChyusenEntry(userId: number, id: number, data: Parti
   await db.update(chyusenEntries)
     .set(data)
     .where(and(eq(chyusenEntries.id, id), eq(chyusenEntries.userId, userId)));
+  const registrationChanged = typeof data.isRegistered === "boolean" && data.isRegistered !== Boolean(existing[0].isRegistered);
   await db.insert(activityLogs).values({
     userId,
-    action: "chyusen_updated",
-    description: `Cập nhật chương trình Chyusen: ${existing[0].title}`,
+    action: registrationChanged ? (data.isRegistered ? "chyusen_registered" : "chyusen_unregistered") : "chyusen_updated",
+    description: registrationChanged
+      ? `${data.isRegistered ? "Đã đăng ký" : "Bỏ đánh dấu đã đăng ký"} Chyusen: ${existing[0].title}`
+      : `Cập nhật chương trình Chyusen: ${existing[0].title}`,
     entityType: "chyusen",
     entityId: id,
   });

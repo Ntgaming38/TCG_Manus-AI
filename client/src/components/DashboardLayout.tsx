@@ -13,6 +13,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -29,6 +30,8 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { trpc } from "@/lib/trpc";
+import { getChyusenTimelineStatus } from "../../../shared/chyusen";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -115,6 +118,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
+  const { data: chyusenEntries = [] } = trpc.chyusen.list.useQuery();
+  const chyusenAlertCount = chyusenEntries.filter((entry) => getChyusenTimelineStatus(entry) === "deadline" && !entry.isRegistered).length;
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -177,6 +182,7 @@ function DashboardLayoutContent({
                       <item.icon className={`h-4 w-4 ${isActive ? "text-primary drop-shadow-[0_0_6px_rgba(74,222,128,0.8)]" : ""}`} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
+                    {item.path === "/chyusen" && chyusenAlertCount > 0 && <SidebarMenuBadge className="bg-red-600 text-white">{chyusenAlertCount > 99 ? "99+" : chyusenAlertCount}</SidebarMenuBadge>}
                   </SidebarMenuItem>
                 );
               })}
