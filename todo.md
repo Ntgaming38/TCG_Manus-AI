@@ -206,3 +206,9 @@
 - [x] Hiển thị badge “Sắp hết hạn” tự động cho chương trình còn hạn đăng ký trong 3 ngày
 - [x] Bổ sung test cho logic phân loại trạng thái thời gian và kết quả Chyusen
 - [x] Lưu checkpoint mới sau khi hoàn tất các bổ sung Chyusen
+
+## Nhắc nhở Chyusen sắp hết hạn
+- [x] Thêm khu vực thông báo cho chương trình còn hạn đăng ký trong 3 ngày
+- [x] Hiển thị tên chương trình, thời hạn còn lại và nút mở link chương trình
+- [x] Đảm bảo cảnh báo responsive, có trạng thái không có thông báo và kiểm tra typecheck/test/build
+- [x] Lưu checkpoint sau khi hoàn tất
