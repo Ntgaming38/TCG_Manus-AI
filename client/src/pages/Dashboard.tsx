@@ -45,8 +45,12 @@ function DashboardUrgencyBadge({ entry }: { entry: { registrationStartAt: Date |
 }
 
 export default function Dashboard() {
+  const utils = trpc.useUtils();
   const { data: stats } = trpc.dashboard.stats.useQuery();
   const { data: chyusenEntries = [], isLoading: isChyusenLoading } = trpc.chyusen.list.useQuery();
+  const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery();
+  const markChyusenNotificationRead = trpc.chyusen.markNotificationRead.useMutation({ onSuccess: () => void utils.chyusen.notifications.invalidate() });
+  const unreadChyusenNotifications = useMemo(() => chyusenNotifications.filter((item) => !item.isRead), [chyusenNotifications]);
   const expiringChyusen = useMemo(() => chyusenEntries
     .filter((entry) => getChyusenTimelineStatus(entry) === "deadline" && entry.registrationDeadline && !entry.isRegistered)
     .sort((a, b) => new Date(a.registrationDeadline!).getTime() - new Date(b.registrationDeadline!).getTime())
@@ -168,6 +172,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      {unreadChyusenNotifications.length > 0 && <Card className="border-emerald-200 bg-emerald-50/60 shadow-sm"><CardContent className="p-4 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><div className="rounded-xl bg-emerald-100 p-2.5 text-emerald-700"><BellRing className="h-5 w-5" /></div><div><CardTitle className="text-base font-bold text-emerald-950">Phát hiện Chyusen mới</CardTitle><p className="mt-1 text-sm text-emerald-800/80">Thông tin được tìm thấy từ các link P-Bandai bạn đang theo dõi.</p></div></div><Badge className="w-fit bg-emerald-600 text-white hover:bg-emerald-600">{unreadChyusenNotifications.length} mới</Badge></div><div className="mt-4 grid gap-2 lg:grid-cols-2">{unreadChyusenNotifications.slice(0, 4).map((item) => <div key={item.id} className="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate font-semibold text-foreground">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.message}</p></div><Button size="sm" variant="outline" className="shrink-0 border-emerald-300 text-emerald-700 hover:bg-emerald-100" onClick={() => markChyusenNotificationRead.mutate({ id: item.id })}>Đã xem</Button></div>)}</div></CardContent></Card>}
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="bg-card neon-card">

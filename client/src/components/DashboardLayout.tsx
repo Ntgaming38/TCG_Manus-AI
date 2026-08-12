@@ -119,7 +119,8 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
   const { data: chyusenEntries = [] } = trpc.chyusen.list.useQuery();
-  const chyusenAlertCount = chyusenEntries.filter((entry) => getChyusenTimelineStatus(entry) === "deadline" && !entry.isRegistered).length;
+  const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery();
+  const chyusenAlertCount = chyusenEntries.filter((entry) => getChyusenTimelineStatus(entry) === "deadline" && !entry.isRegistered).length + chyusenNotifications.filter((item) => !item.isRead).length;
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);

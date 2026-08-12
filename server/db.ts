@@ -1,9 +1,10 @@
 import { eq, and, like, sql, desc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, chyusenNotifications, chyusenSources } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop, InsertChyusenEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
+import { inspectPBandaiUrl, type PBandaiInspection } from "./pbandai";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1004,4 +1005,148 @@ export async function deleteChyusenEntry(userId: number, id: number) {
     entityId: id,
   });
   return { success: true };
+}
+
+// ========== CHYUSEN PUBLIC-LINK MONITORING ==========
+type ChyusenSourceInput = { sourceUrl: string; sourceLabel?: string };
+
+async function applyChyusenSourceInspection(source: any, inspection: PBandaiInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const lastStatus = inspection.status === "detected" ? "detected" : inspection.status === "unavailable" ? "unavailable" : "monitoring";
+  await db.update(chyusenSources).set({
+    lastCheckedAt: new Date(),
+    lastStatus,
+    lastError: inspection.error,
+    lastContentHash: inspection.contentHash,
+    lastDetectedAt: inspection.status === "detected" ? new Date() : source.lastDetectedAt,
+  }).where(eq(chyusenSources.id, source.id));
+
+  if (inspection.status !== "detected") return { detected: false, chyusenEntryId: null };
+  const existing = await db.select().from(chyusenEntries)
+    .where(and(eq(chyusenEntries.userId, source.userId), eq(chyusenEntries.sourceId, source.id))).limit(1);
+  if (existing[0]) {
+    await db.update(chyusenEntries).set({
+      title: inspection.title || existing[0].title,
+      productName: inspection.productName || existing[0].productName,
+      registrationStartAt: inspection.registrationStartAt || existing[0].registrationStartAt,
+      registrationDeadline: inspection.registrationDeadline || existing[0].registrationDeadline,
+      drawAt: inspection.drawAt || existing[0].drawAt,
+    }).where(eq(chyusenEntries.id, existing[0].id));
+    return { detected: false, chyusenEntryId: existing[0].id };
+  }
+
+  const inserted = await db.insert(chyusenEntries).values({
+    userId: source.userId,
+    sourceId: source.id,
+    title: inspection.title || source.sourceLabel || "Chương trình Chyusen P-Bandai",
+    productName: inspection.productName,
+    sourceName: "P-Bandai",
+    sourceUrl: source.sourceUrl,
+    registrationStartAt: inspection.registrationStartAt,
+    registrationDeadline: inspection.registrationDeadline,
+    drawAt: inspection.drawAt,
+    resultStatus: "pending",
+    isRegistered: false,
+    notes: "Tự phát hiện từ link P-Bandai công khai. Vui lòng kiểm tra lại thông tin trước khi tham gia.",
+  });
+  const chyusenEntryId = inserted[0].insertId;
+  await db.insert(chyusenNotifications).values({
+    userId: source.userId,
+    sourceId: source.id,
+    chyusenEntryId,
+    kind: "new_chyusen",
+    title: `Phát hiện Chyusen mới: ${inspection.title || source.sourceLabel || "P-Bandai"}`,
+    message: "TCG Manager phát hiện chương trình Chyusen trên link theo dõi. Vui lòng mở link và xác nhận thông tin trước khi đăng ký.",
+  });
+  await db.insert(activityLogs).values({
+    userId: source.userId,
+    action: "chyusen_auto_detected",
+    description: `Tự phát hiện Chyusen từ P-Bandai: ${inspection.title || source.sourceLabel || source.sourceUrl}`,
+    entityType: "chyusen",
+    entityId: chyusenEntryId,
+  });
+  return { detected: true, chyusenEntryId };
+}
+
+export async function previewChyusenSource(sourceUrl: string) {
+  return inspectPBandaiUrl(sourceUrl);
+}
+
+export async function listChyusenSources(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(chyusenSources).where(eq(chyusenSources.userId, userId)).orderBy(desc(chyusenSources.updatedAt));
+}
+
+export async function addChyusenSource(userId: number, data: ChyusenSourceInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(chyusenSources)
+    .where(and(eq(chyusenSources.userId, userId), eq(chyusenSources.sourceUrl, data.sourceUrl))).limit(1);
+  if (existing[0]) throw new Error("Link này đã được theo dõi.");
+  const result = await db.insert(chyusenSources).values({ userId, sourceUrl: data.sourceUrl, sourceLabel: data.sourceLabel, isActive: true });
+  const source = (await db.select().from(chyusenSources).where(eq(chyusenSources.id, result[0].insertId)).limit(1))[0];
+  const inspection = await inspectPBandaiUrl(data.sourceUrl);
+  const lastStatus = inspection.status === "detected" ? "detected" : inspection.status === "unavailable" ? "unavailable" : "monitoring";
+  await db.update(chyusenSources).set({ lastCheckedAt: new Date(), lastStatus, lastError: inspection.error, lastContentHash: inspection.contentHash, lastDetectedAt: inspection.status === "detected" ? new Date() : null }).where(eq(chyusenSources.id, source.id));
+  await db.insert(activityLogs).values({ userId, action: "chyusen_source_added", description: `Thêm link theo dõi Chyusen: ${data.sourceLabel || data.sourceUrl}`, entityType: "chyusen_source", entityId: source.id });
+  return { sourceId: source.id, inspection };
+}
+
+export async function updateChyusenSource(userId: number, id: number, data: { sourceLabel?: string; isActive?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const source = (await db.select().from(chyusenSources).where(and(eq(chyusenSources.id, id), eq(chyusenSources.userId, userId))).limit(1))[0];
+  if (!source) throw new Error("Link theo dõi không tồn tại");
+  await db.update(chyusenSources).set(data).where(eq(chyusenSources.id, id));
+  return { success: true };
+}
+
+export async function deleteChyusenSource(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const source = (await db.select().from(chyusenSources).where(and(eq(chyusenSources.id, id), eq(chyusenSources.userId, userId))).limit(1))[0];
+  if (!source) throw new Error("Link theo dõi không tồn tại");
+  await db.delete(chyusenSources).where(eq(chyusenSources.id, id));
+  await db.insert(activityLogs).values({ userId, action: "chyusen_source_deleted", description: `Xóa link theo dõi Chyusen: ${source.sourceLabel || source.sourceUrl}`, entityType: "chyusen_source", entityId: id });
+  return { success: true };
+}
+
+export async function scanChyusenSource(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const source = (await db.select().from(chyusenSources).where(and(eq(chyusenSources.id, id), eq(chyusenSources.userId, userId))).limit(1))[0];
+  if (!source) throw new Error("Link theo dõi không tồn tại");
+  const inspection = await inspectPBandaiUrl(source.sourceUrl);
+  const detection = await applyChyusenSourceInspection(source, inspection);
+  return { inspection, ...detection };
+}
+
+export async function listChyusenNotifications(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(chyusenNotifications).where(eq(chyusenNotifications.userId, userId)).orderBy(desc(chyusenNotifications.createdAt));
+}
+
+export async function markChyusenNotificationRead(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(chyusenNotifications).set({ isRead: true }).where(and(eq(chyusenNotifications.id, id), eq(chyusenNotifications.userId, userId)));
+  return { success: true };
+}
+
+export async function scanActiveChyusenSources() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const sources = await db.select().from(chyusenSources).where(eq(chyusenSources.isActive, true));
+  let detected = 0;
+  let unavailable = 0;
+  for (const source of sources) {
+    const inspection = await inspectPBandaiUrl(source.sourceUrl);
+    const result = await applyChyusenSourceInspection(source, inspection);
+    if (result.detected) detected += 1;
+    if (inspection.status === "unavailable") unavailable += 1;
+  }
+  return { checked: sources.length, detected, unavailable };
 }

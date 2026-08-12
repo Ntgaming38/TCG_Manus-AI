@@ -289,6 +289,39 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => db.deleteChyusenEntry(ctx.user.id, input.id)),
+
+    previewSource: protectedProcedure
+      .input(z.object({ sourceUrl: z.string().url() }))
+      .mutation(({ input }) => db.previewChyusenSource(input.sourceUrl)),
+
+    sources: protectedProcedure
+      .query(({ ctx }) => db.listChyusenSources(ctx.user.id)),
+
+    addSource: protectedProcedure
+      .input(z.object({ sourceUrl: z.string().url(), sourceLabel: z.string().max(255).optional() }))
+      .mutation(({ ctx, input }) => db.addChyusenSource(ctx.user.id, input)),
+
+    updateSource: protectedProcedure
+      .input(z.object({ id: z.number(), sourceLabel: z.string().max(255).optional(), isActive: z.boolean().optional() }))
+      .mutation(({ ctx, input }) => {
+        const { id, ...data } = input;
+        return db.updateChyusenSource(ctx.user.id, id, data);
+      }),
+
+    deleteSource: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => db.deleteChyusenSource(ctx.user.id, input.id)),
+
+    refreshSource: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => db.scanChyusenSource(ctx.user.id, input.id)),
+
+    notifications: protectedProcedure
+      .query(({ ctx }) => db.listChyusenNotifications(ctx.user.id)),
+
+    markNotificationRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => db.markChyusenNotificationRead(ctx.user.id, input.id)),
   }),
 });
 

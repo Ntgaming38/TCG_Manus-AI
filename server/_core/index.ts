@@ -6,7 +6,9 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
+import { scanActiveChyusenSources } from "../db";
 import { createContext } from "./context";
+import { sdk } from "./sdk";
 import { serveStatic, setupVite } from "./vite";
 import { storagePut } from "../storage";
 
@@ -53,6 +55,19 @@ async function startServer() {
     } catch (error: any) {
       console.error("[Upload] Error:", error.message);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/scheduled/chyusen-monitor", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
+      const summary = await scanActiveChyusenSources();
+      return res.json({ ok: true, taskUid: user.taskUid, ...summary, timestamp: new Date().toISOString() });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown Chyusen monitor error";
+      console.error("[Chyusen monitor]", error);
+      return res.status(500).json({ error: message, timestamp: new Date().toISOString() });
     }
   });
 

@@ -227,3 +227,18 @@
 - [x] Viết test, kiểm tra responsive, typecheck, build và lưu checkpoint mới
 - [x] Kiểm tra riêng giao diện mobile cho Chyusen và Dashboard sau khi thêm Đã đăng ký và các mức cảnh báo
 - [x] Lưu checkpoint mới sau khi hoàn tất Đã đăng ký Chyusen, badge sidebar và màu cảnh báo 72/24/6 giờ
+
+## Đánh giá nhập Chyusen từ link P-Bandai
+- [x] Kiểm tra trang P-Bandai công khai có hiển thị đủ tên, lịch đăng ký, hạn chót và trạng thái hay không
+- [x] Đề xuất phương án nhập từ link và cập nhật tự động an toàn, không tự đăng ký thay người dùng
+
+## Nhập link và theo dõi Chyusen tự động
+- [x] Xác minh cách phát hiện cập nhật công khai của P-Bandai và tần suất kiểm tra phù hợp
+- [x] Chốt kiểm tra P-Bandai mỗi 6 giờ để giảm truy cập lặp lại nhưng vẫn phát hiện chương trình mới trong ngày
+- [x] Thêm luồng dán link, đọc dữ liệu công khai, tạo bản nháp Chyusen và yêu cầu người dùng xác nhận trước khi lưu
+- [x] Lưu nguồn link, trạng thái theo dõi, thời điểm kiểm tra và dấu vết phát hiện mới theo từng user
+- [x] Thêm kiểm tra định kỳ an toàn, idempotent và chỉ tạo thông báo khi phát hiện chương trình Chyusen mới
+- [x] Hiển thị thông báo phát hiện mới trong Dashboard/Chyusen, không tự đăng ký hoặc thao tác P-Bandai
+- [x] Viết test, kiểm tra, build và lưu checkpoint cho tính năng theo dõi link
+- [x] Lưu checkpoint mới sau khi hoàn tất tính năng nhập link và theo dõi Chyusen P-Bandai
+- [ ] Kích hoạt lịch Heartbeat 6 giờ sau khi phiên bản mới được publish
