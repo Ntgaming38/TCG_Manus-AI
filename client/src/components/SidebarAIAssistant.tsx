@@ -10,9 +10,9 @@ import { trpc } from "@/lib/trpc";
 const STORAGE_KEY = "tcg-manager-ai-assistant-history";
 
 const suggestedPrompts = [
-  "Tóm tắt tình hình kho của tôi",
-  "Lợi nhuận hiện tại là bao nhiêu?",
-  "Thống kê số lượng sản phẩm",
+  "Phân tích xu hướng giá và lợi nhuận thẻ bài",
+  "Thẻ bài nào đang có ROI cao nhất?",
+  "Đánh giá danh mục Card trong kho",
 ];
 
 export function SidebarAIAssistant() {
@@ -42,7 +42,7 @@ export function SidebarAIAssistant() {
     },
   });
 
-  const placeholder = useMemo(() => "Hỏi về kho, lợi nhuận hoặc sản phẩm...", []);
+  const placeholder = useMemo(() => "Hỏi về xu hướng giá, ROI, lợi nhuận thẻ bài...", []);
 
   const handleSendMessage = (content: string) => {
     const nextMessages: Message[] = [...messages, { role: "user" as const, content }].slice(-12);
@@ -71,7 +71,7 @@ export function SidebarAIAssistant() {
           </span>
           <span className="min-w-0 group-data-[collapsible=icon]:hidden">
             <span className="block text-sm font-bold">Trợ lý AI</span>
-            <span className="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground">Hỏi kho, lợi nhuận, thống kê</span>
+            <span className="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground">Phân tích giá & lợi nhuận Card</span>
           </span>
         </Button>
       </DialogTrigger>
@@ -102,7 +102,7 @@ export function SidebarAIAssistant() {
             </AlertDialog>
           </div>
           <DialogDescription>
-            Hỏi về kho, lợi nhuận và các sản phẩm của bạn. Tôi không tự thay đổi dữ liệu.
+            Phân tích sâu về xu hướng giá, tỷ suất ROI và lợi nhuận chưa thực hiện của các thẻ bài trong kho.
           </DialogDescription>
           {assistantMutation.isPending && (
             <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-background/70 px-3 py-2 text-xs text-primary" role="status" aria-live="polite">
@@ -119,7 +119,7 @@ export function SidebarAIAssistant() {
             isLoading={assistantMutation.isPending}
             placeholder={placeholder}
             height="min(62vh, 520px)"
-            emptyStateMessage="Tôi có thể tóm tắt kho, lợi nhuận và hỗ trợ thông tin sản phẩm cho bạn."
+            emptyStateMessage="Tôi có thể phân tích sâu xu hướng giá, ROI và lợi nhuận thẻ bài cho bạn."
             suggestedPrompts={suggestedPrompts}
             className="border-primary/20 shadow-none"
           />
