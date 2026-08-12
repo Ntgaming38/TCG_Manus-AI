@@ -88,15 +88,15 @@ export function SidebarAIAssistant() {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="mb-3 h-auto w-full justify-start gap-3 border-primary/30 bg-primary/5 px-3 py-2.5 text-left text-foreground hover:border-primary/60 hover:bg-primary/10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2"
+          className="mb-3 h-auto w-full justify-start gap-3 border-primary/40 bg-primary/10 px-3 py-2.5 text-left text-white hover:border-primary hover:bg-primary/20 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2 shadow-sm"
           aria-label="Mở Trợ lý AI"
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/25 text-white">
             <Sparkles className="size-4" />
           </span>
           <span className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="block text-sm font-bold">Trợ lý AI</span>
-            <span className="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground">Phân tích giá & lợi nhuận Card</span>
+            <span className="block text-sm font-bold text-white tracking-wide">Trợ lý AI</span>
+            <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-300">Phân tích giá & lợi nhuận Card</span>
           </span>
         </Button>
       </DialogTrigger>

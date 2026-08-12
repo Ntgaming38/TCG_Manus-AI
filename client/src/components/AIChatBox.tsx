@@ -289,17 +289,11 @@ export function AIChatBox({
                       : undefined
                   }
                 >
-                  <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/15 flex items-center justify-center">
-                    <Sparkles className="size-4 text-primary animate-pulse" />
+                  <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="size-4 text-primary" />
                   </div>
-                  <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-3 shadow-xs flex items-center gap-2.5 text-xs text-muted-foreground">
-                    <Loader2 className="size-3.5 animate-spin text-primary" />
-                    <span className="font-medium">Trợ lý AI đang suy nghĩ và tổng hợp dữ liệu kho...</span>
-                    <span className="flex gap-1 items-center" aria-hidden="true">
-                      <i className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
-                      <i className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
-                      <i className="size-1.5 animate-bounce rounded-full bg-primary" />
-                    </span>
+                  <div className="rounded-lg bg-muted px-4 py-2.5">
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
                   </div>
                 </div>
               )}
