@@ -243,3 +243,15 @@
 - [x] Lưu checkpoint mới sau khi hoàn tất tính năng nhập link và theo dõi Chyusen P-Bandai
 - [x] Kích hoạt lịch Heartbeat 6 giờ sau khi phiên bản mới được publish
 - [x] Xác nhận Heartbeat pbandai-chyusen-monitor đang bật, trỏ đến /api/scheduled/chyusen-monitor và có lịch chạy tiếp theo lúc 06:00 UTC
+
+## Fix chuyển vùng P-Bandai
+- [x] Kiểm tra các đường dẫn Nhật và dữ liệu công khai thay thế cho trang P-Bandai bị chuyển vùng
+- [x] Cập nhật bộ đọc P-Bandai để thử fallback công khai an toàn trước khi báo không đọc được
+- [x] Bổ sung test hồi quy, typecheck, build và chuẩn bị deploy cho nguồn fallback
+
+## Theo dõi thông báo P-Bandai công khai
+- [x] Xác minh landing page/thông báo P-Bandai công khai và bài đăng chính thức có thể đọc định kỳ
+- [x] Mở rộng bộ đọc để hỗ trợ nguồn landing page/thông báo công khai, không dùng cách vượt chặn vùng
+- [x] Cập nhật giao diện để phân biệt link sản phẩm và link thông báo chính thức
+- [x] Thêm test, kiểm tra, build và lưu checkpoint cho nguồn thông báo công khai
+- [ ] Xác minh Heartbeat đang bật sau khi publish bản fallback mới

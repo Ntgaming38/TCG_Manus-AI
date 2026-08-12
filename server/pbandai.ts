@@ -13,11 +13,22 @@ export type PBandaiInspection = {
 };
 
 const PBANDAI_HOST = /(^|\.)p-bandai\.jp$/i;
+const OFFICIAL_PBANDAI_X_PATH = /^\/(?:p_bandai)\/status\/\d+/i;
 
 export function isValidPBandaiUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && PBANDAI_HOST.test(url.hostname);
+    const isOfficialPost = /^(x\.com|www\.x\.com|twitter\.com|www\.twitter\.com)$/i.test(url.hostname) && OFFICIAL_PBANDAI_X_PATH.test(url.pathname);
+    return url.protocol === "https:" && (PBANDAI_HOST.test(url.hostname) || isOfficialPost);
+  } catch {
+    return false;
+  }
+}
+
+export function isOfficialPBandaiPostUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && /^(x\.com|www\.x\.com|twitter\.com|www\.twitter\.com)$/i.test(url.hostname) && OFFICIAL_PBANDAI_X_PATH.test(url.pathname);
   } catch {
     return false;
   }
@@ -71,9 +82,29 @@ export function parsePBandaiPage(html: string, sourceUrl: string): PBandaiInspec
   };
 }
 
+export function parsePBandaiOfficialPost(embedHtml: string, sourceUrl: string, authorName?: string): PBandaiInspection {
+  const text = toText(embedHtml);
+  const contentHash = createHash("sha256").update(text).digest("hex");
+  if (authorName && !/プレミアムバンダイ|Premium Bandai/i.test(authorName)) {
+    return { status: "unavailable", sourceUrl, contentHash, error: "Bài đăng không xác nhận là từ tài khoản P-Bandai chính thức." };
+  }
+  const isLottery = /抽選(?:販売|受付|申込)?|応募可能/.test(text);
+  if (!isLottery) return { status: "monitoring", sourceUrl, title: "Bài đăng chính thức P-Bandai", productName: text.slice(0, 180) || undefined, contentHash };
+  const title = text.length > 120 ? `${text.slice(0, 117)}...` : text;
+  return { status: "detected", sourceUrl, title: title || "Thông báo Chyusen từ P-Bandai", productName: title || undefined, contentHash };
+}
+
 export async function inspectPBandaiUrl(sourceUrl: string): Promise<PBandaiInspection> {
-  if (!isValidPBandaiUrl(sourceUrl)) throw new Error("Chỉ hỗ trợ link HTTPS từ p-bandai.jp.");
+  if (!isValidPBandaiUrl(sourceUrl)) throw new Error("Chỉ hỗ trợ link HTTPS từ p-bandai.jp hoặc bài đăng chính thức x.com/p_bandai.");
   try {
+    if (isOfficialPBandaiPostUrl(sourceUrl)) {
+      const endpoint = `https://publish.twitter.com/oembed?omit_script=1&url=${encodeURIComponent(sourceUrl)}`;
+      const response = await fetch(endpoint, { signal: AbortSignal.timeout(20_000) });
+      if (!response.ok) return { status: "unavailable", sourceUrl, error: `Không đọc được bài đăng P-Bandai (HTTP ${response.status}).` };
+      const payload = await response.json() as { html?: string; author_name?: string };
+      if (!payload.html) return { status: "unavailable", sourceUrl, error: "Bài đăng P-Bandai không có nội dung công khai để đọc." };
+      return parsePBandaiOfficialPost(payload.html, sourceUrl, payload.author_name);
+    }
     const response = await fetch(sourceUrl, {
       redirect: "follow",
       headers: {

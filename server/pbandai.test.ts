@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { isValidPBandaiUrl, parsePBandaiPage } from "./pbandai";
+import { isOfficialPBandaiPostUrl, isValidPBandaiUrl, parsePBandaiOfficialPost, parsePBandaiPage } from "./pbandai";
 
 describe("P-Bandai Chyusen inspection", () => {
   it("accepts only HTTPS P-Bandai URLs", () => {
     expect(isValidPBandaiUrl("https://p-bandai.jp/item/item-1000255803/")).toBe(true);
     expect(isValidPBandaiUrl("https://shop.p-bandai.jp/item/123")).toBe(true);
+    expect(isValidPBandaiUrl("https://x.com/p_bandai/status/2021860815645843873")).toBe(true);
+    expect(isOfficialPBandaiPostUrl("https://x.com/p_bandai/status/2021860815645843873")).toBe(true);
+    expect(isValidPBandaiUrl("https://x.com/not_official/status/2021860815645843873")).toBe(false);
     expect(isValidPBandaiUrl("https://evil-p-bandai.jp/item/123")).toBe(false);
     expect(isValidPBandaiUrl("http://p-bandai.jp/item/123")).toBe(false);
   });
@@ -23,5 +26,17 @@ describe("P-Bandai Chyusen inspection", () => {
     const inspection = parsePBandaiPage(page, "https://p-bandai.jp/item/item-test/");
     expect(inspection.status).toBe("unavailable");
     expect(inspection.error).toContain("trang quốc tế");
+  });
+
+  it("detects a lottery from a verified official P-Bandai X post", () => {
+    const embed = `<blockquote><p>プレミアムバンダイ春祭り 魂ウェブ商店抽選販売について、現在は抽選応募可能です。</p></blockquote>`;
+    const inspection = parsePBandaiOfficialPost(embed, "https://x.com/p_bandai/status/2021860815645843873", "プレミアムバンダイ 【公式】");
+    expect(inspection.status).toBe("detected");
+    expect(inspection.title).toContain("抽選販売");
+  });
+
+  it("rejects a post that does not identify P-Bandai as the author", () => {
+    const inspection = parsePBandaiOfficialPost("<p>抽選販売</p>", "https://x.com/p_bandai/status/1", "Không rõ nguồn");
+    expect(inspection.status).toBe("unavailable");
   });
 });

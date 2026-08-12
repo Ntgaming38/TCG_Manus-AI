@@ -10,3 +10,5 @@ Kết luận: Có thể tự tạo nháp Chyusen từ các trang P-Bandai khi d�
 ## Cập nhật kiến trúc theo yêu cầu theo dõi tự động
 
 Kết quả tìm kiếm không cho thấy P-Bandai có webhook hoặc API công khai dành cho thông báo Chyusen. Vì vậy, giải pháp phù hợp là kiểm tra định kỳ các link đã lưu, với tần suất vừa phải, rồi chỉ tạo thông báo trong app khi phát hiện dữ liệu công khai mới hoặc thay đổi. Quy trình cần có cơ chế chặn trùng lặp, lưu thời điểm kiểm tra và hiển thị lỗi rõ ràng khi P-Bandai chuyển hướng theo vùng hoặc không cho đọc trang.
+
+Trang landing chính thức `https://p-bandai.jp/hobby/lotterysales/` cũng bị chuyển vùng về `global_newpc` trong môi trường kiểm tra. Vì vậy, theo dõi trực tiếp các trang `p-bandai.jp` bằng máy chủ hiện tại không thể là nguồn dữ liệu chính. Các nguồn thông báo công khai không bị chuyển vùng, chẳng hạn bài đăng chính thức hoặc landing page công khai khác do người dùng cung cấp, cần được dùng làm nguồn theo dõi thay thế.
