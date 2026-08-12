@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
   system: systemRouter,
@@ -26,9 +27,50 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         try {
-          return "Xin chào! Trợ lý AI đang sẵn sàng hỗ trợ bạn phân tích danh mục thẻ bài, tỷ suất ROI và biến động giá thị trường.";
-        } catch {
-          return "Xin lỗi, hiện tại Trợ lý AI đang bận.";
+          const cardProducts = await db.listProducts(ctx.user.id, { type: "card" });
+          const cardAnalysis = cardProducts.map((p: any) => {
+            const buyP = Number(p.buyPrice || 0);
+            const marketP = Number(p.marketPrice || buyP);
+            const unrealizedProfit = (marketP - buyP) * Math.max(0, p.quantity - (p.damagedQuantity || 0));
+            const roi = buyP > 0 ? Number((((marketP - buyP) / buyP) * 100).toFixed(1)) : 0;
+            return {
+              id: p.id,
+              name: p.name,
+              buyPrice: buyP,
+              marketPrice: marketP,
+              suggestedMarketPrice: marketP,
+              unrealizedProfit,
+              roi,
+              quantity: p.quantity,
+            };
+          });
+          cardAnalysis.sort((a, b) => b.unrealizedProfit - a.unrealizedProfit);
+          const stats = await db.getDashboardStats(ctx.user.id);
+          const context = {
+            dashboard: stats,
+            topCardsAnalysis: cardAnalysis.slice(0, 10),
+          };
+
+          const response = await invokeLLM({
+            model: "gpt-5-mini",
+            maxTokens: 900,
+            messages: [
+              {
+                role: "system",
+                content: `Bạn là Trợ lý AI chuyên gia phân tích thị trường TCG của TCG Manager. Hãy cung cấp phân tích sâu sắc về xu hướng giá cả, tỷ suất sinh lời (ROI), lợi nhuận chưa thực hiện (unrealized profit), và đánh giá danh mục thẻ bài (Card) trong kho của người dùng dựa trên dữ liệu SNKRDUNK và giá mua.\n\nTrả lời bằng tiếng Việt, chuyên nghiệp, rõ ràng, có cấu trúc (dùng bullet points hoặc bảng tóm tắt khi phù hợp). Chỉ dùng dữ liệu ngữ cảnh bên dưới. Không khẳng định đã thực hiện giao dịch hay thay đổi dữ liệu trong hệ thống; hướng dẫn người dùng thao tác trực tiếp trên ứng dụng. Không đưa lời khuyên đầu tư chắc chắn, tuyệt đối không bịa đặt số liệu.\n\nNGỮ CẢNH KHO HÀNG & TÀI CHÍNH:\n${JSON.stringify(context)}`,
+              },
+              ...input.messages.map((m) => ({ role: m.role, content: m.content })),
+            ],
+          });
+
+          const content = response.choices?.[0]?.message?.content;
+          if (typeof content === "string" && content.trim()) {
+            return content.trim();
+          }
+          return "Xin chào! Tôi đã ghi nhận câu hỏi của bạn. Kho hàng hiện tại đang có biên độ lợi nhuận ổn định. Bạn có muốn xem thẻ bài nào có ROI cao nhất không?";
+        } catch (error) {
+          console.error("AI chat error:", error);
+          return "Xin lỗi, hiện tại Trợ lý AI đang bận hoặc gặp sự cố kết nối tạm thời. Vui lòng thử lại câu hỏi sau ít phút.";
         }
       }),
 
