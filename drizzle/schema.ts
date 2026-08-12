@@ -146,3 +146,25 @@ export const activityLogs = mysqlTable("activity_logs", {
 });
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
+
+/**
+ * Chyusen - lottery/draw opportunity tracker
+ */
+export const chyusenEntries = mysqlTable("chyusen_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  productName: varchar("productName", { length: 255 }),
+  sourceName: varchar("sourceName", { length: 255 }),
+  sourceUrl: text("sourceUrl"),
+  registrationStartAt: timestamp("registrationStartAt"),
+  registrationDeadline: timestamp("registrationDeadline"),
+  drawAt: timestamp("drawAt"),
+  resultStatus: mysqlEnum("resultStatus", ["pending", "won", "lost", "not_entered", "cancelled"]).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ChyusenEntry = typeof chyusenEntries.$inferSelect;
+export type InsertChyusenEntry = typeof chyusenEntries.$inferInsert;

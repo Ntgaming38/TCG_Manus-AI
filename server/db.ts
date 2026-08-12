@@ -1,7 +1,7 @@
 import { eq, and, like, sql, desc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs } from "../drizzle/schema";
-import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries } from "../drizzle/schema";
+import type { InsertProduct, InsertPurchase, InsertSale, InsertShop, InsertChyusenEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
 
@@ -939,4 +939,66 @@ export async function createShop(data: InsertShop) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.insert(shops).values(data);
+}
+
+// ========== CHYUSEN ==========
+export async function listChyusenEntries(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(chyusenEntries)
+    .where(eq(chyusenEntries.userId, userId))
+    .orderBy(desc(chyusenEntries.registrationDeadline), desc(chyusenEntries.createdAt));
+}
+
+export async function createChyusenEntry(data: InsertChyusenEntry) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(chyusenEntries).values(data);
+  await db.insert(activityLogs).values({
+    userId: data.userId,
+    action: "chyusen_created",
+    description: `Thêm chương trình Chyusen: ${data.title}`,
+    entityType: "chyusen",
+    entityId: result[0].insertId,
+  });
+  return { id: result[0].insertId };
+}
+
+export async function updateChyusenEntry(userId: number, id: number, data: Partial<InsertChyusenEntry>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(chyusenEntries)
+    .where(and(eq(chyusenEntries.id, id), eq(chyusenEntries.userId, userId)))
+    .limit(1);
+  if (!existing[0]) throw new Error("Chương trình Chyusen không tồn tại");
+  await db.update(chyusenEntries)
+    .set(data)
+    .where(and(eq(chyusenEntries.id, id), eq(chyusenEntries.userId, userId)));
+  await db.insert(activityLogs).values({
+    userId,
+    action: "chyusen_updated",
+    description: `Cập nhật chương trình Chyusen: ${existing[0].title}`,
+    entityType: "chyusen",
+    entityId: id,
+  });
+  return { success: true };
+}
+
+export async function deleteChyusenEntry(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(chyusenEntries)
+    .where(and(eq(chyusenEntries.id, id), eq(chyusenEntries.userId, userId)))
+    .limit(1);
+  if (!existing[0]) throw new Error("Chương trình Chyusen không tồn tại");
+  await db.delete(chyusenEntries)
+    .where(and(eq(chyusenEntries.id, id), eq(chyusenEntries.userId, userId)));
+  await db.insert(activityLogs).values({
+    userId,
+    action: "chyusen_deleted",
+    description: `Xóa chương trình Chyusen: ${existing[0].title}`,
+    entityType: "chyusen",
+    entityId: id,
+  });
+  return { success: true };
 }

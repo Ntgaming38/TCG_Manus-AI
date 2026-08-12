@@ -113,4 +113,18 @@ describe("appRouter", () => {
       await expect(caller.reports.overview()).rejects.toThrow();
     });
   });
+
+  describe("chyusen router", () => {
+    it("requires authentication for chyusen.list", async () => {
+      const ctx = createUnauthContext();
+      const caller = appRouter.createCaller(ctx);
+      await expect(caller.chyusen.list()).rejects.toThrow();
+    });
+
+    it("requires authentication for chyusen.create", async () => {
+      const ctx = createUnauthContext();
+      const caller = appRouter.createCaller(ctx);
+      await expect(caller.chyusen.create({ title: "Test draw" })).rejects.toThrow();
+    });
+  });
 });

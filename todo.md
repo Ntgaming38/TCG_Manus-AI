@@ -195,3 +195,14 @@
 ## Làm nổi bật nhãn Hạng A
 - [x] Đổi nhãn Hạng A sang màu tương phản mạnh hơn trên bảng desktop và card mobile
 - [x] Giữ nguyên tooltip, logic giá và đồng bộ SNKRDUNK; chạy typecheck, test, build và lưu checkpoint
+
+## Chyusen (抽選)
+- [x] Thêm mục Chyusen ngay dưới Bán Hàng trong sidebar và route /chyusen
+- [x] Tạo dữ liệu chương trình: tên, sản phẩm, website/app, link, ngày mở đăng ký, hạn đăng ký, ngày quay số, trạng thái và ghi chú
+- [x] Thêm backend CRUD theo từng user, không tự động tham gia hoặc truy cập tài khoản app bên ngoài
+- [x] Xây giao diện danh sách, bộ lọc trạng thái, thêm/sửa/xóa và mở link chương trình
+- [x] Hiển thị trạng thái tự động: Sắp mở, Đang mở, Sắp hết hạn, Đã hết hạn, Đã có kết quả
+- [x] Viết test, migration an toàn, typecheck, build và lưu checkpoint
+- [x] Hiển thị badge “Sắp hết hạn” tự động cho chương trình còn hạn đăng ký trong 3 ngày
+- [x] Bổ sung test cho logic phân loại trạng thái thời gian và kết quả Chyusen
+- [x] Lưu checkpoint mới sau khi hoàn tất các bổ sung Chyusen

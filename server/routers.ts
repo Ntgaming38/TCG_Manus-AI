@@ -235,6 +235,58 @@ export const appRouter = router({
         note: input.note,
       })),
   }),
+
+  chyusen: router({
+    list: protectedProcedure
+      .query(({ ctx }) => db.listChyusenEntries(ctx.user.id)),
+
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        productName: z.string().optional(),
+        sourceName: z.string().optional(),
+        sourceUrl: z.string().optional(),
+        registrationStartAt: z.coerce.date().optional(),
+        registrationDeadline: z.coerce.date().optional(),
+        drawAt: z.coerce.date().optional(),
+        resultStatus: z.enum(["pending", "won", "lost", "not_entered", "cancelled"]).default("pending"),
+        notes: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => db.createChyusenEntry({
+        userId: ctx.user.id,
+        title: input.title,
+        productName: input.productName,
+        sourceName: input.sourceName,
+        sourceUrl: input.sourceUrl,
+        registrationStartAt: input.registrationStartAt,
+        registrationDeadline: input.registrationDeadline,
+        drawAt: input.drawAt,
+        resultStatus: input.resultStatus,
+        notes: input.notes,
+      })),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(1).optional(),
+        productName: z.string().optional(),
+        sourceName: z.string().optional(),
+        sourceUrl: z.string().optional(),
+        registrationStartAt: z.coerce.date().optional(),
+        registrationDeadline: z.coerce.date().optional(),
+        drawAt: z.coerce.date().optional(),
+        resultStatus: z.enum(["pending", "won", "lost", "not_entered", "cancelled"]).optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) => {
+        const { id, ...data } = input;
+        return db.updateChyusenEntry(ctx.user.id, id, data);
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => db.deleteChyusenEntry(ctx.user.id, input.id)),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
