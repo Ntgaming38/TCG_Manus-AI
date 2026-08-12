@@ -10,9 +10,10 @@ import { trpc } from "@/lib/trpc";
 const STORAGE_KEY = "tcg-manager-ai-assistant-history";
 
 const suggestedPrompts = [
-  "Phân tích xu hướng giá và lợi nhuận thẻ bài",
-  "Thẻ bài nào đang có ROI cao nhất?",
-  "Đánh giá danh mục Card trong kho",
+  "📈 Phân tích xu hướng giá và lợi nhuận thẻ bài",
+  "⭐ Thẻ bài nào có tỷ suất ROI cao nhất?",
+  "🔍 Đánh giá toàn diện danh mục Card",
+  "💰 Top thẻ bài có lợi nhuận chưa thực hiện lớn nhất",
 ];
 
 export function SidebarAIAssistant() {
