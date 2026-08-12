@@ -298,7 +298,18 @@ export const appRouter = router({
       .query(({ ctx }) => db.listChyusenSources(ctx.user.id)),
 
     addSource: protectedProcedure
-      .input(z.object({ sourceUrl: z.string().url(), sourceLabel: z.string().max(255).optional() }))
+      .input(z.object({
+        sourceUrl: z.string().url(),
+        sourceLabel: z.string().max(255).optional(),
+        confirmedDraft: z.object({
+          title: z.string().min(1),
+          productName: z.string().optional(),
+          registrationStartAt: z.coerce.date().optional(),
+          registrationDeadline: z.coerce.date().optional(),
+          drawAt: z.coerce.date().optional(),
+          note: z.string().max(1000).optional(),
+        }).optional(),
+      }))
       .mutation(({ ctx, input }) => db.addChyusenSource(ctx.user.id, input)),
 
     updateSource: protectedProcedure

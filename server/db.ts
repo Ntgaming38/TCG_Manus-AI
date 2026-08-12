@@ -4,7 +4,8 @@ import { InsertUser, users, products, purchases, sales, priceHistory, shops, act
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop, InsertChyusenEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
-import { inspectPBandaiUrl, type PBandaiInspection } from "./pbandai";
+import { inspectPBandaiUrl, isOfficialPBandaiPostUrl, type PBandaiInspection } from "./pbandai";
+import { extractChyusenScheduleWithAI } from "./chyusenAi";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1008,7 +1009,18 @@ export async function deleteChyusenEntry(userId: number, id: number) {
 }
 
 // ========== CHYUSEN PUBLIC-LINK MONITORING ==========
-type ChyusenSourceInput = { sourceUrl: string; sourceLabel?: string };
+type ChyusenSourceInput = {
+  sourceUrl: string;
+  sourceLabel?: string;
+  confirmedDraft?: {
+    title: string;
+    productName?: string;
+    registrationStartAt?: Date;
+    registrationDeadline?: Date;
+    drawAt?: Date;
+    note?: string;
+  };
+};
 
 async function applyChyusenSourceInspection(source: any, inspection: PBandaiInspection) {
   const db = await getDb();
@@ -1070,7 +1082,32 @@ async function applyChyusenSourceInspection(source: any, inspection: PBandaiInsp
 }
 
 export async function previewChyusenSource(sourceUrl: string) {
-  return inspectPBandaiUrl(sourceUrl);
+  const inspection = await inspectPBandaiUrl(sourceUrl);
+  if (!isOfficialPBandaiPostUrl(sourceUrl) || !inspection.rawContent) return inspection;
+  try {
+    const aiSchedule = await extractChyusenScheduleWithAI(inspection.rawContent);
+    return {
+      ...inspection,
+      title: aiSchedule.title || inspection.title,
+      productName: aiSchedule.title || inspection.productName,
+      registrationStartAt: aiSchedule.registrationStartAt || inspection.registrationStartAt,
+      registrationDeadline: aiSchedule.registrationDeadline || inspection.registrationDeadline,
+      drawAt: aiSchedule.drawAt || inspection.drawAt,
+      aiSchedule,
+    };
+  } catch (error) {
+    return {
+      ...inspection,
+      aiSchedule: {
+        title: null,
+        registrationStartAt: null,
+        registrationDeadline: null,
+        drawAt: null,
+        confidence: "low" as const,
+        note: error instanceof Error ? `Không thể trích xuất AI: ${error.message}` : "Không thể trích xuất AI từ bài đăng này.",
+      },
+    };
+  }
 }
 
 export async function listChyusenSources(userId: number) {
@@ -1091,7 +1128,25 @@ export async function addChyusenSource(userId: number, data: ChyusenSourceInput)
   const lastStatus = inspection.status === "detected" ? "detected" : inspection.status === "unavailable" ? "unavailable" : "monitoring";
   await db.update(chyusenSources).set({ lastCheckedAt: new Date(), lastStatus, lastError: inspection.error, lastContentHash: inspection.contentHash, lastDetectedAt: inspection.status === "detected" ? new Date() : null }).where(eq(chyusenSources.id, source.id));
   await db.insert(activityLogs).values({ userId, action: "chyusen_source_added", description: `Thêm link theo dõi Chyusen: ${data.sourceLabel || data.sourceUrl}`, entityType: "chyusen_source", entityId: source.id });
-  return { sourceId: source.id, inspection };
+  let chyusenEntryId: number | null = null;
+  if (data.confirmedDraft) {
+    const created = await createChyusenEntry({
+      userId,
+      sourceId: source.id,
+      title: data.confirmedDraft.title,
+      productName: data.confirmedDraft.productName,
+      sourceName: "P-Bandai",
+      sourceUrl: data.sourceUrl,
+      registrationStartAt: data.confirmedDraft.registrationStartAt,
+      registrationDeadline: data.confirmedDraft.registrationDeadline,
+      drawAt: data.confirmedDraft.drawAt,
+      resultStatus: "pending",
+      isRegistered: false,
+      notes: data.confirmedDraft.note ? `AI trích xuất từ bài đăng công khai. ${data.confirmedDraft.note}` : "AI trích xuất từ bài đăng công khai. Vui lòng xác nhận lại thông tin.",
+    });
+    chyusenEntryId = created.id;
+  }
+  return { sourceId: source.id, inspection, chyusenEntryId };
 }
 
 export async function updateChyusenSource(userId: number, id: number, data: { sourceLabel?: string; isActive?: boolean }) {

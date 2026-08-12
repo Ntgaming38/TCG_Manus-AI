@@ -9,7 +9,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 
-type SourcePreview = { status: "detected" | "monitoring" | "unavailable"; sourceUrl: string; title?: string; productName?: string; registrationStartAt?: Date | string; registrationDeadline?: Date | string; drawAt?: Date | string; contentHash?: string; error?: string };
+type SourcePreview = {
+  status: "detected" | "monitoring" | "unavailable";
+  sourceUrl: string;
+  title?: string;
+  productName?: string;
+  registrationStartAt?: Date | string;
+  registrationDeadline?: Date | string;
+  drawAt?: Date | string;
+  contentHash?: string;
+  error?: string;
+  aiSchedule?: {
+    title: string | null;
+    registrationStartAt: Date | string | null;
+    registrationDeadline: Date | string | null;
+    drawAt: Date | string | null;
+    confidence: "high" | "medium" | "low";
+    note: string;
+  };
+};
 
 function formatDate(value: Date | string | null | undefined) {
   return value ? new Date(value).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" }) : "Chưa kiểm tra";
@@ -53,9 +71,19 @@ export function ChyusenSourcePanel() {
   async function saveSource() {
     if (!sourceUrl) return;
     try {
-      const result = await addMutation.mutateAsync({ sourceUrl, sourceLabel: sourceLabel || undefined });
-      if (preview?.status === "detected") {
-        await refreshMutation.mutateAsync({ id: result.sourceId });
+      const result = await addMutation.mutateAsync({
+        sourceUrl,
+        sourceLabel: sourceLabel || undefined,
+        confirmedDraft: preview?.status === "detected" ? {
+          title: preview.title || sourceLabel || "Chương trình Chyusen P-Bandai",
+          productName: preview.productName || undefined,
+          registrationStartAt: preview.registrationStartAt ? new Date(preview.registrationStartAt) : undefined,
+          registrationDeadline: preview.registrationDeadline ? new Date(preview.registrationDeadline) : undefined,
+          drawAt: preview.drawAt ? new Date(preview.drawAt) : undefined,
+          note: preview.aiSchedule?.note,
+        } : undefined,
+      });
+      if (result.chyusenEntryId) {
         toast.success("Đã lưu link và tạo Chyusen từ bản nháp đã xác nhận.");
       } else {
         toast.success("Đã lưu link theo dõi. TCG Manager sẽ kiểm tra lại mỗi 6 giờ.");
@@ -89,6 +117,6 @@ export function ChyusenSourcePanel() {
 
     <Card className="border-border shadow-sm"><CardHeader className="pb-2"><CardTitle className="text-base">Link đang theo dõi</CardTitle></CardHeader><CardContent>{sourcesLoading ? <p className="py-3 text-sm text-muted-foreground">Đang tải link theo dõi...</p> : sources.length === 0 ? <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">Chưa có link nào. Bạn có thể thêm link P-Bandai hoặc bài đăng chính thức để nhận cảnh báo khi có Chyusen.</p> : <div className="space-y-3">{sources.map((source) => <div key={source.id} className="rounded-xl border border-border bg-card p-3"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold text-foreground">{source.sourceLabel || "P-Bandai"}</p><SourceStatus status={source.lastStatus} />{!source.isActive && <Badge variant="outline">Đã tạm dừng</Badge>}</div><a href={source.sourceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex max-w-full items-center truncate text-sm text-primary hover:underline">{source.sourceUrl}<ExternalLink className="ml-1 h-3.5 w-3.5 shrink-0" /></a><p className="mt-1 text-xs text-muted-foreground">Kiểm tra gần nhất: {formatDate(source.lastCheckedAt)} · Lịch tự động: mỗi 6 giờ</p>{source.lastError && <p className="mt-2 flex items-start gap-1 text-xs text-amber-800"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {source.lastError}</p>}</div><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => refreshSource(source.id)} disabled={refreshMutation.isPending}><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Kiểm tra</Button><Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: source.id, isActive: !source.isActive }, { onSuccess: invalidateAll })}>{source.isActive ? <><Pause className="mr-1.5 h-3.5 w-3.5" /> Tạm dừng</> : <><Play className="mr-1.5 h-3.5 w-3.5" /> Bật lại</>}</Button><Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => { if (window.confirm("Xóa link theo dõi này?")) deleteMutation.mutate({ id: source.id }, { onSuccess: invalidateAll, onError: (error) => toast.error(error.message) }); }}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Xóa</Button></div></div></div>)}</div>}</CardContent></Card>
 
-    <Dialog open={open} onOpenChange={(value) => { if (!value) resetDialog(); else setOpen(true); }}><DialogContent className="sm:max-w-xl"><DialogHeader><DialogTitle>Thêm nguồn theo dõi Chyusen</DialogTitle><DialogDescription>Hỗ trợ link P-Bandai hoặc bài đăng chính thức x.com/p_bandai. TCG Manager chỉ đọc nội dung công khai; bạn tự mở link và đăng ký nếu muốn tham gia.</DialogDescription></DialogHeader><div className="space-y-4"><div className="space-y-2"><Label htmlFor="source-url">Link nguồn *</Label><Input id="source-url" type="url" value={sourceUrl} onChange={(event) => { setSourceUrl(event.target.value); setPreview(null); }} placeholder="https://p-bandai.jp/... hoặc https://x.com/p_bandai/status/..." /></div><div className="space-y-2"><Label htmlFor="source-label">Tên gợi nhớ (tùy chọn)</Label><Input id="source-label" value={sourceLabel} onChange={(event) => setSourceLabel(event.target.value)} placeholder="Ví dụ: ONE PIECE OP-17" /></div>{preview && <div className={`rounded-xl border p-3 text-sm ${preview.status === "detected" ? "border-emerald-200 bg-emerald-50" : preview.status === "unavailable" ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50"}`}><div className="flex items-center gap-2 font-semibold"><SourceStatus status={preview.status === "detected" ? "detected" : preview.status === "unavailable" ? "unavailable" : "monitoring"} />{preview.title || "Chưa đọc được tiêu đề"}</div>{preview.registrationDeadline && <p className="mt-2">Hạn đăng ký nhận diện: <strong>{formatDate(preview.registrationDeadline)}</strong></p>}<p className="mt-2 text-muted-foreground">{preview.error || (preview.status === "detected" ? "Đã nhận diện dữ liệu công khai. Bấm lưu để xác nhận tạo Chyusen và theo dõi link." : "Chưa nhận diện chương trình Chyusen. Bạn vẫn có thể lưu link để hệ thống kiểm tra định kỳ.")}</p></div>}</div><DialogFooter><Button type="button" variant="outline" onClick={resetDialog}>Hủy</Button><Button type="button" variant="outline" disabled={!sourceUrl || isBusy} onClick={() => previewMutation.mutate({ sourceUrl })}>{previewMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Đọc link</Button><Button type="button" disabled={!sourceUrl || !preview || isBusy} onClick={saveSource} className="bg-primary text-primary-foreground">{addMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{preview?.status === "detected" ? "Lưu link & tạo Chyusen" : "Lưu link theo dõi"}</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={open} onOpenChange={(value) => { if (!value) resetDialog(); else setOpen(true); }}><DialogContent className="sm:max-w-xl"><DialogHeader><DialogTitle>Thêm nguồn theo dõi Chyusen</DialogTitle><DialogDescription>Hỗ trợ link P-Bandai hoặc bài đăng chính thức x.com/p_bandai. TCG Manager chỉ đọc nội dung công khai; bạn tự mở link và đăng ký nếu muốn tham gia.</DialogDescription></DialogHeader><div className="space-y-4"><div className="space-y-2"><Label htmlFor="source-url">Link nguồn *</Label><Input id="source-url" type="url" value={sourceUrl} onChange={(event) => { setSourceUrl(event.target.value); setPreview(null); }} placeholder="https://p-bandai.jp/... hoặc https://x.com/p_bandai/status/..." /></div><div className="space-y-2"><Label htmlFor="source-label">Tên gợi nhớ (tùy chọn)</Label><Input id="source-label" value={sourceLabel} onChange={(event) => setSourceLabel(event.target.value)} placeholder="Ví dụ: ONE PIECE OP-17" /></div>{preview && <div className={`rounded-xl border p-3 text-sm ${preview.status === "detected" ? "border-emerald-200 bg-emerald-50" : preview.status === "unavailable" ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50"}`}><div className="flex items-center gap-2 font-semibold"><SourceStatus status={preview.status === "detected" ? "detected" : preview.status === "unavailable" ? "unavailable" : "monitoring"} />{preview.title || "Chưa đọc được tiêu đề"}</div>{preview.aiSchedule && <div className="mt-3 space-y-1 rounded-lg border border-white/70 bg-white/75 p-3 text-sm"><div className="flex items-center justify-between gap-2"><strong>AI điền sẵn lịch</strong><Badge className={preview.aiSchedule.confidence === "high" ? "bg-emerald-600 text-white" : preview.aiSchedule.confidence === "medium" ? "bg-amber-500 text-white" : "bg-slate-600 text-white"}>Độ tin cậy: {preview.aiSchedule.confidence === "high" ? "cao" : preview.aiSchedule.confidence === "medium" ? "trung bình" : "thấp"}</Badge></div><p>Bắt đầu: <strong>{preview.registrationStartAt ? formatDate(preview.registrationStartAt) : "Chưa xác định"}</strong></p><p>Hạn đăng ký: <strong>{preview.registrationDeadline ? formatDate(preview.registrationDeadline) : "Chưa xác định"}</strong></p>{preview.drawAt && <p>Quay số: <strong>{formatDate(preview.drawAt)}</strong></p>}<p className="pt-1 text-xs text-muted-foreground">{preview.aiSchedule.note} Vui lòng kiểm tra lại trước khi lưu.</p></div>}{!preview.aiSchedule && preview.registrationDeadline && <p className="mt-2">Hạn đăng ký nhận diện: <strong>{formatDate(preview.registrationDeadline)}</strong></p>}<p className="mt-2 text-muted-foreground">{preview.error || (preview.status === "detected" ? "Đã nhận diện dữ liệu công khai. Bấm lưu để xác nhận tạo Chyusen và theo dõi link." : "Chưa nhận diện chương trình Chyusen. Bạn vẫn có thể lưu link để hệ thống kiểm tra định kỳ.")}</p></div>}</div><DialogFooter><Button type="button" variant="outline" onClick={resetDialog}>Hủy</Button><Button type="button" variant="outline" disabled={!sourceUrl || isBusy} onClick={() => previewMutation.mutate({ sourceUrl })}>{previewMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Đọc link</Button><Button type="button" disabled={!sourceUrl || !preview || isBusy} onClick={saveSource} className="bg-primary text-primary-foreground">{addMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{preview?.status === "detected" ? "Lưu link & tạo Chyusen" : "Lưu link theo dõi"}</Button></DialogFooter></DialogContent></Dialog>
   </div>;
 }

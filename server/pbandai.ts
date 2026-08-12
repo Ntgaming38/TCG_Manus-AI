@@ -5,6 +5,7 @@ export type PBandaiInspection = {
   sourceUrl: string;
   title?: string;
   productName?: string;
+  rawContent?: string;
   registrationStartAt?: Date;
   registrationDeadline?: Date;
   drawAt?: Date;
@@ -89,9 +90,9 @@ export function parsePBandaiOfficialPost(embedHtml: string, sourceUrl: string, a
     return { status: "unavailable", sourceUrl, contentHash, error: "Bài đăng không xác nhận là từ tài khoản P-Bandai chính thức." };
   }
   const isLottery = /抽選(?:販売|受付|申込)?|応募可能/.test(text);
-  if (!isLottery) return { status: "monitoring", sourceUrl, title: "Bài đăng chính thức P-Bandai", productName: text.slice(0, 180) || undefined, contentHash };
+  if (!isLottery) return { status: "monitoring", sourceUrl, title: "Bài đăng chính thức P-Bandai", productName: text.slice(0, 180) || undefined, rawContent: text, contentHash };
   const title = text.length > 120 ? `${text.slice(0, 117)}...` : text;
-  return { status: "detected", sourceUrl, title: title || "Thông báo Chyusen từ P-Bandai", productName: title || undefined, contentHash };
+  return { status: "detected", sourceUrl, title: title || "Thông báo Chyusen từ P-Bandai", productName: title || undefined, rawContent: text, contentHash };
 }
 
 export async function inspectPBandaiUrl(sourceUrl: string): Promise<PBandaiInspection> {

@@ -255,3 +255,10 @@
 - [x] Cập nhật giao diện để phân biệt link sản phẩm và link thông báo chính thức
 - [x] Thêm test, kiểm tra, build và lưu checkpoint cho nguồn thông báo công khai
 - [x] Xác minh Heartbeat đang bật sau khi publish bản fallback mới và callback chạy thành công (HTTP 200)
+
+## AI trích xuất lịch Chyusen từ X.com
+- [x] Tạo schema JSON AI cho tên chương trình, thời gian bắt đầu, hạn đăng ký, thời gian quay số, độ tin cậy và lý do thiếu dữ liệu
+- [x] Gọi LLM server-side để trích xuất từ nội dung bài đăng chính thức, kiểm tra dữ liệu và không suy đoán khi thiếu năm/giờ
+- [x] Điền sẵn bản nháp Chyusen trên giao diện, hiển thị độ tin cậy và luôn yêu cầu người dùng xác nhận trước khi lưu
+- [x] Viết test dữ liệu AI, typecheck, build và kiểm tra luồng trích xuất với bài đăng tiếng Nhật có ngày rõ ràng
+- [x] Lưu checkpoint và deploy tính năng AI trích xuất lịch Chyusen
