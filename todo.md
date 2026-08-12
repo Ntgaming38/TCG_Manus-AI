@@ -241,4 +241,5 @@
 - [x] Hiển thị thông báo phát hiện mới trong Dashboard/Chyusen, không tự đăng ký hoặc thao tác P-Bandai
 - [x] Viết test, kiểm tra, build và lưu checkpoint cho tính năng theo dõi link
 - [x] Lưu checkpoint mới sau khi hoàn tất tính năng nhập link và theo dõi Chyusen P-Bandai
-- [ ] Kích hoạt lịch Heartbeat 6 giờ sau khi phiên bản mới được publish
+- [x] Kích hoạt lịch Heartbeat 6 giờ sau khi phiên bản mới được publish
+- [x] Xác nhận Heartbeat pbandai-chyusen-monitor đang bật, trỏ đến /api/scheduled/chyusen-monitor và có lịch chạy tiếp theo lúc 06:00 UTC
