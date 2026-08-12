@@ -12,6 +12,8 @@ export type SnkrdunkPriceResult = {
   sourceUrl: string;
 };
 
+export type SnkrdunkProductType = "card" | "box" | "pack";
+
 type SnkrdunkSize = {
   currency?: unknown;
   price?: unknown;
@@ -126,6 +128,20 @@ function parseFirstChoiceListingStatePrice(html: string): number | null {
 
   const firstPriceMatch = html.match(/minNewListingPrice(?:\\")?\s*:\s*(\d[\d,]*)/i);
   return firstPriceMatch ? parseJpyNumber(firstPriceMatch[1]) : null;
+}
+
+export function parseFirstRankAPrice(html: string): number | null {
+  const decoded = decodeHtmlEntities(html);
+  const buttons = decoded.match(/<button\b[^>]*>[\s\S]*?<\/button>/gi) ?? [];
+  for (const button of buttons) {
+    if (!/(?:>\s*A(?:あり)?\s*<|>\s*A\s*<)/i.test(button)) continue;
+    const priceMatch = button.match(/(?:¥|円)(?:<[^>]+>)*\s*([\d,]+)/i);
+    const price = priceMatch ? parseJpyNumber(priceMatch[1]) : null;
+    if (price !== null) return price;
+  }
+
+  const fallbackMatch = decoded.match(/(?:Aあり|>\s*A\s*<)[\s\S]{0,500}?(?:¥|円)(?:<[^>]+>)*\s*([\d,]+)/i);
+  return fallbackMatch ? parseJpyNumber(fallbackMatch[1]) : null;
 }
 
 function parseFirstChoiceMarkupPrice(html: string): number | null {
@@ -249,7 +265,7 @@ async function fetchFirstSizePrice(productCode: string): Promise<number> {
   return price;
 }
 
-export async function fetchSnkrdunkPrice(sourceUrl: string): Promise<SnkrdunkPriceResult> {
+export async function fetchSnkrdunkPrice(sourceUrl: string, productType?: SnkrdunkProductType): Promise<SnkrdunkPriceResult> {
   if (!isValidSnkrdunkUrl(sourceUrl)) {
     throw new SnkrdunkSyncError(
       "Link phải là trang sản phẩm https://snkrdunk.com, không phải link danh mục.",
@@ -257,6 +273,26 @@ export async function fetchSnkrdunkPrice(sourceUrl: string): Promise<SnkrdunkPri
   }
 
   const html = await fetchPublicHtml(sourceUrl);
+  if (productType === "card") {
+    const rankAPrice = parseFirstRankAPrice(html);
+    if (rankAPrice !== null) return { price: rankAPrice, sourceUrl };
+
+    const japaneseFallbackUrl = getJapaneseProductFallbackUrl(sourceUrl);
+    if (japaneseFallbackUrl) {
+      try {
+        const japaneseHtml = await fetchPublicHtml(japaneseFallbackUrl);
+        const japaneseRankAPrice = parseFirstRankAPrice(japaneseHtml);
+        if (japaneseRankAPrice !== null) return { price: japaneseRankAPrice, sourceUrl };
+      } catch {
+        // Preserve the explicit Rank A error below when the localized page is unavailable.
+      }
+    }
+
+    throw new SnkrdunkSyncError(
+      "Không tìm thấy giá JPY hạng A (Aあり) công khai trên SNKRDUNK. Giá chưa được cập nhật.",
+    );
+  }
+
   const htmlPrice = parseSnkrdunkPrice(html);
   if (htmlPrice !== null) return { price: htmlPrice, sourceUrl };
 

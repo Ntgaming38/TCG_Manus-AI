@@ -214,7 +214,7 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
     throw new Error("Chưa có link sản phẩm SNKRDUNK. Hãy gắn link sản phẩm cụ thể trước khi đồng bộ.");
   }
 
-  const result = await fetchSnkrdunkPrice(product.snkrdunkUrl);
+  const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack");
   const newPrice = String(result.price);
   const syncedAt = new Date();
 

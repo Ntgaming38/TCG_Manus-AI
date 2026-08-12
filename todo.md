@@ -176,3 +176,9 @@
 - [x] Kiểm tra Marketplace ở mobile/tablet và lưu checkpoint mới sau redesign
 - [x] Thay bảng ngang bằng card Marketplace gọn trên mobile để không cắt cột và vẫn giữ đủ thao tác
 - [x] Lưu checkpoint mới sau bản redesign Marketplace (inline error, card mobile/tablet, test và build)
+
+## Đồng bộ giá Card theo hạng A SNKRDUNK
+- [x] Giữ nguyên luồng đồng bộ hiện tại cho Marketplace và Box/Pack
+- [x] Với sản phẩm Card, ưu tiên lấy giá hạng A (Aあり) của lựa chọn đầu tiên
+- [x] Bổ sung test Card có nhiều hạng và xác nhận không lấy giá B/PSA hoặc hạng khác
+- [x] Chạy typecheck, test, build và lưu checkpoint mới
