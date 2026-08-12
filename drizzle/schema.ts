@@ -1,4 +1,4 @@
-import { bigint, boolean, int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -146,61 +146,3 @@ export const activityLogs = mysqlTable("activity_logs", {
 });
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
-
-/**
- * Chyusen - lottery/draw opportunity tracker
- */
-export const chyusenEntries = mysqlTable("chyusen_entries", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  productName: varchar("productName", { length: 255 }),
-  sourceName: varchar("sourceName", { length: 255 }),
-  sourceUrl: text("sourceUrl"),
-  registrationStartAt: timestamp("registrationStartAt"),
-  registrationDeadline: timestamp("registrationDeadline"),
-  drawAt: timestamp("drawAt"),
-  resultStatus: mysqlEnum("resultStatus", ["pending", "won", "lost", "not_entered", "cancelled"]).default("pending").notNull(),
-  isRegistered: boolean("isRegistered").default(false).notNull(),
-  notes: text("notes"),
-  sourceId: int("sourceId"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type ChyusenEntry = typeof chyusenEntries.$inferSelect;
-export type InsertChyusenEntry = typeof chyusenEntries.$inferInsert;
-
-/** Public Chyusen links monitored on behalf of one user. */
-export const chyusenSources = mysqlTable("chyusen_sources", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  sourceUrl: text("sourceUrl").notNull(),
-  sourceLabel: varchar("sourceLabel", { length: 255 }),
-  isActive: boolean("isActive").default(true).notNull(),
-  lastCheckedAt: timestamp("lastCheckedAt"),
-  lastStatus: mysqlEnum("lastStatus", ["monitoring", "detected", "unavailable", "error"]).default("monitoring").notNull(),
-  lastError: text("lastError"),
-  lastContentHash: varchar("lastContentHash", { length: 128 }),
-  lastDetectedAt: timestamp("lastDetectedAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type ChyusenSource = typeof chyusenSources.$inferSelect;
-export type InsertChyusenSource = typeof chyusenSources.$inferInsert;
-
-/** In-app notices created when an active public link gains a Chyusen program. */
-export const chyusenNotifications = mysqlTable("chyusen_notifications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  sourceId: int("sourceId"),
-  chyusenEntryId: int("chyusenEntryId"),
-  kind: mysqlEnum("kind", ["new_chyusen", "source_error"]).default("new_chyusen").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  message: text("message"),
-  isRead: boolean("isRead").default(false).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type ChyusenNotification = typeof chyusenNotifications.$inferSelect;

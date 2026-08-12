@@ -1,10 +1,6 @@
-import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { getChyusenDeadlineUrgency, getChyusenTimelineStatus } from "../../../shared/chyusen";
-import { BellRing, TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, ExternalLink, ArrowRight } from "lucide-react";
+import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 // Sample chart data - will be replaced with real data from API
@@ -19,42 +15,8 @@ const monthlyData = [
   { month: "T8", revenue: 0, profit: 0 },
 ];
 
-const DAY = 24 * 60 * 60 * 1000;
-function formatReminderDate(value: Date | string | null | undefined) {
-  return value ? new Date(value).toLocaleString("vi-VN", { dateStyle: "medium", timeStyle: "short" }) : "Chưa đặt";
-}
-function formatRemaining(value: Date | string) {
-  const remaining = new Date(value).getTime() - Date.now();
-  if (remaining <= 0) return "Đã hết hạn";
-  const days = Math.floor(remaining / DAY);
-  const hours = Math.floor((remaining % DAY) / (60 * 60 * 1000));
-  const minutes = Math.max(1, Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000)));
-  if (days > 0) return `Còn ${days} ngày${hours > 0 ? ` ${hours} giờ` : ""}`;
-  if (hours > 0) return `Còn ${hours} giờ`;
-  return `Còn ${minutes} phút`;
-}
-
-function DashboardUrgencyBadge({ entry }: { entry: { registrationStartAt: Date | string | null; registrationDeadline: Date | string | null; drawAt: Date | string | null; resultStatus: "pending" | "won" | "lost" | "not_entered" | "cancelled" } }) {
-  const urgency = getChyusenDeadlineUrgency(entry);
-  const map = {
-    notice: { label: "≤72 giờ", className: "border border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-100" },
-    urgent: { label: "≤24 giờ", className: "border border-orange-400 bg-orange-500 text-white hover:bg-orange-500" },
-    critical: { label: "≤6 giờ", className: "border border-red-700 bg-red-600 text-white hover:bg-red-600" },
-  } as const;
-  return urgency ? <Badge className={map[urgency].className}>{map[urgency].label}</Badge> : <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Sắp hết hạn</Badge>;
-}
-
 export default function Dashboard() {
-  const utils = trpc.useUtils();
   const { data: stats } = trpc.dashboard.stats.useQuery();
-  const { data: chyusenEntries = [], isLoading: isChyusenLoading } = trpc.chyusen.list.useQuery();
-  const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery();
-  const markChyusenNotificationRead = trpc.chyusen.markNotificationRead.useMutation({ onSuccess: () => void utils.chyusen.notifications.invalidate() });
-  const unreadChyusenNotifications = useMemo(() => chyusenNotifications.filter((item) => !item.isRead), [chyusenNotifications]);
-  const expiringChyusen = useMemo(() => chyusenEntries
-    .filter((entry) => getChyusenTimelineStatus(entry) === "deadline" && entry.registrationDeadline && !entry.isRegistered)
-    .sort((a, b) => new Date(a.registrationDeadline!).getTime() - new Date(b.registrationDeadline!).getTime())
-    .slice(0, 3), [chyusenEntries]);
 
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
@@ -158,7 +120,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Chyusen reminders hidden */}
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="bg-card neon-card">

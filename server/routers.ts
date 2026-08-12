@@ -4,7 +4,6 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
-import { answerTcgAssistant, buildTcgAssistantContext } from "./tcgAssistant";
 
 export const appRouter = router({
   system: systemRouter,
@@ -15,26 +14,6 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
-  }),
-
-  ai: router({
-    chat: protectedProcedure
-      .input(z.object({
-        messages: z.array(z.object({
-          role: z.enum(["user", "assistant"]),
-          content: z.string().trim().min(1).max(2000),
-        })).min(1).max(12),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await answerTcgAssistant(ctx.user.id, input.messages);
-        return result;
-      }),
-
-    analysisChartData: protectedProcedure
-      .query(async ({ ctx }) => {
-        const context = await buildTcgAssistantContext(ctx.user.id);
-        return context;
-      }),
   }),
 
   products: router({
@@ -255,105 +234,6 @@ export const appRouter = router({
         location: input.location,
         note: input.note,
       })),
-  }),
-
-  chyusen: router({
-    list: protectedProcedure
-      .query(({ ctx }) => db.listChyusenEntries(ctx.user.id)),
-
-    create: protectedProcedure
-      .input(z.object({
-        title: z.string().min(1),
-        productName: z.string().optional(),
-        sourceName: z.string().optional(),
-        sourceUrl: z.string().optional(),
-        registrationStartAt: z.coerce.date().optional(),
-        registrationDeadline: z.coerce.date().optional(),
-        drawAt: z.coerce.date().optional(),
-        resultStatus: z.enum(["pending", "won", "lost", "not_entered", "cancelled"]).default("pending"),
-        isRegistered: z.boolean().default(false),
-        notes: z.string().optional(),
-      }))
-      .mutation(({ ctx, input }) => db.createChyusenEntry({
-        userId: ctx.user.id,
-        title: input.title,
-        productName: input.productName,
-        sourceName: input.sourceName,
-        sourceUrl: input.sourceUrl,
-        registrationStartAt: input.registrationStartAt,
-        registrationDeadline: input.registrationDeadline,
-        drawAt: input.drawAt,
-        resultStatus: input.resultStatus,
-        isRegistered: input.isRegistered,
-        notes: input.notes,
-      })),
-
-    update: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        title: z.string().min(1).optional(),
-        productName: z.string().optional(),
-        sourceName: z.string().optional(),
-        sourceUrl: z.string().optional(),
-        registrationStartAt: z.coerce.date().optional(),
-        registrationDeadline: z.coerce.date().optional(),
-        drawAt: z.coerce.date().optional(),
-        resultStatus: z.enum(["pending", "won", "lost", "not_entered", "cancelled"]).optional(),
-        isRegistered: z.boolean().optional(),
-        notes: z.string().optional(),
-      }))
-      .mutation(({ ctx, input }) => {
-        const { id, ...data } = input;
-        return db.updateChyusenEntry(ctx.user.id, id, data);
-      }),
-
-    delete: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(({ ctx, input }) => db.deleteChyusenEntry(ctx.user.id, input.id)),
-
-    previewSource: protectedProcedure
-      .input(z.object({ sourceUrl: z.string().url() }))
-      .mutation(({ input }) => db.previewChyusenSource(input.sourceUrl)),
-
-    sources: protectedProcedure
-      .query(({ ctx }) => db.listChyusenSources(ctx.user.id)),
-
-    addSource: protectedProcedure
-      .input(z.object({
-        sourceUrl: z.string().url(),
-        sourceLabel: z.string().max(255).optional(),
-        confirmedDraft: z.object({
-          title: z.string().min(1),
-          productName: z.string().optional(),
-          registrationStartAt: z.coerce.date().optional(),
-          registrationDeadline: z.coerce.date().optional(),
-          drawAt: z.coerce.date().optional(),
-          note: z.string().max(1000).optional(),
-        }).optional(),
-      }))
-      .mutation(({ ctx, input }) => db.addChyusenSource(ctx.user.id, input)),
-
-    updateSource: protectedProcedure
-      .input(z.object({ id: z.number(), sourceLabel: z.string().max(255).optional(), isActive: z.boolean().optional() }))
-      .mutation(({ ctx, input }) => {
-        const { id, ...data } = input;
-        return db.updateChyusenSource(ctx.user.id, id, data);
-      }),
-
-    deleteSource: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(({ ctx, input }) => db.deleteChyusenSource(ctx.user.id, input.id)),
-
-    refreshSource: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(({ ctx, input }) => db.scanChyusenSource(ctx.user.id, input.id)),
-
-    notifications: protectedProcedure
-      .query(({ ctx }) => db.listChyusenNotifications(ctx.user.id)),
-
-    markNotificationRead: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(({ ctx, input }) => db.markChyusenNotificationRead(ctx.user.id, input.id)),
   }),
 });
 

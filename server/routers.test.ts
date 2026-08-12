@@ -106,33 +106,11 @@ describe("appRouter", () => {
     });
   });
 
-  describe("ai router", () => {
-    it("requires authentication for ai.chat", async () => {
-      const ctx = createUnauthContext();
-      const caller = appRouter.createCaller(ctx);
-      await expect(caller.ai.chat({ messages: [{ role: "user", content: "Tóm tắt kho của tôi" }] })).rejects.toThrow();
-    });
-  });
-
   describe("reports router", () => {
     it("requires authentication for reports.overview", async () => {
       const ctx = createUnauthContext();
       const caller = appRouter.createCaller(ctx);
       await expect(caller.reports.overview()).rejects.toThrow();
-    });
-  });
-
-  describe("chyusen router", () => {
-    it("requires authentication for chyusen.list", async () => {
-      const ctx = createUnauthContext();
-      const caller = appRouter.createCaller(ctx);
-      await expect(caller.chyusen.list()).rejects.toThrow();
-    });
-
-    it("requires authentication for chyusen.create", async () => {
-      const ctx = createUnauthContext();
-      const caller = appRouter.createCaller(ctx);
-      await expect(caller.chyusen.create({ title: "Test draw" })).rejects.toThrow();
     });
   });
 });

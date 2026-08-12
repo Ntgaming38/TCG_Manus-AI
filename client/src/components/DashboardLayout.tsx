@@ -13,7 +13,6 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -23,16 +22,13 @@ import {
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
-  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift, Dices,
+  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift,
   Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-import { trpc } from "@/lib/trpc";
-import { getChyusenTimelineStatus } from "../../../shared/chyusen";
-import { SidebarAIAssistant } from "./SidebarAIAssistant";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -42,7 +38,6 @@ const menuItems = [
   { icon: Warehouse, label: "Kho Hàng", path: "/kho-hang" },
   { icon: ShoppingCart, label: "Mua Hàng", path: "/mua-hang" },
   { icon: DollarSign, label: "Bán Hàng", path: "/ban-hang" },
-  // { icon: Dices, label: "Chyusen", path: "/chyusen" },
   { icon: TrendingUp, label: "Marketplace", path: "/marketplace" },
   { icon: FileText, label: "Báo Cáo", path: "/bao-cao" },
 ];
@@ -119,9 +114,6 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
-  const chyusenEntries: any[] = [];
-  const chyusenNotifications: any[] = [];
-  const chyusenAlertCount = 0;
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -184,7 +176,6 @@ function DashboardLayoutContent({
                       <item.icon className={`h-4 w-4 ${isActive ? "text-primary drop-shadow-[0_0_6px_rgba(74,222,128,0.8)]" : ""}`} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
-                    {/* {item.path === "/chyusen" && chyusenAlertCount > 0 && <SidebarMenuBadge className="bg-red-600 text-white">{chyusenAlertCount > 99 ? "99+" : chyusenAlertCount}</SidebarMenuBadge>} */}
                   </SidebarMenuItem>
                 );
               })}
@@ -192,7 +183,6 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
-            <SidebarAIAssistant />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-sidebar-accent transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none">
