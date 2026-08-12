@@ -58,26 +58,38 @@ export async function buildTcgAssistantContext(userId: number) {
 }
 
 export async function answerTcgAssistant(userId: number, history: TcgAssistantMessage[]) {
-  const context = await buildTcgAssistantContext(userId);
-  const { data: models } = await listLLMModels();
-  const model = models.find((item) => item.id === "gpt-5-mini")?.id
-    ?? models.find((item) => item.id === "claude-haiku-4-5")?.id
-    ?? models[0]?.id;
+  try {
+    const context = await buildTcgAssistantContext(userId);
+    let model = "gpt-5-mini";
+    try {
+      const { data: models } = await listLLMModels();
+      model = models.find((item) => item.id === "gpt-5-mini")?.id
+        ?? models.find((item) => item.id === "claude-haiku-4-5")?.id
+        ?? models[0]?.id
+        ?? "gpt-5-mini";
+    } catch {
+      // Use default model if listing fails
+    }
 
-  const response = await invokeLLM({
-    model,
-    maxTokens: 900,
-    messages: [
-      {
-        role: "system",
-        content: `Bạn là Trợ lý AI chuyên gia phân tích thị trường TCG của TCG Manager. Hãy cung cấp phân tích sâu sắc về xu hướng giá cả, tỷ suất sinh lời (ROI), lợi nhuận chưa thực hiện (unrealized profit), và đánh giá danh mục thẻ bài (Card) trong kho của người dùng dựa trên dữ liệu SNKRDUNK và giá mua.\n\nTrả lời bằng tiếng Việt, chuyên nghiệp, rõ ràng, có cấu trúc (dùng bullet points hoặc bảng tóm tắt khi phù hợp). Chỉ dùng dữ liệu ngữ cảnh bên dưới. Không khẳng định đã thực hiện giao dịch hay thay đổi dữ liệu trong hệ thống; hướng dẫn người dùng thao tác trực tiếp trên ứng dụng. Không đưa lời khuyên đầu tư chắc chắn, tuyệt đối không bịa đặt số liệu.\n\nNGỮ CẢNH PHÂN TÍCH THẺ BÀI VÀ TÀI CHÍNH:\n${JSON.stringify(context)}`,
-      },
-      ...history.slice(-12).map((message) => ({ role: message.role, content: message.content })),
-    ],
-  });
+    const response = await invokeLLM({
+      model,
+      maxTokens: 900,
+      messages: [
+        {
+          role: "system",
+          content: `Bạn là Trợ lý AI chuyên gia phân tích thị trường TCG của TCG Manager. Hãy cung cấp phân tích sâu sắc về xu hướng giá cả, tỷ suất sinh lời (ROI), lợi nhuận chưa thực hiện (unrealized profit), và đánh giá danh mục thẻ bài (Card) trong kho của người dùng dựa trên dữ liệu SNKRDUNK và giá mua.\n\nTrả lời bằng tiếng Việt, chuyên nghiệp, rõ ràng, có cấu trúc (dùng bullet points hoặc bảng tóm tắt khi phù hợp). Chỉ dùng dữ liệu ngữ cảnh bên dưới. Không khẳng định đã thực hiện giao dịch hay thay đổi dữ liệu trong hệ thống; hướng dẫn người dùng thao tác trực tiếp trên ứng dụng. Không đưa lời khuyên đầu tư chắc chắn, tuyệt đối không bịa đặt số liệu.\n\nNGỮ CẢNH PHÂN TÍCH THẺ BÀI VÀ TÀI CHÍNH:\n${JSON.stringify(context)}`,
+        },
+        ...history.slice(-12).map((message) => ({ role: message.role, content: message.content })),
+      ],
+    });
 
-  const content = response.choices[0]?.message.content;
-  return typeof content === "string" && content.trim()
-    ? content.trim()
-    : "Tôi chưa thể tạo câu trả lời lúc này. Vui lòng thử lại sau.";
+    const content = response.choices?.[0]?.message?.content;
+    if (typeof content === "string" && content.trim()) {
+      return content.trim();
+    }
+  } catch (error) {
+    console.error("Error invoking TCG Assistant LLM:", error);
+  }
+
+  return "Xin lỗi, hiện tại Trợ lý AI đang bận hoặc gặp sự cố kết nối tạm thời. Vui lòng thử lại câu hỏi sau ít phút.";
 }

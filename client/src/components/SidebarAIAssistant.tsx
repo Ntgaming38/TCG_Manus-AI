@@ -1,4 +1,4 @@
-import { Bot, Loader2, Sparkles, Trash2, BarChart2 } from "lucide-react";
+import { Bot, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useMemo } from "react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
@@ -6,7 +6,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const STORAGE_KEY = "tcg-manager-ai-assistant-history";
 
@@ -35,13 +34,11 @@ export function SidebarAIAssistant() {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-12)));
   }, [messages]);
 
-  const { data: chartContext, isLoading: isChartLoading } = trpc.ai.analysisChartData.useQuery(undefined, { enabled: open });
-
   const assistantMutation = trpc.ai.chat.useMutation({
     onSuccess: (answer) => setMessages((current): Message[] => [...current, { role: "assistant" as const, content: answer }].slice(-12)),
     onError: (error) => {
       toast.error("Trợ lý AI chưa thể trả lời", { description: error.message });
-      setMessages((current): Message[] => [...current, { role: "assistant" as const, content: "Tôi chưa thể xử lý câu hỏi này. Vui lòng thử lại sau." }].slice(-12));
+      setMessages((current): Message[] => [...current, { role: "assistant" as const, content: "Xin lỗi, hiện tại Trợ lý AI đang bận hoặc gặp sự cố kết nối tạm thời. Vui lòng thử lại câu hỏi sau ít phút." }].slice(-12));
     },
   });
 
@@ -95,7 +92,7 @@ export function SidebarAIAssistant() {
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Xóa lịch sử trò chuyện?</AlertDialogTitle>
-                  <AlertDialogDescription>Lịch sử chat của phiên hiện tại sẽ bị xóa khỏi thiết bị này. Dữ liệu kho, mua bán và Chyusen sẽ không bị ảnh hưởng.</AlertDialogDescription>
+                  <AlertDialogDescription>Lịch sử chat của phiên hiện tại sẽ bị xóa khỏi thiết bị này. Dữ liệu kho, mua bán và thống kê sẽ không bị ảnh hưởng.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Hủy</AlertDialogCancel>
@@ -115,50 +112,13 @@ export function SidebarAIAssistant() {
             </div>
           )}
         </DialogHeader>
-        <div className="space-y-4 px-4 pb-4 sm:px-5">
-          {/* Visual Analysis Chart */}
-          <div className="rounded-xl border border-border bg-card/60 p-3 shadow-sm">
-            <div className="flex items-center justify-between pb-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                <BarChart2 className="size-4 text-primary" />
-                <span>Biểu đồ phân bổ lợi nhuận chưa thực hiện & ROI (Top Thẻ Bài)</span>
-              </div>
-              <span className="text-[11px] text-muted-foreground">SNKRDUNK vs Vốn</span>
-            </div>
-            {isChartLoading ? (
-              <div className="flex h-44 items-center justify-center text-xs text-muted-foreground">Đang tải dữ liệu biểu đồ...</div>
-            ) : !chartContext || !chartContext.topCardsAnalysis || chartContext.topCardsAnalysis.length === 0 ? (
-              <div className="flex h-44 flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-                <p>Chưa có thẻ bài (Card) nào trong kho để vẽ biểu đồ.</p>
-                <p className="text-[11px]">Hãy thêm sản phẩm loại Card để xem phân tích trực quan.</p>
-              </div>
-            ) : (
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartContext.topCardsAnalysis.slice(0, 6)} margin={{ top: 10, right: 10, left: -15, bottom: 25 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="name" stroke="currentColor" fontSize={10} tickLine={false} interval={0} angle={-15} textAnchor="end" className="text-muted-foreground" />
-                    <YAxis stroke="currentColor" fontSize={10} tickLine={false} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: "#12122b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px", color: "#fff" }}
-                      formatter={(val: any, name: string) => [
-                        name === "unrealizedProfit" ? `¥${Number(val || 0).toLocaleString()}` : `${val}%`,
-                        name === "unrealizedProfit" ? "Lợi nhuận (¥)" : "ROI (%)"
-                      ]}
-                    />
-                    <Bar dataKey="unrealizedProfit" fill="#22c55e" radius={[4, 4, 0, 0]} name="unrealizedProfit" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
+        <div className="px-4 pb-4 sm:px-5">
           <AIChatBox
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={assistantMutation.isPending}
             placeholder={placeholder}
-            height="min(45vh, 360px)"
+            height="min(65vh, 540px)"
             emptyStateMessage="Tôi có thể phân tích sâu xu hướng giá, ROI và lợi nhuận thẻ bài cho bạn."
             suggestedPrompts={suggestedPrompts}
             className="border-primary/20 shadow-none"
