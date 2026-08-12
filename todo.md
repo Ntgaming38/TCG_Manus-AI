@@ -277,3 +277,13 @@
 - [x] Thêm nút xóa lịch sử chat theo phiên, có xác nhận và trạng thái trống rõ ràng
 - [x] Hiển thị trạng thái “đang suy nghĩ” trực quan khi AI xử lý câu trả lời
 - [x] Kiểm tra responsive, typecheck, test, build và lưu checkpoint
+
+## 9Router cho Trợ lý AI
+- [ ] Xác minh endpoint/model 9Router đang khả dụng bằng health-check server-side
+- [ ] Thêm adapter 9Router server-side tùy chọn, không lộ API key và có fallback built-in LLM
+- [ ] Thêm lựa chọn/tình trạng tuyến 9Router trong Trợ lý AI
+- [ ] Viết test, kiểm tra typecheck, build và lưu checkpoint
+
+## Quyết định tuyến AI
+- [x] Hủy tích hợp 9Router theo yêu cầu; giữ nguyên built-in LLM và Trợ lý AI hiện tại
+- [x] Dọn bỏ tệp health-check thử nghiệm để không thêm kiểm tra mạng hoặc phụ thuộc 9Router vào bộ test của ứng dụng
