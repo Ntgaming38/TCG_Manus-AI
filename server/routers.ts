@@ -16,6 +16,54 @@ export const appRouter = router({
     }),
   }),
 
+  ai: router({
+    chat: protectedProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string().trim().min(1).max(2000),
+        })).min(1).max(12),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          return "Xin chào! Trợ lý AI đang sẵn sàng hỗ trợ bạn phân tích danh mục thẻ bài, tỷ suất ROI và biến động giá thị trường.";
+        } catch {
+          return "Xin lỗi, hiện tại Trợ lý AI đang bận.";
+        }
+      }),
+
+    analysisChartData: protectedProcedure
+      .query(async ({ ctx }) => {
+        const cardProducts = await db.listProducts(ctx.user.id, { type: "card" });
+        const cardAnalysis = cardProducts.map((p: any) => {
+          const buyP = Number(p.buyPrice || 0);
+          const marketP = Number(p.marketPrice || buyP);
+          const unrealizedProfit = (marketP - buyP) * Math.max(0, p.quantity - (p.damagedQuantity || 0));
+          const roi = buyP > 0 ? Number((((marketP - buyP) / buyP) * 100).toFixed(1)) : 0;
+          return {
+            id: p.id,
+            name: p.name,
+            buyPrice: buyP,
+            marketPrice: marketP,
+            suggestedMarketPrice: marketP,
+            unrealizedProfit,
+            roi,
+          };
+        });
+        cardAnalysis.sort((a, b) => b.unrealizedProfit - a.unrealizedProfit);
+
+        const stats = await db.getDashboardStats(ctx.user.id);
+        return {
+          dashboard: stats,
+          topCardsAnalysis: cardAnalysis.slice(0, 10),
+          inventorySummary: {
+            totalCardsInStock: cardProducts.reduce((sum: number, p: any) => sum + p.quantity, 0),
+            linkedToSnkrdunk: cardProducts.filter((p: any) => Boolean(p.snkrdunkUrl)).length,
+          },
+        };
+      }),
+  }),
+
   products: router({
     list: protectedProcedure
       .input(z.object({
