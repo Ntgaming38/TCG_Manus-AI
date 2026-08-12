@@ -191,3 +191,7 @@
 ## Tooltip nhãn Hạng A Marketplace
 - [x] Thêm tooltip giải thích nhãn “Hạng A” là giá được đồng bộ từ SNKRDUNK ở desktop và mobile
 - [x] Kiểm tra accessibility bằng hover/focus, typecheck, test, build và lưu checkpoint mới
+
+## Làm nổi bật nhãn Hạng A
+- [x] Đổi nhãn Hạng A sang màu tương phản mạnh hơn trên bảng desktop và card mobile
+- [x] Giữ nguyên tooltip, logic giá và đồng bộ SNKRDUNK; chạy typecheck, test, build và lưu checkpoint
