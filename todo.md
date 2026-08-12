@@ -182,3 +182,8 @@
 - [x] Với sản phẩm Card, ưu tiên lấy giá hạng A (Aあり) của lựa chọn đầu tiên
 - [x] Bổ sung test Card có nhiều hạng và xác nhận không lấy giá B/PSA hoặc hạng khác
 - [x] Chạy typecheck, test, build và lưu checkpoint mới
+
+## Nhãn giá Card Marketplace
+- [x] Hiển thị nhãn “Hạng A” cạnh giá thị trường ở bảng Marketplace và card responsive cho sản phẩm Card
+- [x] Giữ nguyên giá và logic đồng bộ của Box/Pack
+- [x] Chạy typecheck, test, build và lưu checkpoint mới
