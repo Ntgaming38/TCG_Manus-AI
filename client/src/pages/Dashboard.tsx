@@ -1,6 +1,10 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck } from "lucide-react";
+import { getChyusenTimelineStatus } from "../../../shared/chyusen";
+import { BellRing, TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, ExternalLink, ArrowRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 // Sample chart data - will be replaced with real data from API
@@ -15,8 +19,28 @@ const monthlyData = [
   { month: "T8", revenue: 0, profit: 0 },
 ];
 
+const DAY = 24 * 60 * 60 * 1000;
+function formatReminderDate(value: Date | string | null | undefined) {
+  return value ? new Date(value).toLocaleString("vi-VN", { dateStyle: "medium", timeStyle: "short" }) : "Chưa đặt";
+}
+function formatRemaining(value: Date | string) {
+  const remaining = new Date(value).getTime() - Date.now();
+  if (remaining <= 0) return "Đã hết hạn";
+  const days = Math.floor(remaining / DAY);
+  const hours = Math.floor((remaining % DAY) / (60 * 60 * 1000));
+  const minutes = Math.max(1, Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000)));
+  if (days > 0) return `Còn ${days} ngày${hours > 0 ? ` ${hours} giờ` : ""}`;
+  if (hours > 0) return `Còn ${hours} giờ`;
+  return `Còn ${minutes} phút`;
+}
+
 export default function Dashboard() {
   const { data: stats } = trpc.dashboard.stats.useQuery();
+  const { data: chyusenEntries = [], isLoading: isChyusenLoading } = trpc.chyusen.list.useQuery();
+  const expiringChyusen = useMemo(() => chyusenEntries
+    .filter((entry) => getChyusenTimelineStatus(entry) === "deadline" && entry.registrationDeadline)
+    .sort((a, b) => new Date(a.registrationDeadline!).getTime() - new Date(b.registrationDeadline!).getTime())
+    .slice(0, 3), [chyusenEntries]);
 
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
@@ -119,6 +143,20 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chyusen reminders */}
+      <Card className="border-orange-200 bg-orange-50/60 shadow-sm">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-orange-100 p-2.5 text-orange-700"><BellRing className="h-5 w-5" /></div>
+              <div><CardTitle className="text-base font-bold text-orange-950">Nhắc nhở Chyusen</CardTitle><p className="mt-1 text-sm text-orange-800/80">Chương trình xổ số sắp hết hạn đăng ký.</p></div>
+            </div>
+            <div className="flex items-center gap-2"><Badge className="bg-orange-600 text-white hover:bg-orange-600">{expiringChyusen.length} cảnh báo</Badge><Button asChild size="sm" variant="outline" className="border-orange-300 text-orange-800 hover:bg-orange-100"><a href="/chyusen">Xem Chyusen <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></a></Button></div>
+          </div>
+          {isChyusenLoading ? <div className="mt-4 rounded-lg border border-dashed border-orange-200 bg-white/70 px-4 py-3 text-sm text-orange-900/70">Đang tải thông báo...</div> : expiringChyusen.length === 0 ? <div className="mt-4 rounded-lg border border-dashed border-orange-200 bg-white/70 px-4 py-3 text-sm text-orange-900/70">Hiện không có chương trình nào sắp hết hạn đăng ký.</div> : <div className="mt-4 grid gap-2 lg:grid-cols-3">{expiringChyusen.map((entry) => <div key={entry.id} className="flex min-w-0 flex-col gap-2 rounded-xl border border-orange-200 bg-white p-3"><div className="flex items-start justify-between gap-2"><p className="min-w-0 truncate font-semibold text-foreground">{entry.title}</p><Badge className="shrink-0 bg-orange-100 text-orange-800 hover:bg-orange-100">Sắp hết hạn</Badge></div><p className="text-xs text-muted-foreground">Hạn: <span className="font-medium text-orange-700">{formatReminderDate(entry.registrationDeadline)}</span></p><div className="flex items-center justify-between gap-2"><span className="text-sm font-bold text-orange-700">{formatRemaining(entry.registrationDeadline!)}</span>{entry.sourceUrl ? <a href={entry.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs font-semibold text-primary hover:underline">Mở link <ExternalLink className="ml-1 h-3 w-3" /></a> : <span className="text-xs text-muted-foreground">Chưa có link</span>}</div></div>)}</div>}
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

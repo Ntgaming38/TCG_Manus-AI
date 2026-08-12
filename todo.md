@@ -212,3 +212,9 @@
 - [x] Hiển thị tên chương trình, thời hạn còn lại và nút mở link chương trình
 - [x] Đảm bảo cảnh báo responsive, có trạng thái không có thông báo và kiểm tra typecheck/test/build
 - [x] Lưu checkpoint sau khi hoàn tất
+
+## Nhắc nhở Chyusen trên Dashboard
+- [x] Đưa danh sách chương trình Chyusen sắp hết hạn lên Dashboard chính
+- [x] Hiển thị số lượng cảnh báo, thời hạn còn lại và nút mở chương trình
+- [x] Giữ đồng bộ với dữ liệu Chyusen theo từng user và có trạng thái rỗng/loading
+- [x] Kiểm tra responsive, typecheck, test, build và lưu checkpoint mới
