@@ -187,3 +187,7 @@
 - [x] Hiển thị nhãn “Hạng A” cạnh giá thị trường ở bảng Marketplace và card responsive cho sản phẩm Card
 - [x] Giữ nguyên giá và logic đồng bộ của Box/Pack
 - [x] Chạy typecheck, test, build và lưu checkpoint mới
+
+## Tooltip nhãn Hạng A Marketplace
+- [x] Thêm tooltip giải thích nhãn “Hạng A” là giá được đồng bộ từ SNKRDUNK ở desktop và mobile
+- [x] Kiểm tra accessibility bằng hover/focus, typecheck, test, build và lưu checkpoint mới
