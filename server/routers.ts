@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { answerTcgAssistant } from "./tcgAssistant";
 
 export const appRouter = router({
   system: systemRouter,
@@ -14,6 +15,17 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+  }),
+
+  ai: router({
+    chat: protectedProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string().trim().min(1).max(2000),
+        })).min(1).max(12),
+      }))
+      .mutation(({ ctx, input }) => answerTcgAssistant(ctx.user.id, input.messages)),
   }),
 
   products: router({

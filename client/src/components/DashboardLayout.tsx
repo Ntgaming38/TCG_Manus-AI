@@ -32,6 +32,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { trpc } from "@/lib/trpc";
 import { getChyusenTimelineStatus } from "../../../shared/chyusen";
+import { SidebarAIAssistant } from "./SidebarAIAssistant";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -191,6 +192,7 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            <SidebarAIAssistant />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-sidebar-accent transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none">

@@ -262,3 +262,13 @@
 - [x] Điền sẵn bản nháp Chyusen trên giao diện, hiển thị độ tin cậy và luôn yêu cầu người dùng xác nhận trước khi lưu
 - [x] Viết test dữ liệu AI, typecheck, build và kiểm tra luồng trích xuất với bài đăng tiếng Nhật có ngày rõ ràng
 - [x] Lưu checkpoint và deploy tính năng AI trích xuất lịch Chyusen
+
+## Kỹ năng tái sử dụng Chyusen
+- [x] Đóng gói workflow theo dõi link công khai, AI trích xuất lịch và nhắc hạn thành skill tái sử dụng
+- [x] Kiểm tra cấu trúc skill và giao SKILL.md để thêm vào kho kỹ năng
+
+## Trợ lý AI sidebar
+- [x] Đánh giá và tái sử dụng thành phần chat có sẵn cho Trợ lý AI
+- [x] Tạo tRPC server-side để trả lời câu hỏi theo ngữ cảnh dữ liệu của đúng người dùng
+- [x] Thêm Trợ lý AI phía trên thông tin người dùng trong sidebar, có trạng thái mở/đóng và lịch sử phiên
+- [x] Viết test, kiểm tra responsive, typecheck, build và lưu checkpoint
