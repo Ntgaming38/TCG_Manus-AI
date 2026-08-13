@@ -1,4 +1,4 @@
-import { eq, and, like, sql, desc, inArray, asc, isNotNull, lt, ne, or } from "drizzle-orm";
+import { eq, and, like, sql, desc, inArray, asc, isNotNull, lt, ne, or, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, marketplaceSyncConfig } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
@@ -11,6 +11,7 @@ import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
 import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
 import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
+import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../shared/marketplacePriceHistory';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -209,7 +210,7 @@ export async function updateMarketPrice(id: number, userId: number, marketPrice:
   }
 }
 
-export async function getProductPriceHistory(productId: number, userId: number) {
+export async function getProductPriceHistory(productId: number, userId: number, days?: number) {
   const db = await getDb();
   if (!db) return [];
 
@@ -219,6 +220,8 @@ export async function getProductPriceHistory(productId: number, userId: number) 
     .limit(1);
   if (!product) throw new Error("Sản phẩm không tồn tại hoặc không thuộc quyền truy cập của bạn.");
 
+  const period = parseMarketplaceHistoryPeriod(days);
+  const cutoff = new Date(Date.now() - period * 24 * 60 * 60 * 1000);
   return db.select({
     id: priceHistory.id,
     oldPrice: priceHistory.oldPrice,
@@ -226,9 +229,28 @@ export async function getProductPriceHistory(productId: number, userId: number) 
     source: priceHistory.source,
     createdAt: priceHistory.createdAt,
   }).from(priceHistory)
-    .where(eq(priceHistory.productId, productId))
+    .where(and(eq(priceHistory.productId, productId), gte(priceHistory.createdAt, cutoff)))
     .orderBy(asc(priceHistory.createdAt), asc(priceHistory.id))
     .limit(180);
+}
+
+export async function getMarketplace24hChanges(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const userProducts = await db.select({ id: products.id }).from(products).where(and(eq(products.userId, userId), eq(products.status, "in_stock")));
+  if (!userProducts.length) return [];
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const history = await db.select({
+    id: priceHistory.id,
+    productId: priceHistory.productId,
+    oldPrice: priceHistory.oldPrice,
+    newPrice: priceHistory.newPrice,
+    source: priceHistory.source,
+    createdAt: priceHistory.createdAt,
+  }).from(priceHistory)
+    .where(and(inArray(priceHistory.productId, userProducts.map((product) => product.id)), gte(priceHistory.createdAt, cutoff)))
+    .orderBy(asc(priceHistory.createdAt), asc(priceHistory.id));
+  return getMarketplace24hMovements(history);
 }
 
 export async function updateSnkrdunkUrl(id: number, userId: number, snkrdunkUrl: string) {

@@ -255,8 +255,11 @@ export const appRouter = router({
       .mutation(({ ctx, input }) => db.updateMarketPrice(input.id, ctx.user.id, String(input.marketPrice))),
 
     priceHistory: protectedProcedure
-      .input(z.object({ productId: z.number().int().positive() }))
-      .query(({ ctx, input }) => db.getProductPriceHistory(input.productId, ctx.user.id)),
+      .input(z.object({ productId: z.number().int().positive(), days: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional() }))
+      .query(({ ctx, input }) => db.getProductPriceHistory(input.productId, ctx.user.id, input.days)),
+
+    priceChanges24h: protectedProcedure
+      .query(({ ctx }) => db.getMarketplace24hChanges(ctx.user.id)),
 
     updateSnkrdunkUrl: protectedProcedure
       .input(z.object({ id: z.number(), snkrdunkUrl: z.string().url() }))

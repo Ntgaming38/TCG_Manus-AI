@@ -438,3 +438,8 @@
 - [x] Rà soát dữ liệu price history hiện có và thiết kế API theo sản phẩm
 - [x] Thêm biểu đồ lịch sử giá vào Marketplace
 - [x] Kiểm thử dữ liệu, API, biểu đồ và lưu checkpoint
+
+## Bộ lọc và biến động giá Marketplace
+- [x] Thêm bộ lọc 7 ngày, 30 ngày và 90 ngày vào biểu đồ lịch sử giá
+- [x] Hiển thị biến động 24 giờ bằng mũi tên xanh đỏ trong bảng Marketplace
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
