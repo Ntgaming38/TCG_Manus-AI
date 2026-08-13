@@ -195,3 +195,10 @@ Ngày xác minh: 13/08/2026
 
 - Ô **Sắp hết hạn** chỉ đếm Chyusen chưa đăng ký có thời hạn còn 24 giờ hoặc ít hơn, bao gồm mốc 3 giờ; các chương trình còn 24–72 giờ không xuất hiện trong ô này.
 - Chyusen đã đăng ký vẫn được ưu tiên trong Chờ kết quả, không bị đếm trùng vào Sắp hết hạn. Typecheck và 99 Vitest tests đều đạt.
+
+## Đếm hạn Chyusen theo ngày Nhật Bản
+
+Ngày xác minh: 13/08/2026
+
+- Phép đếm Sắp hết hạn giờ dùng ngày lịch JST. Ví dụ, ngày hiện tại 13 và hạn đăng ký ngày 14 cho kết quả còn **1 ngày**, nên chương trình được hiển thị trong ô ngay từ ngày 13.
+- Hạn cách hai ngày lịch không xuất hiện; dữ liệu đã đăng ký vẫn được chuyển sang Chờ kết quả. Typecheck và 99 Vitest tests đều đạt.

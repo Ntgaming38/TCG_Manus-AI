@@ -10,6 +10,7 @@ import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
 import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
 import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
 import { summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
+import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1016,6 +1017,7 @@ export async function getDashboardStats(userId: number) {
     ...entry,
     timeState: getChyusenTimeState(entry),
     urgency: getChyusenUrgency(entry.applicationEnd),
+    daysRemaining: getChyusenDaysRemaining(entry.applicationEnd),
     remainingTime: formatRemainingTime(entry.applicationEnd),
   }));
   const chyusen = { open: 0, ...summarizeChyusenDashboard(chyusenWithState) };

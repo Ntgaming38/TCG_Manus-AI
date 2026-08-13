@@ -374,3 +374,7 @@
 ## Nhắc hạn Chyusen một ngày
 - [x] Đếm Chyusen còn một ngày hoặc ít hơn trong ô Sắp hết hạn
 - [x] Kiểm thử mốc thời gian và lưu checkpoint
+
+## Đếm hạn Chyusen theo ngày Nhật Bản
+- [x] Tính Sắp hết hạn theo ngày lịch JST để hạn ngày mai được đếm từ hôm nay
+- [x] Kiểm thử mốc ngày 13 → hạn ngày 14 và lưu checkpoint
