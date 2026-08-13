@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Loader2, Send, User, Sparkles } from "lucide-react";
+import { Check, Copy, Loader2, Send, User, Sparkles } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 
@@ -121,6 +121,7 @@ export function AIChatBox({
   suggestedPrompts,
 }: AIChatBoxProps) {
   const [input, setInput] = useState("");
+  const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputAreaRef = useRef<HTMLFormElement>(null);
@@ -128,26 +129,6 @@ export function AIChatBox({
 
   // Filter out system messages
   const displayMessages = messages.filter((msg) => msg.role !== "system");
-
-  // Calculate min-height for last assistant message to push user message to top
-  const [minHeightForLastMessage, setMinHeightForLastMessage] = useState(0);
-
-  useEffect(() => {
-    if (containerRef.current && inputAreaRef.current) {
-      const containerHeight = containerRef.current.offsetHeight;
-      const inputHeight = inputAreaRef.current.offsetHeight;
-      const scrollAreaHeight = containerHeight - inputHeight;
-
-      // Reserve space for:
-      // - padding (p-4 = 32px top+bottom)
-      // - user message: 40px (item height) + 16px (margin-top from space-y-4) = 56px
-      // Note: margin-bottom is not counted because it naturally pushes the assistant message down
-      const userMessageReservedHeight = 56;
-      const calculatedHeight = scrollAreaHeight - 32 - userMessageReservedHeight;
-
-      setMinHeightForLastMessage(Math.max(0, calculatedHeight));
-    }
-  }, []);
 
   // Scroll to bottom helper function with smooth animation
   const scrollToBottom = () => {
@@ -187,6 +168,25 @@ export function AIChatBox({
     }
   };
 
+  const copyAssistantMessage = async (content: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageIndex(index);
+      window.setTimeout(() => setCopiedMessageIndex((current) => current === index ? null : current), 1800);
+    } catch {
+      const helper = document.createElement("textarea");
+      helper.value = content;
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.appendChild(helper);
+      helper.select();
+      document.execCommand("copy");
+      document.body.removeChild(helper);
+      setCopiedMessageIndex(index);
+      window.setTimeout(() => setCopiedMessageIndex((current) => current === index ? null : current), 1800);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -223,14 +223,9 @@ export function AIChatBox({
             </div>
           </div>
         ) : (
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full min-h-0 overscroll-contain">
             <div className="flex flex-col space-y-4 p-4">
               {displayMessages.map((message, index) => {
-                // Apply min-height to last message only if NOT loading (when loading, the loading indicator gets it)
-                const isLastMessage = index === displayMessages.length - 1;
-                const shouldApplyMinHeight =
-                  isLastMessage && !isLoading && minHeightForLastMessage > 0;
-
                 return (
                   <div
                     key={index}
@@ -240,11 +235,6 @@ export function AIChatBox({
                         ? "justify-end items-start"
                         : "justify-start items-start"
                     )}
-                    style={
-                      shouldApplyMinHeight
-                        ? { minHeight: `${minHeightForLastMessage}px` }
-                        : undefined
-                    }
                   >
                     {message.role === "assistant" && (
                       <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
@@ -254,16 +244,14 @@ export function AIChatBox({
 
                     <div
                       className={cn(
-                        "min-w-0 max-w-[calc(100%-2.75rem)] overflow-hidden rounded-lg px-3 py-2.5 sm:max-w-[80%] sm:px-4",
+                        "relative min-w-0 max-w-[calc(100%-2.75rem)] overflow-hidden rounded-lg px-3 py-2.5 sm:max-w-[80%] sm:px-4",
                         message.role === "user"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-foreground"
                       )}
                     >
                       {message.role === "assistant" ? (
-                        <div className="prose prose-sm prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg dark:prose-invert max-w-none break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto sm:prose-h1:text-3xl">
-                          <Streamdown>{message.content}</Streamdown>
-                        </div>
+                        <><button type="button" aria-label="Sao chép câu trả lời" onClick={() => copyAssistantMessage(message.content, index)} className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-md border border-border/70 bg-background/80 text-muted-foreground backdrop-blur hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary">{copiedMessageIndex === index ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}</button><div className="prose prose-sm prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg dark:prose-invert max-w-none break-words pr-7 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto sm:prose-h1:text-3xl"><Streamdown>{message.content}</Streamdown></div></>
                       ) : (
                         <p className="whitespace-pre-wrap text-sm">
                           {message.content}
@@ -283,11 +271,6 @@ export function AIChatBox({
               {isLoading && (
                 <div
                   className="flex items-start gap-3"
-                  style={
-                    minHeightForLastMessage > 0
-                      ? { minHeight: `${minHeightForLastMessage}px` }
-                      : undefined
-                  }
                 >
                   <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
                     <Sparkles className="size-4 text-primary" />

@@ -332,3 +332,8 @@
 - [x] Sửa modal Trợ lý AI responsive trên mobile, tránh tràn nội dung và giữ ô nhập luôn thao tác được
 - [x] Chuẩn hóa system prompt và hiển thị phân tích AI sang ¥ (JPY), không dùng VNĐ
 - [x] Kiểm thử mobile và lưu checkpoint
+
+## Khung AI mobile và sao chép trả lời
+- [x] Bảo đảm khung Trợ lý AI mobile không bị che khi phản hồi dài, chỉ vùng nội dung được cuộn
+- [x] Thêm nút sao chép cho từng câu trả lời của trợ lý AI
+- [x] Kiểm thử mobile với nội dung dài và lưu checkpoint

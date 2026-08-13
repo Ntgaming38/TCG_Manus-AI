@@ -127,3 +127,11 @@ Ngày xác minh: 13/08/2026
 - Modal Trợ lý AI dùng chiều cao theo viewport trên điện thoại, vùng chat co giãn/có cuộn độc lập và ô nhập luôn nằm trong khung; nội dung Markdown, bảng và chuỗi dài được giới hạn để không tràn ngang.
 - System prompt yêu cầu dùng ¥/JPY; phản hồi mới và lịch sử chat cũ có hậu tố VNĐ/VND được chuẩn hóa thành ¥ trước khi hiển thị.
 - Đã xác minh trang mobile 375×812 sau khi ổn định dịch vụ, typecheck, 98 Vitest tests và production build đều đạt.
+
+## Khung AI mobile và sao chép trả lời
+
+Ngày xác minh: 13/08/2026
+
+- Đã bỏ cơ chế tạo chiều cao tối thiểu cho câu trả lời cuối, nguyên nhân làm phản hồi dài chiếm và che vùng nhập trên mobile. Chỉ `ScrollArea` của nội dung được cuộn, trong khi header và ô nhập luôn là phần cố định.
+- Mỗi câu trả lời AI có nút sao chép; sau khi sao chép biểu tượng chuyển thành dấu xác nhận trong 1,8 giây. Có fallback cho trình duyệt không hỗ trợ Clipboard API.
+- Typecheck, 98 Vitest tests và production build đều đạt.

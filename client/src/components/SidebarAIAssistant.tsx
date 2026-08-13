@@ -132,7 +132,7 @@ export function SidebarAIAssistant() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex min-h-0 flex-1 px-3 pb-3 sm:px-5 sm:pb-4">
+        <div className="relative flex min-h-0 flex-1 overflow-hidden px-3 pb-3 sm:px-5 sm:pb-4">
           <AIChatBox
             messages={messages}
             onSendMessage={handleSendMessage}
