@@ -253,3 +253,8 @@
 - [x] Thêm nút Lưu rõ ràng cho URL/tên/tần suất từng nguồn
 - [x] Thêm nút Xóa với hộp xác nhận từ trang Cài đặt
 - [x] Bổ sung kiểm thử payload Lưu, xác minh UI desktop/mobile và checkpoint sau bản sửa
+
+## Cài đặt kiểm tra nguồn và Marketplace
+- [x] Thêm nút Kiểm tra ngay cho từng nguồn Chyusen với trạng thái/lỗi lần chạy gần nhất
+- [x] Thêm cấu hình auto-sync Marketplace vào trang Cài đặt, giữ lịch 6 giờ và nút thủ công
+- [x] Kiểm thử thao tác, lỗi nguồn, desktop/mobile và lưu checkpoint

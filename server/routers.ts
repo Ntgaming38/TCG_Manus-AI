@@ -10,6 +10,7 @@ import { buildTcgAssistantSystemPrompt } from "./tcgAssistantPrompt";
 import * as chyusenDb from "./chyusenDb";
 import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
+import { checkChyusenSourceNow } from "./chyusenMonitor";
 
 const chyusenEntryInput = z.object({
   title: z.string().trim().min(1).max(255),
@@ -261,6 +262,13 @@ export const appRouter = router({
     autoSyncStatus: protectedProcedure
       .query(() => db.getMarketplaceAutoSyncStatus()),
 
+    updateAutoSyncSettings: protectedProcedure
+      .input(z.object({ isEnabled: z.boolean().optional(), batchSize: z.number().int().min(1).max(20).optional() }))
+      .mutation(({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new Error("Chỉ quản trị viên mới có thể thay đổi đồng bộ Marketplace tự động.");
+        return db.updateMarketplaceAutoSyncSettings(input);
+      }),
+
     markDamaged: protectedProcedure
       .input(z.object({
         productId: z.number(),
@@ -459,6 +467,10 @@ export const appRouter = router({
     deleteSource: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => chyusenDb.deleteChyusenSource(ctx.user.id, input.id)),
+
+    checkSourceNow: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => checkChyusenSourceNow(ctx.user.id, input.id)),
   }),
 
   dashboard: router({

@@ -12,6 +12,52 @@ export type ChyusenMonitorSummary = {
   unavailableSources: number;
 };
 
+export async function checkChyusenSource(source: any) {
+  const now = new Date();
+  try {
+    const fetched = await fetchPublicChyusenSource(source.sourceUrl);
+    const changed = Boolean(source.contentHash && source.contentHash !== fetched.contentHash);
+    await chyusenDb.updateChyusenSourceStatus(source.id, {
+      latestStatus: changed ? "detected" : "monitoring",
+      latestError: null,
+      contentHash: fetched.contentHash,
+      lastDetectedAt: changed ? now : undefined,
+      detectedCount: changed ? (source.detectedCount || 0) + 1 : source.detectedCount,
+      failureCount: 0,
+      nextCheckAt: new Date(now.getTime() + source.checkIntervalMinutes * 60_000),
+    });
+    if (changed) {
+      await chyusenDb.recordChyusenSourceHistory({
+        userId: source.userId, sourceId: source.id, entryId: source.entryId ?? null,
+        previousHash: source.contentHash ?? null, currentHash: fetched.contentHash,
+        changeType: source.contentHash ? "content_changed" : "first_seen",
+        summary: `Nội dung công khai của ${source.label || "nguồn theo dõi"} đã thay đổi; cần người dùng mở preview để xác nhận.`,
+      });
+      const settings = await chyusenDb.getChyusenNotificationSettings(source.userId);
+      if (settings?.lotteryChanged !== 0) await chyusenDb.createChyusenNotification({
+        userId: source.userId, entryId: source.entryId ?? null, sourceId: source.id,
+        type: "source_changed", category: "chyusen", priority: "medium",
+        notificationKey: `source-changed:${source.id}:${fetched.contentHash}`,
+        title: "Nguồn Chyusen có thay đổi",
+        message: `Nội dung công khai của ${source.label || "nguồn theo dõi"} đã thay đổi. Hãy mở Chyusen và bấm "Đọc thông tin" để xem preview trước khi cập nhật.`, isRead: 0,
+      });
+    }
+    return { sourceId: source.id, changed, unavailable: false, latestStatus: changed ? "detected" : "monitoring", latestError: null };
+  } catch (error) {
+    const failureCount = (source.failureCount || 0) + 1;
+    const retryMinutes = failureCount === 1 ? 5 : failureCount === 2 ? 15 : 60;
+    const latestError = error instanceof Error ? error.message.slice(0, 800) : "Không thể truy cập nguồn công khai.";
+    await chyusenDb.updateChyusenSourceStatus(source.id, { latestStatus: "unavailable", latestError, failureCount, nextCheckAt: new Date(now.getTime() + retryMinutes * 60_000) });
+    return { sourceId: source.id, changed: false, unavailable: true, latestStatus: "unavailable", latestError };
+  }
+}
+
+export async function checkChyusenSourceNow(userId: number, sourceId: number) {
+  const source = await chyusenDb.getChyusenSource(userId, sourceId);
+  if (!source) throw new Error("Nguồn Chyusen không tồn tại hoặc không thuộc tài khoản này.");
+  return checkChyusenSource(source);
+}
+
 /**
  * Deterministic monitor for public sources. It never calls the LLM and never
  * overwrites a user entry: differences only create a user-scoped notification.
@@ -27,56 +73,9 @@ export async function runChyusenMonitor(taskUid: string): Promise<ChyusenMonitor
   const sources = await chyusenDb.listDueChyusenSources(now);
   for (const source of sources) {
     summary.sourcesChecked += 1;
-    try {
-      const fetched = await fetchPublicChyusenSource(source.sourceUrl);
-      const changed = Boolean(source.contentHash && source.contentHash !== fetched.contentHash);
-      await chyusenDb.updateChyusenSourceStatus(source.id, {
-        latestStatus: changed ? "detected" : "monitoring",
-        latestError: null,
-        contentHash: fetched.contentHash,
-        lastDetectedAt: changed ? new Date() : undefined,
-        detectedCount: changed ? (source.detectedCount || 0) + 1 : source.detectedCount,
-        failureCount: 0,
-        nextCheckAt: new Date(now.getTime() + source.checkIntervalMinutes * 60_000),
-      });
-      if (changed) {
-        summary.sourceChanges += 1;
-        await chyusenDb.recordChyusenSourceHistory({
-          userId: source.userId,
-          sourceId: source.id,
-          entryId: source.entryId ?? null,
-          previousHash: source.contentHash ?? null,
-          currentHash: fetched.contentHash,
-          changeType: source.contentHash ? "content_changed" : "first_seen",
-          summary: `Nội dung công khai của ${source.label || "nguồn theo dõi"} đã thay đổi; cần người dùng mở preview để xác nhận.`,
-        });
-        const settings = await chyusenDb.getChyusenNotificationSettings(source.userId);
-        if (settings?.lotteryChanged !== 0) {
-          await chyusenDb.createChyusenNotification({
-            userId: source.userId,
-            entryId: source.entryId ?? null,
-            sourceId: source.id,
-            type: "source_changed",
-            category: "chyusen",
-            priority: "medium",
-            notificationKey: `source-changed:${source.id}:${fetched.contentHash}`,
-            title: "Nguồn Chyusen có thay đổi",
-            message: `Nội dung công khai của ${source.label || "nguồn theo dõi"} đã thay đổi. Hãy mở Chyusen và bấm "Đọc thông tin" để xem preview trước khi cập nhật.`,
-            isRead: 0,
-          });
-        }
-      }
-    } catch (error) {
-      summary.unavailableSources += 1;
-      const failureCount = (source.failureCount || 0) + 1;
-      const retryMinutes = failureCount === 1 ? 5 : failureCount === 2 ? 15 : 60;
-      await chyusenDb.updateChyusenSourceStatus(source.id, {
-        latestStatus: "unavailable",
-        latestError: error instanceof Error ? error.message.slice(0, 800) : "Không thể truy cập nguồn công khai.",
-        failureCount,
-        nextCheckAt: new Date(now.getTime() + retryMinutes * 60_000),
-      });
-    }
+    const result = await checkChyusenSource(source);
+    if (result.changed) summary.sourceChanges += 1;
+    if (result.unavailable) summary.unavailableSources += 1;
   }
 
   const db = await getDb();

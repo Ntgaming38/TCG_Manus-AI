@@ -356,6 +356,14 @@ export async function listChyusenSources(userId: number) {
   return db.select().from(chyusenSources).where(eq(chyusenSources.userId, userId)).orderBy(desc(chyusenSources.updatedAt));
 }
 
+export async function getChyusenSource(userId: number, sourceId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [source] = await db.select().from(chyusenSources)
+    .where(and(eq(chyusenSources.id, sourceId), eq(chyusenSources.userId, userId))).limit(1);
+  return source;
+}
+
 export async function listDueChyusenSources(now = new Date()) {
   const db = await getDb();
   if (!db) return [];

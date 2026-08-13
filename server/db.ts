@@ -324,6 +324,20 @@ export async function getMarketplaceAutoSyncStatus() {
   };
 }
 
+export async function updateMarketplaceAutoSyncSettings(input: { isEnabled?: boolean; batchSize?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const config = await getMarketplaceAutoSyncConfig();
+  if (!config) throw new Error("Đồng bộ Marketplace chưa được cấu hình lịch nền.");
+  const update: Record<string, unknown> = {};
+  if (input.isEnabled !== undefined) update.isEnabled = input.isEnabled ? 1 : 0;
+  if (input.batchSize !== undefined) update.batchSize = Math.min(Math.max(input.batchSize, 1), 20);
+  if (Object.keys(update).length) {
+    await db.update(marketplaceSyncConfig).set(update).where(eq(marketplaceSyncConfig.id, config.id));
+  }
+  return getMarketplaceAutoSyncStatus();
+}
+
 /** Scheduled batch sync. Existing prices stay unchanged if SNKRDUNK returns no valid JPY price. */
 export async function runMarketplaceAutoSync(taskUid: string): Promise<MarketplaceAutoSyncSummary> {
   const db = await getDb();

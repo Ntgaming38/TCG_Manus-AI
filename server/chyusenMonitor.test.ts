@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./chyusenDb", () => ({
   getChyusenMonitorConfig: vi.fn(),
+  getChyusenSource: vi.fn(),
   listDueChyusenSources: vi.fn(),
   getChyusenNotificationSettings: vi.fn(),
   recordChyusenSourceHistory: vi.fn(),
@@ -14,7 +15,7 @@ vi.mock("./db", () => ({ getDb: vi.fn() }));
 import * as chyusenDb from "./chyusenDb";
 import { getDb } from "./db";
 import { fetchPublicChyusenSource } from "./chyusenSource";
-import { runChyusenMonitor } from "./chyusenMonitor";
+import { checkChyusenSourceNow, runChyusenMonitor } from "./chyusenMonitor";
 
 describe("runChyusenMonitor", () => {
   const taskUid = "task-chyusen-test";
@@ -60,5 +61,26 @@ describe("runChyusenMonitor", () => {
     expect(summary).toEqual({ sourcesChecked: 0, sourceChanges: 0, remindersCreated: 0, unavailableSources: 0 });
     expect(fetchPublicChyusenSource).not.toHaveBeenCalled();
     expect(notifications).toEqual([]);
+  });
+
+  it("kiểm tra ngay chỉ nguồn thuộc tài khoản và trả trạng thái mới", async () => {
+    vi.mocked(chyusenDb.getChyusenSource).mockResolvedValue({
+      id: 9, userId: 4, entryId: 7, sourceUrl: "https://joshinweb.jp/game/lottery", label: "Joshin", contentHash: "old-hash", checkIntervalMinutes: 60, failureCount: 0, detectedCount: 0,
+    } as any);
+    vi.mocked(fetchPublicChyusenSource).mockResolvedValue({ contentHash: "old-hash" } as any);
+
+    await expect(checkChyusenSourceNow(4, 9)).resolves.toMatchObject({ sourceId: 9, changed: false, unavailable: false, latestStatus: "monitoring" });
+    expect(chyusenDb.getChyusenSource).toHaveBeenCalledWith(4, 9);
+    expect(chyusenDb.updateChyusenSourceStatus).toHaveBeenCalledWith(9, expect.objectContaining({ latestStatus: "monitoring", latestError: null, failureCount: 0 }));
+  });
+
+  it("lưu lỗi gần nhất khi kiểm tra ngay không truy cập được nguồn", async () => {
+    vi.mocked(chyusenDb.getChyusenSource).mockResolvedValue({
+      id: 9, userId: 4, sourceUrl: "https://joshinweb.jp/game/lottery", label: "Joshin", checkIntervalMinutes: 60, failureCount: 1,
+    } as any);
+    vi.mocked(fetchPublicChyusenSource).mockRejectedValue(new Error("HTTP 503"));
+
+    await expect(checkChyusenSourceNow(4, 9)).resolves.toMatchObject({ unavailable: true, latestStatus: "unavailable", latestError: "HTTP 503" });
+    expect(chyusenDb.updateChyusenSourceStatus).toHaveBeenCalledWith(9, expect.objectContaining({ latestStatus: "unavailable", latestError: "HTTP 503", failureCount: 2 }));
   });
 });
