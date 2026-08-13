@@ -68,3 +68,8 @@
 - [x] Bổ sung thao tác chạm để mở/đóng tooltip hạn Chyusen trên điện thoại.
 - [x] Xác minh trực tiếp tooltip đang mở cùng thứ tự ưu tiên hạn hôm nay trong danh sách.
 - [x] Lưu checkpoint sau khi hoàn tất kiểm thử và xác minh tooltip trên điện thoại.
+- [x] Hiển thị toast thành công sau khi tạo mới Chyusen.
+- [x] Hiển thị toast thành công sau khi cập nhật Chyusen.
+- [x] Kiểm thử thông báo, xác minh giao diện và lưu phiên bản hoàn chỉnh.
+- [x] Xác minh trực tiếp toast thành công tạo mới và cập nhật Chyusen ở góc màn hình.
+- [x] Lưu checkpoint sau khi xác minh toast thành công.
