@@ -316,3 +316,7 @@
 ## Xác nhận trạng thái Đã trúng
 - [x] Thêm hộp thoại xác nhận trước khi chuyển Chyusen sang Đã trúng
 - [x] Kiểm thử thao tác desktop/mobile và lưu checkpoint
+
+## Tương phản menu thao tác kho
+- [x] Đổi biểu tượng ba chấm dọc sửa/xóa Card, Box, Pack sang màu trắng và giữ hover/focus rõ ràng
+- [x] Kiểm thử desktop/mobile và lưu checkpoint

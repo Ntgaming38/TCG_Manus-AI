@@ -104,3 +104,10 @@ Ngày xác minh: 13/08/2026
 - Bấm **Đã trúng** không còn đổi trạng thái ngay lập tức; hộp thoại nêu rõ tên chương trình và yêu cầu xác nhận lần cuối.
 - Nút xác nhận hiển thị trạng thái đang cập nhật, nút hủy vẫn giữ nguyên trạng thái Chyusen.
 - Đã xác minh bố cục mobile 375×812; typecheck và 97 Vitest tests đều đạt.
+
+## Tương phản menu thao tác kho
+
+Ngày xác minh: 13/08/2026
+
+- Menu ba chấm dọc trên Card, Box và Pack dùng biểu tượng trắng cùng nền trắng bán trong suốt; hover và focus ring vẫn rõ trên nền tối.
+- Đã xác minh trực quan Card trên mobile 375×812, nơi biểu tượng hiện dễ thấy ở góc phải thẻ. Typecheck và 97 Vitest tests đều đạt.
