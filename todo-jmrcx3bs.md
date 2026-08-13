@@ -48,3 +48,6 @@
 - [x] Lưu checkpoint sau khi hoàn tất kiểm thử submit và xác minh hộp thoại.
 - [x] Tạo liên kết trực tiếp đến phần trường ngày trong hộp thoại Chyusen để hỗ trợ kiểm tra giao diện.
 - [x] Xác minh các ô dd/mm và chú thích tự gán năm trên mobile, sau đó lưu checkpoint mới.
+- [x] Tự động chèn dấu / khi nhập ngày tháng dd/mm trong biểu mẫu Chyusen.
+- [x] Hiển thị cảnh báo rõ ràng khi hạn đăng ký Chyusen đã qua theo thời điểm hiện tại.
+- [x] Kiểm thử định dạng ngày, cảnh báo quá hạn và lưu phiên bản hoàn chỉnh.
