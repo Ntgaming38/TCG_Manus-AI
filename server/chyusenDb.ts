@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import {
   chyusenEntries,
   chyusenHistory,
@@ -41,6 +41,7 @@ export type ChyusenEntryInput = {
 
 export const CHYUSEN_INTERVAL_MINUTES = [60, 180, 360, 720, 1440] as const;
 export const DEFAULT_CHYUSEN_DEADLINE_HOURS = [168, 72, 24, 12, 3, 1];
+export const CHYUSEN_UNDO_WINDOW_MS = 10_000;
 
 export type ChyusenSourceInput = {
   sourceUrl: string;
@@ -67,7 +68,7 @@ const toDateKey = (value: Date | null | undefined) => value ? value.toISOString(
 export async function findDuplicateChyusenEntry(userId: number, input: Pick<ChyusenEntryInput, "sourceUrl" | "externalProductId" | "productName" | "shop" | "customShopName" | "applicationStart" | "applicationEnd">, excludeEntryId?: number) {
   const db = await getDb();
   if (!db) return undefined;
-  const entries = await db.select().from(chyusenEntries).where(eq(chyusenEntries.userId, userId));
+  const entries = await db.select().from(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)));
   const candidates = entries.filter((entry) => entry.id !== excludeEntryId);
   const sourceUrl = normalizeDuplicateText(input.sourceUrl);
   const sourceMatch = sourceUrl ? candidates.find((entry) => normalizeDuplicateText(entry.sourceUrl) === sourceUrl) : undefined;
@@ -92,7 +93,7 @@ export async function listChyusenEntries(userId: number) {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.select().from(chyusenEntries)
-    .where(eq(chyusenEntries.userId, userId))
+    .where(and(eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)))
     .orderBy(desc(chyusenEntries.updatedAt));
   return rows.map((entry) => ({
     ...entry,
@@ -106,7 +107,7 @@ export async function getChyusenEntry(userId: number, entryId: number) {
   const db = await getDb();
   if (!db) return undefined;
   const [entry] = await db.select().from(chyusenEntries)
-    .where(and(eq(chyusenEntries.id, entryId), eq(chyusenEntries.userId, userId)))
+    .where(and(eq(chyusenEntries.id, entryId), eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)))
     .limit(1);
   if (!entry) return undefined;
   const history = await db.select().from(chyusenHistory)
@@ -270,12 +271,40 @@ export async function deleteChyusenEntry(userId: number, entryId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [entry] = await db.select().from(chyusenEntries)
-    .where(and(eq(chyusenEntries.id, entryId), eq(chyusenEntries.userId, userId))).limit(1);
+    .where(and(eq(chyusenEntries.id, entryId), eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt))).limit(1);
   if (!entry) throw new Error("Chương trình Chyusen không tồn tại hoặc không thuộc tài khoản này.");
-  await db.delete(chyusenNotifications).where(and(eq(chyusenNotifications.userId, userId), eq(chyusenNotifications.entryId, entryId)));
-  await db.delete(chyusenHistory).where(and(eq(chyusenHistory.userId, userId), eq(chyusenHistory.entryId, entryId)));
-  await db.update(chyusenSources).set({ entryId: null }).where(and(eq(chyusenSources.userId, userId), eq(chyusenSources.entryId, entryId)));
-  await db.delete(chyusenEntries).where(eq(chyusenEntries.id, entryId));
+  const deletedAt = new Date();
+  const linkedSources = await db.select().from(chyusenSources)
+    .where(and(eq(chyusenSources.userId, userId), eq(chyusenSources.entryId, entryId)));
+  await db.update(chyusenEntries).set({ deletedAt }).where(eq(chyusenEntries.id, entryId));
+  await db.update(chyusenNotifications).set({ deletedAt }).where(and(eq(chyusenNotifications.userId, userId), eq(chyusenNotifications.entryId, entryId)));
+  await Promise.all(linkedSources.map((source) => db.update(chyusenSources).set({ isActive: 0, pausedByEntryDelete: 1, activeBeforeEntryDelete: source.isActive }).where(eq(chyusenSources.id, source.id))));
+  await db.insert(chyusenHistory).values({ userId, entryId, fieldName: "deleted", oldValue: null, newValue: deletedAt.toISOString(), changeSource: "manual" });
+  return { id: entryId, title: entry.title, deletedAt };
+}
+
+export async function restoreChyusenEntry(userId: number, entryId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [entry] = await db.select().from(chyusenEntries)
+    .where(and(eq(chyusenEntries.id, entryId), eq(chyusenEntries.userId, userId), isNotNull(chyusenEntries.deletedAt))).limit(1);
+  if (!entry?.deletedAt) throw new Error("Chyusen này không còn trong trạng thái có thể hoàn tác.");
+  if (Date.now() - entry.deletedAt.getTime() > CHYUSEN_UNDO_WINDOW_MS) throw new Error("Thời gian hoàn tác đã hết. Chyusen vẫn được ẩn an toàn khỏi danh sách.");
+  const pausedSources = await db.select().from(chyusenSources)
+    .where(and(eq(chyusenSources.userId, userId), eq(chyusenSources.entryId, entryId), eq(chyusenSources.pausedByEntryDelete, 1)));
+  await db.update(chyusenEntries).set({ deletedAt: null }).where(eq(chyusenEntries.id, entryId));
+  await db.update(chyusenNotifications).set({ deletedAt: null }).where(and(eq(chyusenNotifications.userId, userId), eq(chyusenNotifications.entryId, entryId)));
+  await Promise.all(pausedSources.map((source) => {
+    const shouldResume = source.activeBeforeEntryDelete ?? 1;
+    return db.update(chyusenSources).set({
+      isActive: shouldResume,
+      pausedByEntryDelete: 0,
+      activeBeforeEntryDelete: null,
+      nextCheckAt: shouldResume ? new Date() : source.nextCheckAt,
+    }).where(eq(chyusenSources.id, source.id));
+  }));
+  await db.insert(chyusenHistory).values({ userId, entryId, fieldName: "restored", oldValue: entry.deletedAt.toISOString(), newValue: new Date().toISOString(), changeSource: "manual" });
+  return { id: entryId, title: entry.title, restored: true };
 }
 
 export async function markChyusenPurchaseCreated(userId: number, entryId: number) {

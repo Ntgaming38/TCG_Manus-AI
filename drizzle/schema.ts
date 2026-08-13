@@ -202,10 +202,12 @@ export const chyusenEntries = mysqlTable("chyusen_entries", {
   sourceContentHash: varchar("sourceContentHash", { length: 64 }),
   lastCheckedAt: timestamp("lastCheckedAt"),
   purchaseCreatedAt: timestamp("purchaseCreatedAt"),
+  deletedAt: timestamp("deletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [
   index("chyusen_entries_user_idx").on(table.userId),
+  index("chyusen_entries_user_deleted_idx").on(table.userId, table.deletedAt),
   index("chyusen_entries_deadline_idx").on(table.applicationEnd),
   index("chyusen_entries_user_external_product_idx").on(table.userId, table.externalProductId),
 ]);
@@ -221,6 +223,8 @@ export const chyusenSources = mysqlTable("chyusen_sources", {
   sourceUrl: varchar("sourceUrl", { length: 2048 }).notNull(),
   label: varchar("label", { length: 255 }),
   isActive: int("isActive").default(1).notNull(),
+  pausedByEntryDelete: int("pausedByEntryDelete").default(0).notNull(),
+  activeBeforeEntryDelete: int("activeBeforeEntryDelete"),
   latestStatus: mysqlEnum("latestStatus", ["monitoring", "detected", "unavailable"]).default("monitoring").notNull(),
   latestError: text("latestError"),
   contentHash: varchar("contentHash", { length: 64 }),

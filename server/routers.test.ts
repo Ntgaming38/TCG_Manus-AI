@@ -8,6 +8,8 @@ vi.mock("./chyusenDb", async (importOriginal) => {
     getChyusenEntry: vi.fn(),
     createChyusenEntry: vi.fn(),
     updateChyusenEntry: vi.fn(),
+    deleteChyusenEntry: vi.fn(),
+    restoreChyusenEntry: vi.fn(),
     markChyusenNotificationRead: vi.fn(),
     markChyusenPurchaseCreated: vi.fn(),
     updateChyusenSource: vi.fn(),
@@ -188,6 +190,17 @@ describe("appRouter", () => {
       await caller.chyusen.update({ id: 88, data: { applicationEnd } });
 
       expect(chyusenDb.updateChyusenEntry).toHaveBeenCalledWith(1, 88, expect.objectContaining({ applicationEnd }));
+    });
+
+    it("xóa mềm và hoàn tác Chyusen theo đúng user đang đăng nhập", async () => {
+      vi.mocked(chyusenDb.deleteChyusenEntry).mockResolvedValue({ id: 88, title: "Pikachu Box", deletedAt: new Date() });
+      vi.mocked(chyusenDb.restoreChyusenEntry).mockResolvedValue({ id: 88, title: "Pikachu Box", restored: true });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.chyusen.delete({ id: 88 })).resolves.toMatchObject({ id: 88, title: "Pikachu Box" });
+      await expect(caller.chyusen.restore({ id: 88 })).resolves.toEqual({ id: 88, title: "Pikachu Box", restored: true });
+      expect(chyusenDb.deleteChyusenEntry).toHaveBeenCalledWith(1, 88);
+      expect(chyusenDb.restoreChyusenEntry).toHaveBeenCalledWith(1, 88);
     });
 
     it("đánh dấu thông báo đã đọc theo đúng user đang đăng nhập", async () => {

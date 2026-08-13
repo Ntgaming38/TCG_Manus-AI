@@ -73,3 +73,14 @@
 - [x] Kiểm thử thông báo, xác minh giao diện và lưu phiên bản hoàn chỉnh.
 - [x] Xác minh trực tiếp toast thành công tạo mới và cập nhật Chyusen ở góc màn hình.
 - [x] Lưu checkpoint sau khi xác minh toast thành công.
+- [x] Thiết kế xóa mềm và hoàn tác an toàn cho một mục Chyusen vừa xóa.
+- [x] Thêm nút Hoàn tác vào toast sau khi xóa Chyusen.
+- [x] Thêm liên kết Xem chi tiết vào toast thành công sau khi tạo hoặc cập nhật Chyusen.
+- [x] Thêm thanh tiến trình đếm ngược thời gian tự ẩn cho toast hành động của Chyusen.
+- [x] Kiểm thử xóa-hoàn tác, toast hành động và xác minh giao diện trước khi lưu phiên bản.
+- [x] Tạm dừng các nguồn theo dõi gắn với Chyusen khi xóa mềm.
+- [x] Khôi phục đúng trạng thái hoạt động của nguồn theo dõi khi hoàn tác xóa Chyusen.
+- [x] Kiểm thử xóa-hoàn tác có nguồn theo dõi và lưu checkpoint hoàn chỉnh.
+- [x] Lưu trạng thái hoạt động ban đầu của nguồn theo dõi khi xóa mềm Chyusen.
+- [x] Khôi phục chính xác nguồn vốn tắt hoặc bật sau khi hoàn tác Chyusen.
+- [x] Kiểm thử trạng thái nguồn trước/sau hoàn tác và lưu checkpoint hoàn chỉnh.

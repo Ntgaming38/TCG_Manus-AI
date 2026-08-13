@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
 import { EMPTY_CHYUSEN_DRAFT, toChyusenDraft, type ChyusenDraft } from "@/lib/chyusenDraft";
 import { buildChyusenSubmission } from "../lib/chyusenSubmission";
@@ -24,6 +25,21 @@ import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
 
 const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Bandai Premium", "Pokémon Center", "Rakuten", "Khác"];
+const CHYUSEN_TOAST_DURATION = 8_000;
+
+function ToastCountdown({ tone = "success" }: { tone?: "success" | "destructive" }) {
+  const [progress, setProgress] = useState(100);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setProgress(Math.max(0, 100 - ((Date.now() - startedAt) / CHYUSEN_TOAST_DURATION) * 100));
+    }, 80);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return <Progress value={progress} className={tone === "destructive" ? "mt-2 h-1 [&>[data-slot=progress-indicator]]:bg-red-500" : "mt-2 h-1 [&>[data-slot=progress-indicator]]:bg-emerald-500"} />;
+}
 
 function displayDate(value: Date | string | null | undefined) {
   return formatChyusenDayMonth(value) || "Chưa có thông tin";
@@ -104,6 +120,24 @@ export default function Chyusen() {
     utils.chyusen.notificationSettings.invalidate();
     utils.dashboard.stats.invalidate();
   };
+  const openChyusenDetails = async (id: number) => {
+    try {
+      const entry = await utils.chyusen.get.fetch({ id });
+      if (!entry) throw new Error("Không tìm thấy Chyusen để xem chi tiết.");
+      setEditingId(entry.id);
+      setDraft(toChyusenDraft(entry));
+      setValidationErrors({});
+      resetAiDraftState();
+      setShowDialog(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể mở chi tiết Chyusen.");
+    }
+  };
+  const showChyusenSavedToast = (message: string, entryId: number) => toast.success(message, {
+    duration: CHYUSEN_TOAST_DURATION,
+    description: <ToastCountdown />,
+    action: { label: "Xem chi tiết", onClick: () => { void openChyusenDetails(entryId); } },
+  });
   const previewUrl = trpc.chyusen.previewUrl.useMutation({
     onSuccess: (data) => {
       setAiFilledFields([]); setAiFieldConfidence({}); setAiDraftBackup(null);
@@ -116,15 +150,27 @@ export default function Chyusen() {
     },
   });
   const create = trpc.chyusen.create.useMutation({
-    onSuccess: () => { toast.success("Đã lưu Chyusen thủ công thành công."); setShowDialog(false); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); invalidate(); },
+    onSuccess: (data) => { showChyusenSavedToast("Đã lưu Chyusen thủ công thành công.", data.id); setShowDialog(false); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const update = trpc.chyusen.update.useMutation({
-    onSuccess: () => { toast.success("Đã cập nhật Chyusen thành công."); setShowDialog(false); setEditingId(null); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); invalidate(); },
+    onSuccess: (_data, variables) => { showChyusenSavedToast("Đã cập nhật Chyusen thành công.", variables.id); setShowDialog(false); setEditingId(null); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); invalidate(); },
+    onError: (error) => toast.error(error.message),
+  });
+  const restore = trpc.chyusen.restore.useMutation({
+    onSuccess: (data) => { showChyusenSavedToast(`Đã hoàn tác xóa ${data.title}.`, data.id); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const remove = trpc.chyusen.delete.useMutation({
-    onSuccess: () => { toast.success("Đã xóa Chyusen."); setDeleteId(null); invalidate(); },
+    onSuccess: (data) => {
+      toast.success(`Đã xóa ${data.title}.`, {
+        duration: CHYUSEN_TOAST_DURATION,
+        description: <ToastCountdown tone="destructive" />,
+        action: { label: "Hoàn tác", onClick: () => restore.mutate({ id: data.id }) },
+      });
+      setDeleteId(null);
+      invalidate();
+    },
     onError: (error) => toast.error(error.message),
   });
   const setParticipation = trpc.chyusen.setParticipation.useMutation({

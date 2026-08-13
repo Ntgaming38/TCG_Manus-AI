@@ -416,6 +416,10 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => chyusenDb.deleteChyusenEntry(ctx.user.id, input.id)),
 
+    restore: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => chyusenDb.restoreChyusenEntry(ctx.user.id, input.id)),
+
     setParticipation: protectedProcedure
       .input(z.object({ id: z.number(), applicationStatus: z.enum(["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]) }))
       .mutation(({ ctx, input }) => chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
