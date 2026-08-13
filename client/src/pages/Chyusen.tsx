@@ -12,11 +12,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc";
 import { EMPTY_CHYUSEN_DRAFT, toChyusenDraft, type ChyusenDraft } from "@/lib/chyusenDraft";
 import { buildChyusenSubmission } from "../lib/chyusenSubmission";
 import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenDeadlineToday, isChyusenRegistrationExpired } from "@shared/chyusenDate";
 import { isDashboardChyusenFilter, matchesDashboardChyusenFilter } from "@shared/chyusenDashboardFilter";
+import { prioritizeChyusenDeadlineToday } from "@shared/chyusenListOrder";
 import { getChyusenAiFilledFields } from "@shared/chyusenAiFields";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
@@ -77,6 +79,8 @@ export default function Chyusen() {
   const [aiFilledFields, setAiFilledFields] = useState<Array<keyof ChyusenDraft>>([]);
   const [aiFieldConfidence, setAiFieldConfidence] = useState<Partial<Record<keyof ChyusenDraft, "high" | "medium" | "low">>>({});
   const [aiDraftBackup, setAiDraftBackup] = useState<ChyusenDraft | null>(null);
+  const [deadlineTooltipId, setDeadlineTooltipId] = useState<number | null>(null);
+  const [showTodayTooltip] = useState(() => new URLSearchParams(window.location.search).get("tooltip") === "today");
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -178,12 +182,12 @@ export default function Chyusen() {
     onError: (error) => toast.error(error.message || "Không thể đọc ảnh. Hãy thử ảnh rõ hơn."),
   });
 
-  const filteredEntries = useMemo(() => entries.filter((entry: any) => {
+  const filteredEntries = useMemo(() => prioritizeChyusenDeadlineToday(entries.filter((entry: any) => {
     const normalizedSearch = search.trim().toLowerCase();
     const matchesSearch = !normalizedSearch || [entry.title, entry.productName, entry.shop, entry.series].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
     const matchesFilter = filter === "all" || (isDashboardChyusenFilter(filter) ? matchesDashboardChyusenFilter(entry, filter) : entry.timeState === filter || entry.applicationStatus === filter);
     return matchesSearch && matchesFilter;
-  }), [entries, filter, search]);
+  })), [entries, filter, search]);
   const unreadNotifications = notifications.filter((notification: any) => !notification.isRead);
   const sourceLabelForHistory = (sourceId: number, entryId?: number | null) => {
     const sourceLabel = sources.find((source: any) => source.id === sourceId)?.label || `Nguồn #${sourceId}`;
@@ -283,7 +287,7 @@ export default function Chyusen() {
           {filteredEntries.map((entry: any) => {
             const deadlineToday = isChyusenDeadlineToday(entry.applicationEnd);
             return (
-            <Card key={entry.id} className="overflow-hidden"><CardHeader className="space-y-3 pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex items-center gap-2"><CardTitle className="truncate text-lg">{entry.title}</CardTitle>{deadlineToday && <span role="img" aria-label="Hạn đăng ký là hôm nay" className="shrink-0 text-red-400"><CircleAlert className="h-5 w-5 animate-pulse" aria-hidden="true" /></span>}</div><CardDescription className="mt-1 truncate">{entry.shop || "Khác"} · {entry.productType} · {entry.series || "Pokemon"}</CardDescription></div><div className="flex shrink-0 flex-col items-end gap-1">{timeBadge(entry.timeState)}{participationBadge(entry.applicationStatus)}</div></div></CardHeader>
+            <Card key={entry.id} className="overflow-hidden"><CardHeader className="space-y-3 pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex items-center gap-2"><CardTitle className="truncate text-lg">{entry.title}</CardTitle>{deadlineToday && <Tooltip open={deadlineTooltipId === entry.id || showTodayTooltip} onOpenChange={(open) => setDeadlineTooltipId(open ? entry.id : null)}><TooltipTrigger asChild><button type="button" aria-label="Hạn đăng ký là hôm nay. Chạm để xem chi tiết." aria-expanded={deadlineTooltipId === entry.id || showTodayTooltip} onClick={() => setDeadlineTooltipId((current) => current === entry.id ? null : entry.id)} className="shrink-0 rounded-full text-red-400 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-red-400"><CircleAlert className="h-5 w-5 animate-pulse" aria-hidden="true" /></button></TooltipTrigger><TooltipContent side="top">Hạn đăng ký là hôm nay. Hãy hoàn tất trước khi hết ngày.</TooltipContent></Tooltip>}</div><CardDescription className="mt-1 truncate">{entry.shop || "Khác"} · {entry.productType} · {entry.series || "Pokemon"}</CardDescription></div><div className="flex shrink-0 flex-col items-end gap-1">{timeBadge(entry.timeState)}{participationBadge(entry.applicationStatus)}</div></div></CardHeader>
               <CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3 text-sm"><div className="rounded-lg bg-secondary/55 p-3"><p className="text-xs text-muted-foreground">Hết hạn đăng ký</p><p className="mt-1 font-medium">{displayDate(entry.applicationEnd)}</p></div><div className="rounded-lg bg-secondary/55 p-3"><p className="text-xs text-muted-foreground">Công bố kết quả</p><p className="mt-1 font-medium">{displayDate(entry.resultDate)}</p></div></div>
                 {isChyusenRegistrationExpired(entry.applicationEnd) && <div className="flex items-center justify-between gap-2 rounded-lg border border-red-300 bg-red-500/15 px-3 py-2 text-sm font-medium text-red-300"><span className="flex items-center gap-2"><Clock3 className="h-4 w-4" />Hạn đăng ký đã qua. Không thể đăng ký mới.</span><Badge className="shrink-0 border border-red-300 bg-red-500/20 text-red-200 hover:bg-red-500/20">{formatChyusenDaysRemaining(entry.applicationEnd)}</Badge></div>}
                 {!isChyusenRegistrationExpired(entry.applicationEnd) && formatChyusenDaysRemaining(entry.applicationEnd) && <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${getChyusenDeadlineTone(entry.applicationEnd) === "urgent" ? "border-red-400/80 bg-red-500/20 text-red-100 shadow-[0_0_18px_rgba(248,113,113,0.26)]" : getChyusenDeadlineTone(entry.applicationEnd) === "warning" ? "border-amber-300/80 bg-amber-500/15 text-amber-100" : "border-sky-300/50 bg-sky-500/10 text-sky-200"}`}><CalendarClock className="h-4 w-4" />{formatChyusenDaysRemaining(entry.applicationEnd)}</div>}

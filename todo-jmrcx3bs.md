@@ -62,3 +62,9 @@
 - [x] Hiển thị biểu tượng dấu chấm than cạnh nhãn hạn của Chyusen có hạn chót trong hôm nay.
 - [x] Bổ sung nhãn trợ năng cho biểu tượng cảnh báo và kiểm thử điều kiện hạn hôm nay.
 - [x] Xác minh giao diện, kiểm thử và lưu phiên bản hoàn chỉnh.
+- [x] Thêm tooltip có thể chạm/di chuột vào biểu tượng cảnh báo hạn chót hôm nay.
+- [x] Tự động sắp xếp mục Chyusen có hạn hôm nay lên đầu danh sách theo thời điểm Nhật Bản.
+- [x] Kiểm thử tooltip, thứ tự danh sách, xác minh giao diện và lưu phiên bản hoàn chỉnh.
+- [x] Bổ sung thao tác chạm để mở/đóng tooltip hạn Chyusen trên điện thoại.
+- [x] Xác minh trực tiếp tooltip đang mở cùng thứ tự ưu tiên hạn hôm nay trong danh sách.
+- [x] Lưu checkpoint sau khi hoàn tất kiểm thử và xác minh tooltip trên điện thoại.
