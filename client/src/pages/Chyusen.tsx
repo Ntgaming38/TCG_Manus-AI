@@ -232,28 +232,7 @@ export default function Chyusen() {
         </Card>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Settings2 className="h-4 w-4 text-primary" />Nhắc hạn 抽選</CardTitle><CardDescription>Chọn các mốc nhắc riêng cho tài khoản của bạn. Chương trình đã đăng ký sẽ không còn nhắc đăng ký.</CardDescription></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">{[168, 72, 24, 12, 3, 1].map((hour) => {
-              const selected = (notificationSettings?.deadlineHours || [168, 72, 24, 12, 3, 1]).includes(hour);
-              return <Button key={hour} variant={selected ? "default" : "outline"} size="sm" className={selected ? "bg-red-600 text-white hover:bg-red-700" : ""} onClick={() => {
-                const current = notificationSettings?.deadlineHours || [168, 72, 24, 12, 3, 1];
-                updateNotificationSettings.mutate({ deadlineHours: selected ? current.filter((value: number) => value !== hour) : [...current, hour] });
-              }}>{hour >= 24 ? `${hour / 24} ngày` : `${hour} giờ`}</Button>;
-            })}</div>
-            <div className="space-y-2 border-t pt-3">{[
-              ["lotteryNew", "抽選 mới"], ["lotteryExpiring", "抽選 sắp hết hạn"], ["lotteryResult", "Ngày công bố kết quả"], ["lotteryChanged", "抽選 thay đổi"],
-            ].map(([key, label]) => <div key={key} className="flex items-center justify-between text-sm"><span>{label}</span><Switch checked={notificationSettings ? Boolean((notificationSettings as any)[key]) : true} onCheckedChange={(checked) => updateNotificationSettings.mutate({ [key]: checked })} /></div>)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-start justify-between gap-3 pb-3"><div><CardTitle className="flex items-center gap-2 text-base"><Radio className="h-4 w-4 text-primary" />Nguồn theo dõi</CardTitle><CardDescription>Từng nguồn được kiểm tra khi đến hạn, không kiểm tra đồng loạt.</CardDescription></div><Button variant="outline" size="sm" onClick={openNewSource}><Plus className="mr-1.5 h-3.5 w-3.5" />Thêm nguồn</Button></CardHeader>
-          <CardContent className="space-y-2">{sources.length === 0 ? <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Chưa có nguồn riêng. Khi lưu Chyusen từ link, nguồn gốc sẽ tự được thêm.</p> : sources.slice(0, 5).map((source: any) => <div key={source.id} className="rounded-lg border p-3"><div className="flex items-start gap-3"><Switch className="mt-0.5" checked={Boolean(source.isActive)} onCheckedChange={(checked) => updateSource.mutate({ id: source.id, isActive: checked })} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-semibold">{source.label || "Nguồn Chyusen"}</p><Badge variant="outline" className={source.latestStatus === "unavailable" ? "border-red-300 bg-red-50 text-red-800" : source.isActive ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-slate-300 bg-slate-50 text-slate-700"}>{source.latestStatus === "unavailable" ? "Không truy cập" : source.isActive ? "Đang theo dõi" : "Đã tắt"}</Badge></div><p className="mt-0.5 truncate text-xs text-muted-foreground">{source.sourceUrl}</p><p className="mt-1 text-[11px] text-muted-foreground">Lần tiếp theo: {displayDate(source.nextCheckAt)} · Phát hiện: {source.detectedCount || 0}</p></div><div className="flex shrink-0 items-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditSource(source)} aria-label={`Sửa nguồn ${source.label || source.id}`}><Pencil className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteSourceId(source.id)} aria-label={`Xóa nguồn ${source.label || source.id}`}><Trash2 className="h-3.5 w-3.5" /></Button><Select value={String(source.checkIntervalMinutes || 360)} onValueChange={(value) => updateSource.mutate({ id: source.id, checkIntervalMinutes: Number(value) as 60 | 180 | 360 | 720 | 1440 })}><SelectTrigger className="h-8 w-20 text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="60">1 giờ</SelectItem><SelectItem value="180">3 giờ</SelectItem><SelectItem value="360">6 giờ</SelectItem><SelectItem value="720">12 giờ</SelectItem><SelectItem value="1440">24 giờ</SelectItem></SelectContent></Select></div></div></div>)}{sourceHistory.length > 0 && <div className="rounded-lg border border-dashed bg-muted/20 p-3"><p className="mb-2 text-xs font-semibold text-muted-foreground">Lịch sử thay đổi gần đây</p>{sourceHistory.slice(0, 3).map((history: any) => <p key={history.id} className="mb-1 text-xs text-muted-foreground">• {sourceLabelForHistory(history.sourceId, history.entryId)}: {history.summary || "Nội dung nguồn đã thay đổi"} · {displayDate(history.createdAt)}</p>)}</div>}</CardContent>
-        </Card>
-      </div>
+      <Card className="border-dashed bg-muted/20"><CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Cài đặt Chyusen</p><p className="text-xs text-muted-foreground">Nhắc hạn, nguồn theo dõi và tần suất đã được chuyển vào trang Cài đặt để màn quản lý gọn hơn.</p></div><Button variant="outline" onClick={() => window.location.assign("/cai-dat")}><Settings2 className="mr-2 h-4 w-4" />Mở Cài đặt</Button></CardContent></Card>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm sản phẩm, cửa hàng, series..." className="pl-9" /></div>

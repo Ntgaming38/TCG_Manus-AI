@@ -243,3 +243,8 @@
 ## Đồng bộ giá Marketplace tự động
 - [x] Hiển thị rõ trạng thái và tóm tắt lần chạy đồng bộ tự động trên Marketplace
 - [x] Bổ sung kiểm thử ghi giá trực tiếp không ghi đè giá cũ khi nguồn lỗi, xác minh lịch 6 giờ và lưu checkpoint cuối
+
+## Trang Cài đặt
+- [x] Thêm mục Cài đặt vào sidebar và tạo route trang cài đặt riêng
+- [x] Chuyển cài đặt nhắc hạn, nguồn theo dõi và tần suất Chyusen ra khỏi trang quản lý chính
+- [x] Kiểm thử điều hướng, responsive và lưu checkpoint

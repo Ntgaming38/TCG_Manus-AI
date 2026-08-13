@@ -14,6 +14,7 @@ import Marketplace from "./pages/Marketplace";
 import Reports from "./pages/Reports";
 import Chyusen from "./pages/Chyusen";
 import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import DashboardLayout from "./components/DashboardLayout";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -58,6 +59,9 @@ function Router() {
       </Route>
       <Route path={"/thong-bao"}>
         <ProtectedRoute component={Notifications} />
+      </Route>
+      <Route path={"/cai-dat"}>
+        <ProtectedRoute component={Settings} />
       </Route>
       <Route path={"/bao-cao"}>
         <ProtectedRoute component={Reports} />
