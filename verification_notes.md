@@ -150,3 +150,11 @@ Ngày xác minh: 13/08/2026
 - Bộ chuyển đổi **Thẻ ảnh / Danh sách** xuất hiện cạnh bộ lọc trên trang Card, Box và Pack. Chế độ thẻ ảnh được giữ làm mặc định.
 - Chế độ danh sách giữ thông tin tồn, giá mua, giá thị trường, lãi và menu Sửa/Upload ảnh/Xóa; các bộ lọc và sắp xếp được dùng chung cho cả hai chế độ.
 - Đã xác minh Card desktop 1280×720 và mobile 375×812 với dữ liệu thực; typecheck và 98 Vitest tests đều đạt.
+
+## Cá nhân hóa danh sách và xuất CSV
+
+Ngày xác minh: 13/08/2026
+
+- Lựa chọn Thẻ ảnh/Danh sách và tập hợp cột danh sách được lưu trong localStorage của thiết bị, nên được dùng lại ở lần mở sau.
+- Chế độ danh sách cho phép bật/tắt Số lượng, Giá mua, Giá thị trường, Lợi nhuận, Series/Set, Độ hiếm và Trạng thái. CSV xuất đúng các cột đang chọn, có BOM để mở tiếng Nhật/CJK trong Excel.
+- Đã thêm hồi quy CSV. Typecheck, 99 Vitest tests và production build đều đạt. Card mobile 375×812 hiển thị đầy đủ công tắc view và nút xuất CSV.

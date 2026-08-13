@@ -11,8 +11,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
-import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
-import { useMemo, useState, useRef } from "react";
+import { buildProductsCsv, DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
+import { Plus, Search, Filter, Package, CreditCard, Box, Gift, Columns3, Download, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -21,7 +22,15 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [cardSort, setCardSort] = useState<"rarity" | "roi" | "marketPrice">("rarity");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => typeof window === "undefined" ? "grid" : (window.localStorage.getItem("tcg-products-view-mode") === "list" ? "list" : "grid"));
+  const [visibleListColumns, setVisibleListColumns] = useState<ProductListColumnKey[]>(() => {
+    if (typeof window === "undefined") return DEFAULT_PRODUCT_LIST_COLUMNS;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem("tcg-products-list-columns") || "[]");
+      const valid = Array.isArray(stored) ? stored.filter((key): key is ProductListColumnKey => PRODUCT_LIST_COLUMN_OPTIONS.some((column) => column.key === key)) : [];
+      return valid.length ? valid : DEFAULT_PRODUCT_LIST_COLUMNS;
+    } catch { return DEFAULT_PRODUCT_LIST_COLUMNS; }
+  });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -42,6 +51,9 @@ export default function Products() {
     type: activeType !== "all" ? activeType : undefined,
     search: search || undefined,
   });
+
+  useEffect(() => { window.localStorage.setItem("tcg-products-view-mode", viewMode); }, [viewMode]);
+  useEffect(() => { window.localStorage.setItem("tcg-products-list-columns", JSON.stringify(visibleListColumns)); }, [visibleListColumns]);
 
   const addProduct = trpc.products.create.useMutation({
     onSuccess: () => {
@@ -137,6 +149,27 @@ export default function Products() {
     if (activeType === "box") return "Box";
     if (activeType === "pack") return "Pack";
     return "Sản phẩm";
+  };
+
+  const toggleListColumn = (key: ProductListColumnKey) => setVisibleListColumns((current) => {
+    if (current.includes(key)) {
+      if (current.length === 1) { toast.error("Danh sách cần giữ ít nhất một cột thông tin."); return current; }
+      return current.filter((column) => column !== key);
+    }
+    return [...current, key];
+  });
+
+  const exportProductsCsv = () => {
+    const csv = buildProductsCsv(sortedProducts, visibleListColumns);
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `tcg-${activeType === "all" ? "san-pham" : activeType}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Đã xuất ${sortedProducts.length} sản phẩm ra CSV.`);
   };
 
   const sortedProducts = useMemo(() => {
@@ -421,6 +454,8 @@ export default function Products() {
           <Button type="button" size="sm" variant={viewMode === "grid" ? "secondary" : "ghost"} aria-label="Hiển thị thẻ ảnh" aria-pressed={viewMode === "grid"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /><span className="hidden sm:inline">Thẻ ảnh</span></Button>
           <Button type="button" size="sm" variant={viewMode === "list" ? "secondary" : "ghost"} aria-label="Hiển thị danh sách" aria-pressed={viewMode === "list"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("list")}><List className="h-4 w-4" /><span className="hidden sm:inline">Danh sách</span></Button>
         </div>
+        {viewMode === "list" && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" size="sm" variant="outline" className="h-10 gap-2"><Columns3 className="h-4 w-4" /><span className="hidden sm:inline">Cột</span></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-52"><div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Cột trong danh sách</div>{PRODUCT_LIST_COLUMN_OPTIONS.map((column) => <DropdownMenuItem key={column.key} onSelect={(event) => { event.preventDefault(); toggleListColumn(column.key); }} className="gap-2"><input type="checkbox" className="pointer-events-none accent-primary" checked={visibleListColumns.includes(column.key)} readOnly /><span>{column.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>}
+        <Button type="button" size="sm" variant="outline" className="h-10 gap-2" onClick={exportProductsCsv} disabled={sortedProducts.length === 0}><Download className="h-4 w-4" /><span className="hidden sm:inline">Xuất CSV</span></Button>
       </div>
 
       {/* Products Grid */}
@@ -483,13 +518,12 @@ export default function Products() {
           ))}
         </div> : <div className="space-y-2">
           {sortedProducts.map((product: any) => {
-            const difference = Number(product.marketPrice) - Number(product.buyPrice);
             return <Card key={product.id} className="bg-card neon-card transition-colors hover:border-primary/30"><CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:p-4">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {product.image ? <img src={product.image} alt={product.name} className="h-14 w-14 shrink-0 rounded-lg border border-border/70 object-cover sm:h-16 sm:w-16" /> : <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-secondary/50 text-primary sm:h-16 sm:w-16">{getTypeIcon(product.type)}</div>}
-                <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-semibold">{product.name}</h3>{product.type === "card" && <RarityBadge rarity={product.rarity} />}</div><p className="mt-1 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p><div className="mt-2 flex flex-wrap gap-1.5"><Badge variant="secondary" className="text-xs">{getTypeIcon(product.type)}<span className="ml-1 capitalize">{product.type}</span></Badge><Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-xs">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge></div></div>
+                <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-semibold">{product.name}</h3>{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}</div>{visibleListColumns.includes("series") && <p className="mt-1 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}<div className="mt-2 flex flex-wrap gap-1.5"><Badge variant="secondary" className="text-xs">{getTypeIcon(product.type)}<span className="ml-1 capitalize">{product.type}</span></Badge>{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-xs">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div></div>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-border/50 pt-3 text-xs sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><span className="text-muted-foreground">SL <strong className="ml-1 text-foreground">{product.quantity}</strong></span><span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">¥{Number(product.buyPrice).toLocaleString()}</strong></span><span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">¥{Number(product.marketPrice).toLocaleString()}</strong></span><span className="text-muted-foreground">Lãi <strong className={difference >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{difference >= 0 ? "+" : ""}¥{difference.toLocaleString()}</strong></span></div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-border/50 pt-3 text-xs sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">{visibleListColumns.filter((column) => ["quantity", "buyPrice", "marketPrice", "profit"].includes(column)).map((column) => <ProductListMetric key={column} product={product} column={column} />)}</div>
               <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onDelete={handleDelete} />
             </CardContent></Card>;
           })}
@@ -507,4 +541,12 @@ export default function Products() {
 
 function ProductActionMenu({ product, onEdit, onUpload, onDelete }: { product: any; onEdit: (product: any) => void; onUpload: (id: number) => void; onDelete: (id: number, name: string) => void }) {
   return <div className="group relative shrink-0"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Tùy chọn" className="h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 sm:h-8 sm:w-8"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => onEdit(product)}><Pencil className="mr-2 h-3 w-3" />Sửa</DropdownMenuItem><DropdownMenuItem onClick={() => onUpload(product.id)}><ImagePlus className="mr-2 h-3 w-3" />Upload ảnh</DropdownMenuItem><DropdownMenuItem className="text-red-400" onClick={() => onDelete(product.id, product.name)}><Trash2 className="mr-2 h-3 w-3" />Xóa</DropdownMenuItem></DropdownMenuContent></DropdownMenu><span role="tooltip" className="pointer-events-none absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded bg-black/85 px-2 py-1 text-[11px] text-white opacity-0 shadow transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Tùy chọn</span></div>;
+}
+
+function ProductListMetric({ product, column }: { product: any; column: ProductListColumnKey }) {
+  const profit = Number(product.marketPrice) - Number(product.buyPrice);
+  if (column === "quantity") return <span className="text-muted-foreground">SL <strong className="ml-1 text-foreground">{product.quantity}</strong></span>;
+  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">¥{Number(product.buyPrice).toLocaleString()}</strong></span>;
+  if (column === "marketPrice") return <span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">¥{Number(product.marketPrice).toLocaleString()}</strong></span>;
+  return <span className="text-muted-foreground">Lãi <strong className={profit >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{profit >= 0 ? "+" : ""}¥{profit.toLocaleString()}</strong></span>;
 }

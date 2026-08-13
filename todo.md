@@ -346,3 +346,9 @@
 - [x] Thêm chuyển đổi giữa dạng thẻ ảnh và dạng danh sách cho sản phẩm
 - [x] Giữ thao tác sửa, upload ảnh, xóa, lọc và sắp xếp trong hai chế độ
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Cá nhân hóa danh sách sản phẩm
+- [x] Ghi nhớ chế độ Thẻ ảnh / Danh sách theo thiết bị
+- [x] Thêm chọn cột hiển thị cho danh sách Card, Box và Pack
+- [x] Xuất danh sách sản phẩm ra CSV theo dữ liệu và cột đang chọn
+- [x] Kiểm thử desktop/mobile, tệp CSV và lưu checkpoint
