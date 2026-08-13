@@ -180,3 +180,11 @@ Ngày xác minh: 13/08/2026
 
 - Khi chọn chế độ Danh sách, điều khiển cột sau nút Danh sách nay là biểu tượng ba chấm dọc; có nhãn truy cập và tooltip “Tùy chọn cột”.
 - Menu vẫn mở các checkbox chọn cột như trước. Typecheck và 98 Vitest tests đều đạt.
+
+## Tổng quan trạng thái Chyusen
+
+Ngày xác minh: 13/08/2026
+
+- Dashboard chỉ còn bốn ô theo thứ tự **Chờ kết quả → Sắp hết hạn → Đã trúng → Đã trượt**; ô Đang đăng ký đã được bỏ.
+- Một Chyusen có trạng thái Đã đăng ký được đếm vào Chờ kết quả ngay lập tức, kể cả khi đang ở mốc Sắp hết hạn; các trạng thái đã trúng/trượt được loại khỏi hai nhóm chưa có kết quả.
+- Đã thêm hồi quy cho quy tắc đếm. Typecheck và 99 Vitest tests đều đạt.

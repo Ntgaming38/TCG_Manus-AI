@@ -365,3 +365,8 @@
 ## Biểu tượng menu cột danh sách
 - [x] Đổi nút chọn cột phía sau chế độ Danh sách thành ba chấm dọc
 - [x] Xác minh giao diện và lưu checkpoint
+
+## Tổng quan trạng thái Chyusen
+- [x] Bỏ ô Đang đăng ký khỏi Dashboard Chyusen
+- [x] Gộp đã đăng ký vào Chờ kết quả và sắp xếp Chờ kết quả → Sắp hết hạn → Đã trúng → Đã trượt
+- [x] Kiểm thử Dashboard desktop/mobile và lưu checkpoint

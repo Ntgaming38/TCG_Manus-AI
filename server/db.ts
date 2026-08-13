@@ -9,6 +9,7 @@ import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './c
 import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
 import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
 import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
+import { summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1017,13 +1018,7 @@ export async function getDashboardStats(userId: number) {
     urgency: getChyusenUrgency(entry.applicationEnd),
     remainingTime: formatRemainingTime(entry.applicationEnd),
   }));
-  const chyusen = {
-    open: chyusenWithState.filter((entry) => entry.timeState === "open").length,
-    expiring: chyusenWithState.filter((entry) => entry.timeState === "expiring").length,
-    waitingResult: chyusenWithState.filter((entry) => entry.timeState === "waiting_result").length,
-    won: chyusenWithState.filter((entry) => entry.applicationStatus === "won" || entry.resultStatus === "won").length,
-    lost: chyusenWithState.filter((entry) => entry.applicationStatus === "lost" || entry.resultStatus === "lost").length,
-  };
+  const chyusen = { open: 0, ...summarizeChyusenDashboard(chyusenWithState) };
   const chyusenReminders = chyusenWithState
     .filter((entry) => entry.urgency && entry.applicationStatus === "not_registered")
     .sort((a, b) => (a.applicationEnd?.getTime() || 0) - (b.applicationEnd?.getTime() || 0))
