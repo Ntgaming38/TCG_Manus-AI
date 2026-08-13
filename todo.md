@@ -248,3 +248,8 @@
 - [x] Thêm mục Cài đặt vào sidebar và tạo route trang cài đặt riêng
 - [x] Chuyển cài đặt nhắc hạn, nguồn theo dõi và tần suất Chyusen ra khỏi trang quản lý chính
 - [x] Kiểm thử điều hướng, responsive và lưu checkpoint
+
+## Hoàn thiện nguồn theo dõi trong Cài đặt
+- [x] Thêm nút Lưu rõ ràng cho URL/tên/tần suất từng nguồn
+- [x] Thêm nút Xóa với hộp xác nhận từ trang Cài đặt
+- [x] Bổ sung kiểm thử payload Lưu, xác minh UI desktop/mobile và checkpoint sau bản sửa
