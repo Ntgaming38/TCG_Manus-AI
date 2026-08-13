@@ -230,4 +230,4 @@
 - [x] Hoàn thiện audit log nguồn theo từng source/entry và kiểm thử ghi history khi nội dung thay đổi
 - [x] Mở rộng nhắc 7d/3d/24h/12h/3h/1h theo cấu hình người dùng
 - [x] Thêm kiểm thử hồi quy và xác minh responsive cho Notification Center/Chyusen
-- [ ] Cập nhật lịch monitor nền sang mỗi giờ để hỗ trợ tần suất riêng từng nguồn, rồi lưu checkpoint bàn giao
+- [x] Cập nhật lịch monitor nền sang mỗi giờ để hỗ trợ tần suất riêng từng nguồn, rồi lưu checkpoint bàn giao
