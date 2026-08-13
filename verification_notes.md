@@ -44,3 +44,11 @@ Ngày xác minh: 13/08/2026
 - Nền ứng dụng, thẻ, popover, input và viền đã chuyển sang bảng màu xám than đồng nhất theo ảnh tham chiếu; chữ chính/chữ phụ được đổi sang trắng-xám để giữ khả năng đọc.
 - Đã xác minh desktop 1280×720 và mobile 375×812: logo, số liệu, nhãn đỏ/xanh và đường viền vẫn đủ tương phản trên nền mới.
 - Typecheck và 76 Vitest tests đều đạt.
+
+## Tinh gọn chú giải Lịch sử
+
+Ngày xác minh: 13/08/2026
+
+- Đã loại bỏ hoàn toàn dòng **Màu chi tiết: Xóa / Sửa / Mua / Bán** phía trên bộ lọc Lịch sử.
+- Nhãn màu nằm ngay cạnh từng hoạt động được giữ nguyên, nên loại thao tác vẫn nhận biết trực tiếp mà không cần chú giải lặp lại.
+- Đã xác minh desktop/mobile; typecheck và 76 Vitest tests đều đạt.

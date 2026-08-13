@@ -280,3 +280,7 @@
 ## Nền xám than cho giao diện
 - [x] Thay nền trắng bằng tông xám than theo ảnh tham chiếu và cập nhật màu surface/viền/chữ
 - [x] Xác minh độ tương phản desktop/mobile, kiểm thử và lưu checkpoint
+
+## Tinh gọn chú giải Lịch sử
+- [x] Xóa dòng chú giải Màu chi tiết: Xóa / Sửa / Mua / Bán, giữ nhãn màu trên từng hoạt động
+- [x] Kiểm thử giao diện và lưu checkpoint

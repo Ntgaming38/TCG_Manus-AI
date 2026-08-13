@@ -134,13 +134,6 @@ export default function ActivityHistory() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2 text-xs">
-            <span className="mr-1 text-muted-foreground">Màu chi tiết:</span>
-            <Badge variant="outline" className="border-rose-400 bg-rose-400 text-black">Xóa</Badge>
-            <Badge variant="outline" className="border-orange-400 bg-orange-400 text-black">Sửa</Badge>
-            <Badge variant="outline" className="border-emerald-400 bg-emerald-400 text-black">Mua</Badge>
-            <Badge variant="outline" className="border-yellow-400 bg-yellow-400 text-black">Bán</Badge>
-          </div>
           <div className="flex flex-wrap gap-2" aria-label="Lọc lịch sử theo nhóm dữ liệu">
             {filters.map((filter) => (
               <Button key={filter.value} size="sm" variant={activeFilter === filter.value ? "default" : "outline"} onClick={() => setActiveFilter(filter.value)}>
