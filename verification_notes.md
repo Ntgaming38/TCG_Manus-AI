@@ -96,3 +96,11 @@ Ngày xác minh: 13/08/2026
 - Sau khi AI đọc ảnh, người dùng có thể **Chấp nhận tất cả** hoặc **Hoàn tác AI** về trạng thái trước lúc trích xuất; từng trường hiển thị confidence **Cao/Trung bình/Thấp** với màu riêng.
 - Khối lưu ý nguồn công khai/CAPTCHA đã đổi sang nền đỏ đậm, được xác minh trên desktop 1280×720 và mobile 375×812.
 - Nút **Đã trúng** có màu vàng trước thao tác; sau cập nhật trạng thái, badge **Đã trúng** hiển thị đỏ. Typecheck, 97 Vitest tests và production build đều đạt.
+
+## Xác nhận trạng thái Đã trúng
+
+Ngày xác minh: 13/08/2026
+
+- Bấm **Đã trúng** không còn đổi trạng thái ngay lập tức; hộp thoại nêu rõ tên chương trình và yêu cầu xác nhận lần cuối.
+- Nút xác nhận hiển thị trạng thái đang cập nhật, nút hủy vẫn giữ nguyên trạng thái Chyusen.
+- Đã xác minh bố cục mobile 375×812; typecheck và 97 Vitest tests đều đạt.

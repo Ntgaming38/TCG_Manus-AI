@@ -312,3 +312,7 @@
 - [x] Đổi khối lưu ý nguồn/captcha sang cảnh báo đỏ nổi bật
 - [x] Đổi Đã trúng từ tím sang vàng, sau thao tác chuyển sang đỏ
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Xác nhận trạng thái Đã trúng
+- [x] Thêm hộp thoại xác nhận trước khi chuyển Chyusen sang Đã trúng
+- [x] Kiểm thử thao tác desktop/mobile và lưu checkpoint

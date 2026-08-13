@@ -67,6 +67,7 @@ export default function Chyusen() {
   const dateFieldsRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [winConfirmEntry, setWinConfirmEntry] = useState<any | null>(null);
   const [showSourceDialog, setShowSourceDialog] = useState(false);
   const [editingSourceId, setEditingSourceId] = useState<number | null>(null);
   const [deleteSourceId, setDeleteSourceId] = useState<number | null>(null);
@@ -120,7 +121,7 @@ export default function Chyusen() {
     onError: (error) => toast.error(error.message),
   });
   const setParticipation = trpc.chyusen.setParticipation.useMutation({
-    onSuccess: () => { toast.success("Đã cập nhật trạng thái."); invalidate(); },
+    onSuccess: () => { setWinConfirmEntry(null); toast.success("Đã cập nhật trạng thái."); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const purchaseDraft = trpc.chyusen.purchaseDraft.useMutation({
@@ -284,7 +285,7 @@ export default function Chyusen() {
                 <div className="flex flex-wrap gap-2">
                   {entry.sourceUrl && <Button variant="outline" size="sm" asChild><a href={entry.sourceUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Mở website</a></Button>}
                   {entry.applicationStatus === "not_registered" && <Button variant="outline" size="sm" onClick={() => setParticipation.mutate({ id: entry.id, applicationStatus: "registered" })}><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />Đã đăng ký</Button>}
-                  {entry.applicationStatus === "registered" && <Button variant="outline" size="sm" className="border-yellow-400/70 text-yellow-300 hover:bg-yellow-500/15 hover:text-yellow-200" onClick={() => setParticipation.mutate({ id: entry.id, applicationStatus: "won" })}><Trophy className="mr-1.5 h-3.5 w-3.5" />Đã trúng</Button>}
+                  {entry.applicationStatus === "registered" && <Button variant="outline" size="sm" className="border-yellow-400/70 text-yellow-300 hover:bg-yellow-500/15 hover:text-yellow-200" onClick={() => setWinConfirmEntry(entry)}><Trophy className="mr-1.5 h-3.5 w-3.5" />Đã trúng</Button>}
                   {entry.applicationStatus === "registered" && <Button variant="outline" size="sm" onClick={() => setParticipation.mutate({ id: entry.id, applicationStatus: "lost" })}><XCircle className="mr-1.5 h-3.5 w-3.5" />Đã trượt</Button>}
                   {entry.applicationStatus === "won" && !entry.purchaseCreatedAt && <Button size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => purchaseDraft.mutate({ id: entry.id })}><Gift className="mr-1.5 h-3.5 w-3.5" />Thêm vào Mua Hàng</Button>}
                   <Button variant="ghost" size="sm" onClick={() => openEdit(entry)}><Pencil className="mr-1.5 h-3.5 w-3.5" />Sửa</Button><Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(entry.id)}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Xóa</Button>
@@ -306,6 +307,8 @@ export default function Chyusen() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={winConfirmEntry !== null} onOpenChange={(open) => !open && setWinConfirmEntry(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận đã trúng?</AlertDialogTitle><AlertDialogDescription>Bạn xác nhận đã trúng chương trình <strong className="text-foreground">{winConfirmEntry?.title}</strong>? Sau khi xác nhận, trạng thái sẽ chuyển sang Đã trúng và bạn có thể tạo giao dịch Mua Hàng từ chương trình này.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={setParticipation.isPending}>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 text-white hover:bg-red-700" disabled={setParticipation.isPending} onClick={() => winConfirmEntry && setParticipation.mutate({ id: winConfirmEntry.id, applicationStatus: "won" })}>{setParticipation.isPending ? "Đang cập nhật..." : "Xác nhận Đã trúng"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
 
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa chương trình Chyusen?</AlertDialogTitle><AlertDialogDescription>Hành động này xóa Chyusen và các thông báo/lịch sử liên quan trong tài khoản của bạn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteId && remove.mutate({ id: deleteId })}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
 
