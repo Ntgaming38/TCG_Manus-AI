@@ -54,3 +54,8 @@
 - [x] Tính số ngày còn lại đến hạn đăng ký theo múi giờ Nhật Bản.
 - [x] Hiển thị số ngày còn lại cạnh cảnh báo trạng thái Chyusen phù hợp.
 - [x] Kiểm thử số ngày, xác minh giao diện và lưu phiên bản hoàn chỉnh.
+- [x] Thêm trạng thái hover và chạm rõ ràng cho các nút Sửa, Xóa, Mua và Bán trên điện thoại.
+- [x] Làm nổi bật số ngày còn lại của Chyusen khi sắp hết hạn bằng màu cảnh báo phù hợp.
+- [x] Kiểm thử tương tác, xác minh giao diện điện thoại và lưu phiên bản hoàn chỉnh.
+- [x] Kiểm thử riêng các lớp phản hồi hover/chạm dùng chung của Button cho thao tác trên điện thoại.
+- [x] Lưu checkpoint sau khi hoàn tất kiểm thử phản hồi nút và cảnh báo hạn gần.

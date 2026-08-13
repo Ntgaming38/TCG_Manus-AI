@@ -43,6 +43,16 @@ export function formatChyusenDaysRemaining(value: Date | string | null | undefin
   return `Còn ${days} ngày`;
 }
 
+export type ChyusenDeadlineTone = "normal" | "warning" | "urgent" | "expired";
+
+export function getChyusenDeadlineTone(value: Date | string | null | undefined, now = new Date()): ChyusenDeadlineTone {
+  const days = getChyusenDaysRemaining(value, now);
+  if (days === null || days > 3) return "normal";
+  if (days < 0) return "expired";
+  if (days <= 1) return "urgent";
+  return "warning";
+}
+
 export function parseChyusenDayMonth(value: string, savedAt = new Date()) {
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})$/);
   if (!match) return null;
