@@ -31,6 +31,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { SidebarAIAssistant } from "./SidebarAIAssistant";
 import { trpc } from "@/lib/trpc";
+import { getUnreadChyusenCount } from "@shared/chyusenNotifications";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -118,7 +119,7 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
   const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery(undefined, { staleTime: 60_000 });
-  const unreadChyusenCount = chyusenNotifications.filter((notification: any) => !notification.isRead).length;
+  const unreadChyusenCount = getUnreadChyusenCount(chyusenNotifications);
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);

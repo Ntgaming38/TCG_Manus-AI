@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { vi } from "vitest";
+
+vi.mock("./chyusenDb", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./chyusenDb")>();
+  return {
+    ...actual,
+    getChyusenEntry: vi.fn(),
+    markChyusenNotificationRead: vi.fn(),
+    markChyusenPurchaseCreated: vi.fn(),
+  };
+});
+
 import { appRouter } from "./routers";
+import * as chyusenDb from "./chyusenDb";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -111,6 +124,32 @@ describe("appRouter", () => {
       const ctx = createUnauthContext();
       const caller = appRouter.createCaller(ctx);
       await expect(caller.reports.overview()).rejects.toThrow();
+    });
+  });
+
+  describe("chyusen router", () => {
+    it("đánh dấu thông báo đã đọc theo đúng user đang đăng nhập", async () => {
+      vi.mocked(chyusenDb.markChyusenNotificationRead).mockResolvedValue(undefined);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.chyusen.markNotificationRead({ id: 91, isRead: true });
+
+      expect(chyusenDb.markChyusenNotificationRead).toHaveBeenCalledWith(1, 91, true);
+    });
+
+    it("chỉ tạo draft Mua Hàng cho Chyusen trúng và không đánh dấu mua trước khi có mutation riêng", async () => {
+      vi.mocked(chyusenDb.getChyusenEntry).mockResolvedValue({
+        id: 31, applicationStatus: "won", resultStatus: "won", purchaseCreatedAt: null,
+        productName: "Premium Box", productType: "box", series: "Pokemon", shop: "Joshin", customShopName: null, price: "9800", sourceUrl: "https://joshinweb.jp/game/lottery",
+      } as any);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      const draft = await caller.chyusen.purchaseDraft({ id: 31 });
+
+      expect(draft).toMatchObject({ chyusenEntryId: 31, productName: "Premium Box", productType: "box", price: 9800 });
+      expect(chyusenDb.markChyusenPurchaseCreated).not.toHaveBeenCalled();
+      await caller.chyusen.markPurchaseCreated({ id: 31 });
+      expect(chyusenDb.markChyusenPurchaseCreated).toHaveBeenCalledWith(1, 31);
     });
   });
 });

@@ -105,6 +105,7 @@ export default function Chyusen() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const { data: entries = [], isLoading } = trpc.chyusen.list.useQuery();
+  const { data: notifications = [] } = trpc.chyusen.notifications.useQuery();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [showDialog, setShowDialog] = useState(false);
@@ -147,6 +148,10 @@ export default function Chyusen() {
     },
     onError: (error) => toast.error(error.message),
   });
+  const markNotificationRead = trpc.chyusen.markNotificationRead.useMutation({
+    onSuccess: () => utils.chyusen.notifications.invalidate(),
+    onError: (error) => toast.error(error.message),
+  });
 
   const filteredEntries = useMemo(() => entries.filter((entry: any) => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -154,6 +159,7 @@ export default function Chyusen() {
     const matchesFilter = filter === "all" || entry.timeState === filter || entry.applicationStatus === filter;
     return matchesSearch && matchesFilter;
   }), [entries, filter, search]);
+  const unreadNotifications = notifications.filter((notification: any) => !notification.isRead);
 
   const updateDraft = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }));
   const submit = () => {
@@ -188,6 +194,13 @@ export default function Chyusen() {
       <Card className="border-red-100 bg-red-50/40">
         <CardContent className="flex gap-3 p-4 text-sm text-red-900"><FileSearch className="mt-0.5 h-5 w-5 shrink-0 text-red-600" /><p><strong>Tự động tối đa, không tự đoán.</strong> Hệ thống chỉ đọc nguồn công khai được hỗ trợ. Thông tin lấy từ link luôn cần bạn kiểm tra và xác nhận trước khi lưu; website yêu cầu đăng nhập hoặc CAPTCHA sẽ không bị vượt qua.</p></CardContent>
       </Card>
+
+      {unreadNotifications.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/60">
+          <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base text-amber-950"><BellRing className="h-4 w-4 text-amber-700" />Thông báo Chyusen ({unreadNotifications.length})</CardTitle><CardDescription className="text-amber-900">Nhắc hạn đăng ký, ngày công bố kết quả hoặc thay đổi từ nguồn công khai.</CardDescription></CardHeader>
+          <CardContent className="space-y-2">{unreadNotifications.slice(0, 4).map((notification: any) => <div key={notification.id} className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-white/80 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-amber-950">{notification.title}</p><p className="mt-0.5 text-xs text-amber-900">{notification.message}</p></div><Button variant="outline" size="sm" className="border-amber-300 bg-white" onClick={() => markNotificationRead.mutate({ id: notification.id, isRead: true })}>Đã xem</Button></div>)}</CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm sản phẩm, cửa hàng, series..." className="pl-9" /></div>

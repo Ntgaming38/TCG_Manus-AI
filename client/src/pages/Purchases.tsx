@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
 
@@ -56,33 +57,21 @@ export default function Purchases() {
   });
 
   useEffect(() => {
-    const rawDraft = localStorage.getItem("tcg-manager-chyusen-purchase-draft");
-    if (!rawDraft) return;
-    try {
-      const draft = JSON.parse(rawDraft);
-      const productType = ["card", "box", "pack"].includes(draft.productType) ? draft.productType : "box";
-      setNewPurchase({
-        productName: draft.productName || "",
-        productType,
-        series: draft.series || "Pokemon",
-        shop: draft.shop || "Khác",
-        purchaseType: "mua_le",
-        quantity: Math.max(1, Number(draft.quantity || 1)),
-        price: Math.max(0, Number(draft.price || 0)),
-        note: draft.note || "",
-      });
-      setPendingChyusenEntryId(Number(draft.chyusenEntryId) || null);
+    const rawDraft = localStorage.getItem(CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY);
+    const draft = parseChyusenPurchaseDraft(rawDraft);
+    if (draft) {
+      setNewPurchase(draft.purchase);
+      setPendingChyusenEntryId(draft.chyusenEntryId);
       setShowAddDialog(true);
-      localStorage.removeItem("tcg-manager-chyusen-purchase-draft");
-    } catch {
-      localStorage.removeItem("tcg-manager-chyusen-purchase-draft");
     }
+    if (rawDraft) localStorage.removeItem(CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY);
   }, []);
 
   const createPurchase = trpc.purchases.create.useMutation({
     onSuccess: () => {
       toast.success("Đã thêm giao dịch mua thành công!");
-      if (pendingChyusenEntryId) markChyusenPurchaseCreated.mutate({ id: pendingChyusenEntryId });
+      const chyusenEntryId = getChyusenEntryIdToMarkAfterPurchase(pendingChyusenEntryId);
+      if (chyusenEntryId) markChyusenPurchaseCreated.mutate({ id: chyusenEntryId });
       setShowAddDialog(false);
       setNewPurchase({ productName: "", productType: "box", series: "Pokemon", shop: "Joshin", purchaseType: "mua_le", quantity: 1, price: 0, note: "" });
       invalidateAll();

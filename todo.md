@@ -218,5 +218,6 @@
 - [x] Rà soát PRD, kỹ năng và mã Chyusen hiện có; xác định phạm vi khôi phục an toàn
 - [x] Khôi phục mục Sidebar, trang danh sách và quản lý trạng thái Chyusen cốt lõi
 - [x] Mở rộng form/preview nhập link công khai với thông tin trích xuất có mức tin cậy và xác nhận người dùng
-- [ ] Thiết lập theo dõi tự động 6 giờ/lần, trạng thái kết quả, nhắc hạn/nhắc công bố và luồng chuyển Chyusen trúng sang Mua Hàng có xác nhận
-- [ ] Bổ sung kiểm thử, kiểm tra responsive và lưu checkpoint sau khi hoàn tất phạm vi đã xác nhận
+- [x] Thiết lập theo dõi tự động 6 giờ/lần, trạng thái kết quả, nhắc hạn/nhắc công bố và luồng chuyển Chyusen trúng sang Mua Hàng có xác nhận
+- [x] Bổ sung kiểm thử, kiểm tra responsive và lưu checkpoint sau khi hoàn tất phạm vi đã xác nhận
+- [x] Thêm kiểm thử hồi quy monitor, notification và luồng chuyển Chyusen trúng sang Mua Hàng
