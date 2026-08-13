@@ -390,3 +390,8 @@
 ## Đồng bộ đếm hạn Chyusen
 - [x] Sửa Dashboard để đếm Chyusen hiện Hôm nay là hạn cuối trong ô Sắp hết hạn
 - [x] Kiểm thử mốc hạn hôm nay theo JST và lưu checkpoint
+
+## Thao tác nhanh Dashboard Chyusen
+- [x] Cho phép bấm các ô Chyusen trên Dashboard để mở danh sách đã lọc
+- [x] Hiển thị chương trình có hạn đăng ký gần nhất trong ô Sắp hết hạn
+- [x] Kiểm thử luồng lọc, giao diện và lưu checkpoint

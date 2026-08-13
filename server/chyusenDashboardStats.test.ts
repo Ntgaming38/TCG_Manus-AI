@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { summarizeChyusenDashboard } from "../shared/chyusenDashboardStats";
+import { getNearestExpiringChyusen, summarizeChyusenDashboard } from "../shared/chyusenDashboardStats";
 
 describe("summarizeChyusenDashboard", () => {
   it("đưa Chyusen đã đăng ký vào Chờ kết quả ngay cả khi hạn đăng ký chưa hết", () => {
@@ -18,5 +18,14 @@ describe("summarizeChyusenDashboard", () => {
       { timeState: "expiring", daysRemaining: 0, applicationStatus: "registered" },
       { timeState: "expiring", daysRemaining: 1, applicationStatus: "not_registered" },
     ])).toMatchObject({ expiring: 2, deadlineToday: true, deadlineTomorrow: true, waitingResult: 1 });
+  });
+
+  it("chọn Chyusen có hạn gần nhất, kể cả khi mục đó đã được đăng ký", () => {
+    const nearest = getNearestExpiringChyusen([
+      { title: "Hạn ngày mai", timeState: "expiring", daysRemaining: 1, applicationStatus: "not_registered" },
+      { title: "Hạn hôm nay", timeState: "expiring", daysRemaining: 0, applicationStatus: "registered" },
+    ]);
+
+    expect(nearest?.title).toBe("Hạn hôm nay");
   });
 });

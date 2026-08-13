@@ -9,7 +9,7 @@ import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './c
 import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
 import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
 import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
-import { summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
+import { getNearestExpiringChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -999,7 +999,7 @@ export async function getDashboardStats(userId: number) {
     totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
     totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
     cardRarityStats: [], chartData: [], recentActivities: [],
-    chyusen: { open: 0, expiring: 0, deadlineToday: false, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [],
+    chyusen: { open: 0, expiring: 0, deadlineToday: false, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [], chyusenNearestDeadline: null,
   };
 
   // Get all user products
@@ -1021,6 +1021,13 @@ export async function getDashboardStats(userId: number) {
     remainingTime: formatRemainingTime(entry.applicationEnd),
   }));
   const chyusen = { open: 0, ...summarizeChyusenDashboard(chyusenWithState) };
+  const nearestExpiringChyusen = getNearestExpiringChyusen(chyusenWithState);
+  const chyusenNearestDeadline = nearestExpiringChyusen ? {
+    id: nearestExpiringChyusen.id,
+    title: nearestExpiringChyusen.title,
+    shop: nearestExpiringChyusen.shop,
+    daysRemaining: nearestExpiringChyusen.daysRemaining,
+  } : null;
   const chyusenReminders = chyusenWithState
     .filter((entry) => entry.urgency && entry.applicationStatus === "not_registered")
     .sort((a, b) => (a.applicationEnd?.getTime() || 0) - (b.applicationEnd?.getTime() || 0))
@@ -1078,7 +1085,7 @@ export async function getDashboardStats(userId: number) {
     totalCapital, currentValue, totalProfit,
     totalInStock, inStockCards, inStockBoxes, inStockPacks,
     totalSold, soldCards, soldBoxes, soldPacks,
-    cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders,
+    cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders, chyusenNearestDeadline,
   };
 }
 
