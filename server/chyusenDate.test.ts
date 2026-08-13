@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatChyusenDayMonth, parseChyusenDayMonth } from "../shared/chyusenDate";
+import { formatChyusenDayMonth, formatChyusenDayMonthInput, isChyusenRegistrationExpired, parseChyusenDayMonth } from "../shared/chyusenDate";
 
 describe("Chyusen day/month dates", () => {
   it("hiển thị ngày theo dd/mm và bỏ năm, giờ", () => {
@@ -14,5 +14,15 @@ describe("Chyusen day/month dates", () => {
   it("không chấp nhận ngày hoặc tháng không hợp lệ", () => {
     expect(parseChyusenDayMonth("31/02", new Date("2027-01-02T10:00:00.000Z"))).toBeNull();
     expect(parseChyusenDayMonth("05-01", new Date("2027-01-02T10:00:00.000Z"))).toBeNull();
+  });
+
+  it("tự chèn dấu gạch chéo sau khi người dùng nhập ngày", () => {
+    expect(formatChyusenDayMonthInput("1a2-3")).toBe("12/3");
+    expect(formatChyusenDayMonthInput("12034")).toBe("12/03");
+  });
+
+  it("chỉ cảnh báo quá hạn sau khi đã qua hết ngày đăng ký theo giờ Nhật Bản", () => {
+    expect(isChyusenRegistrationExpired("2026-08-13T00:00:00+09:00", new Date("2026-08-13T12:00:00+09:00"))).toBe(false);
+    expect(isChyusenRegistrationExpired("2026-08-13T00:00:00+09:00", new Date("2026-08-14T00:01:00+09:00"))).toBe(true);
   });
 });

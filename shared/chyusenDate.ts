@@ -10,6 +10,20 @@ export function formatChyusenDayMonth(value: Date | string | null | undefined) {
   return `${parts.day}/${parts.month}`;
 }
 
+export function formatChyusenDayMonthInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+}
+
+export function isChyusenRegistrationExpired(value: Date | string | null | undefined, now = new Date()) {
+  if (!value) return false;
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime())) return false;
+  const deadlineParts = japanDateParts(deadline);
+  const nowParts = japanDateParts(now);
+  return `${nowParts.year}${nowParts.month}${nowParts.day}` > `${deadlineParts.year}${deadlineParts.month}${deadlineParts.day}`;
+}
+
 export function parseChyusenDayMonth(value: string, savedAt = new Date()) {
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})$/);
   if (!match) return null;
