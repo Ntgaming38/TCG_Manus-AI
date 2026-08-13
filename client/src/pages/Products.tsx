@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
-import { getCardRarityOptionsForSeries, getCardRarityPriority } from "@shared/cardRarity";
+import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useMemo, useState, useRef } from "react";
@@ -104,6 +104,7 @@ export default function Products() {
   const openEdit = (product: any) => {
     setEditingProduct({
       id: product.id,
+      type: product.type,
       name: product.name,
       series: product.series || "Pokemon",
       setName: product.setName || "",
@@ -113,7 +114,7 @@ export default function Products() {
       description: product.description || "",
       cardNumber: product.cardNumber || "",
       language: product.language || "Japanese",
-      rarity: product.rarity || "",
+      rarity: normalizeCardRarity(product.rarity),
       condition: product.condition || "New",
       psaGrade: product.psaGrade || "",
     });
@@ -305,13 +306,33 @@ export default function Products() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Series</Label>
-                  <Input value={editingProduct.series} onChange={(e) => setEditingProduct((p: any) => ({ ...p, series: e.target.value }))} />
+                  <Select value={editingProduct.series} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, series: value, rarity: p.series === value ? p.rarity : "" }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pokemon">Pokémon</SelectItem>
+                      <SelectItem value="One Piece">One Piece</SelectItem>
+                      <SelectItem value="Other">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Set</Label>
                   <Input value={editingProduct.setName} onChange={(e) => setEditingProduct((p: any) => ({ ...p, setName: e.target.value }))} />
                 </div>
               </div>
+              {editingProduct.type === "card" && (
+                <div className="space-y-2">
+                  <Label>Rarity</Label>
+                  <Select value={editingProduct.rarity || undefined} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, rarity: value }))}>
+                    <SelectTrigger><SelectValue placeholder="Chọn rarity" /></SelectTrigger>
+                    <SelectContent>
+                      {getCardRarityOptionsForSeries(editingProduct.series).map((rarity) => (
+                        <SelectItem key={rarity.value} value={rarity.value}>{rarity.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Số lượng</Label>
