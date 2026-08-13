@@ -11,8 +11,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
-import { buildProductsCsv, DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
-import { Plus, Search, Filter, Package, CreditCard, Box, Gift, Columns3, Download, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
+import { Plus, Search, Filter, Package, CreditCard, Box, Gift, Columns3, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -158,19 +158,6 @@ export default function Products() {
     }
     return [...current, key];
   });
-
-  const exportProductsCsv = () => {
-    const csv = buildProductsCsv(sortedProducts, visibleListColumns);
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `tcg-${activeType === "all" ? "san-pham" : activeType}-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success(`Đã xuất ${sortedProducts.length} sản phẩm ra CSV.`);
-  };
 
   const sortedProducts = useMemo(() => {
     if (!products) return [];
@@ -455,7 +442,6 @@ export default function Products() {
           <Button type="button" size="sm" variant={viewMode === "list" ? "secondary" : "ghost"} aria-label="Hiển thị danh sách" aria-pressed={viewMode === "list"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("list")}><List className="h-4 w-4" /><span className="hidden sm:inline">Danh sách</span></Button>
         </div>
         {viewMode === "list" && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" size="sm" variant="outline" className="h-10 gap-2"><Columns3 className="h-4 w-4" /><span className="hidden sm:inline">Cột</span></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-52"><div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Cột trong danh sách</div>{PRODUCT_LIST_COLUMN_OPTIONS.map((column) => <DropdownMenuItem key={column.key} onSelect={(event) => { event.preventDefault(); toggleListColumn(column.key); }} className="gap-2"><input type="checkbox" className="pointer-events-none accent-primary" checked={visibleListColumns.includes(column.key)} readOnly /><span>{column.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>}
-        <Button type="button" size="sm" variant="outline" className="h-10 gap-2" onClick={exportProductsCsv} disabled={sortedProducts.length === 0}><Download className="h-4 w-4" /><span className="hidden sm:inline">Xuất CSV</span></Button>
       </div>
 
       {/* Products Grid */}

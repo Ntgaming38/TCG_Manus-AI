@@ -352,3 +352,7 @@
 - [x] Thêm chọn cột hiển thị cho danh sách Card, Box và Pack
 - [x] Xuất danh sách sản phẩm ra CSV theo dữ liệu và cột đang chọn
 - [x] Kiểm thử desktop/mobile, tệp CSV và lưu checkpoint
+
+## Tinh gọn thanh công cụ sản phẩm
+- [x] Bỏ nút Xuất CSV, giữ chế độ hiển thị và chọn cột
+- [x] Xác minh giao diện và lưu checkpoint

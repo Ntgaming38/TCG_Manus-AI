@@ -158,3 +158,10 @@ Ngày xác minh: 13/08/2026
 - Lựa chọn Thẻ ảnh/Danh sách và tập hợp cột danh sách được lưu trong localStorage của thiết bị, nên được dùng lại ở lần mở sau.
 - Chế độ danh sách cho phép bật/tắt Số lượng, Giá mua, Giá thị trường, Lợi nhuận, Series/Set, Độ hiếm và Trạng thái. CSV xuất đúng các cột đang chọn, có BOM để mở tiếng Nhật/CJK trong Excel.
 - Đã thêm hồi quy CSV. Typecheck, 99 Vitest tests và production build đều đạt. Card mobile 375×812 hiển thị đầy đủ công tắc view và nút xuất CSV.
+
+## Gỡ nút xuất CSV
+
+Ngày xác minh: 13/08/2026
+
+- Nút xuất CSV đã được loại bỏ khỏi thanh công cụ sản phẩm; chỉ còn công tắc Thẻ ảnh/Danh sách và tùy chỉnh cột khi đang ở chế độ danh sách.
+- Đã xác minh Card mobile 375×812. Typecheck và 98 Vitest tests đều đạt.
