@@ -356,3 +356,8 @@
 ## Tinh gọn thanh công cụ sản phẩm
 - [x] Bỏ nút Xuất CSV, giữ chế độ hiển thị và chọn cột
 - [x] Xác minh giao diện và lưu checkpoint
+
+## Danh sách sản phẩm cô đọng
+- [x] Bỏ ảnh và giảm chiều cao hàng trong chế độ Danh sách
+- [x] Chỉ hiển thị tên, loại và các cột người dùng đang chọn
+- [x] Kiểm thử desktop/mobile và lưu checkpoint

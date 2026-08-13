@@ -165,3 +165,11 @@ Ngày xác minh: 13/08/2026
 
 - Nút xuất CSV đã được loại bỏ khỏi thanh công cụ sản phẩm; chỉ còn công tắc Thẻ ảnh/Danh sách và tùy chỉnh cột khi đang ở chế độ danh sách.
 - Đã xác minh Card mobile 375×812. Typecheck và 98 Vitest tests đều đạt.
+
+## Danh sách sản phẩm cô đọng
+
+Ngày xác minh: 13/08/2026
+
+- Chế độ Danh sách không còn hiển thị ảnh sản phẩm. Mỗi hàng chỉ giữ tên, loại, các badge/cột do người dùng chọn và menu thao tác.
+- Hàng được giảm padding và thay thông tin cố định bằng các cột đã chọn, giúp hiển thị nhiều loại Card, Box, Pack hơn trong cùng một màn hình.
+- Typecheck và 98 Vitest tests đều đạt.
