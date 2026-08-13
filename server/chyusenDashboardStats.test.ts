@@ -10,6 +10,13 @@ describe("summarizeChyusenDashboard", () => {
       { timeState: "waiting_result", applicationStatus: "not_registered" },
       { timeState: "waiting_result", applicationStatus: "won" },
       { timeState: "expired", applicationStatus: "lost" },
-    ])).toEqual({ waitingResult: 2, expiring: 1, won: 1, lost: 1 });
+    ])).toEqual({ waitingResult: 2, expiring: 1, deadlineTomorrow: true, won: 1, lost: 1 });
+  });
+
+  it("chỉ bật chỉ báo Còn 1 ngày khi có Chyusen chưa đăng ký hết hạn vào ngày mai", () => {
+    expect(summarizeChyusenDashboard([
+      { timeState: "expiring", daysRemaining: 0, applicationStatus: "not_registered" },
+      { timeState: "expiring", daysRemaining: 1, applicationStatus: "registered" },
+    ])).toMatchObject({ expiring: 1, deadlineTomorrow: false, waitingResult: 1 });
   });
 });

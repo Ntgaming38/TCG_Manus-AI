@@ -999,7 +999,7 @@ export async function getDashboardStats(userId: number) {
     totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
     totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
     cardRarityStats: [], chartData: [], recentActivities: [],
-    chyusen: { open: 0, expiring: 0, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [],
+    chyusen: { open: 0, expiring: 0, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [],
   };
 
   // Get all user products
