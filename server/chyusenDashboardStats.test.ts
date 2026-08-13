@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getNearestExpiringChyusen, summarizeChyusenDashboard } from "../shared/chyusenDashboardStats";
+import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyusenDashboard } from "../shared/chyusenDashboardStats";
 
 describe("summarizeChyusenDashboard", () => {
   it("đưa Chyusen đã đăng ký vào Chờ kết quả ngay cả khi hạn đăng ký chưa hết", () => {
@@ -27,5 +27,15 @@ describe("summarizeChyusenDashboard", () => {
     ]);
 
     expect(nearest?.title).toBe("Hạn hôm nay");
+  });
+
+  it("chỉ chọn mục chưa đăng ký có liên kết công khai cho thao tác Đăng ký ngay", () => {
+    const nearest = getNearestRegistrableChyusen([
+      { title: "Đã đăng ký", timeState: "expiring", daysRemaining: 0, applicationStatus: "registered", sourceUrl: "https://example.com/registered" },
+      { title: "Chưa có link", timeState: "expiring", daysRemaining: 0, applicationStatus: "not_registered" },
+      { title: "Đăng ký ngay", timeState: "expiring", daysRemaining: 1, applicationStatus: "not_registered", sourceUrl: "https://example.com/apply" },
+    ]);
+
+    expect(nearest?.title).toBe("Đăng ký ngay");
   });
 });

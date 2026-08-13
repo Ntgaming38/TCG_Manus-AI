@@ -9,7 +9,7 @@ import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './c
 import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
 import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
 import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
-import { getNearestExpiringChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
+import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -999,7 +999,7 @@ export async function getDashboardStats(userId: number) {
     totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
     totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
     cardRarityStats: [], chartData: [], recentActivities: [],
-    chyusen: { open: 0, expiring: 0, deadlineToday: false, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [], chyusenNearestDeadline: null,
+    chyusen: { open: 0, expiring: 0, deadlineToday: false, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [], chyusenNearestDeadline: null, chyusenRegisterNow: null,
   };
 
   // Get all user products
@@ -1027,6 +1027,13 @@ export async function getDashboardStats(userId: number) {
     title: nearestExpiringChyusen.title,
     shop: nearestExpiringChyusen.shop,
     daysRemaining: nearestExpiringChyusen.daysRemaining,
+  } : null;
+  const nearestRegistrableChyusen = getNearestRegistrableChyusen(chyusenWithState);
+  const chyusenRegisterNow = nearestRegistrableChyusen ? {
+    id: nearestRegistrableChyusen.id,
+    title: nearestRegistrableChyusen.title,
+    sourceUrl: nearestRegistrableChyusen.sourceUrl,
+    daysRemaining: nearestRegistrableChyusen.daysRemaining,
   } : null;
   const chyusenReminders = chyusenWithState
     .filter((entry) => entry.urgency && entry.applicationStatus === "not_registered")
@@ -1085,7 +1092,7 @@ export async function getDashboardStats(userId: number) {
     totalCapital, currentValue, totalProfit,
     totalInStock, inStockCards, inStockBoxes, inStockPacks,
     totalSold, soldCards, soldBoxes, soldPacks,
-    cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders, chyusenNearestDeadline,
+    cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders, chyusenNearestDeadline, chyusenRegisterNow,
   };
 }
 

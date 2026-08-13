@@ -395,3 +395,8 @@
 - [x] Cho phép bấm các ô Chyusen trên Dashboard để mở danh sách đã lọc
 - [x] Hiển thị chương trình có hạn đăng ký gần nhất trong ô Sắp hết hạn
 - [x] Kiểm thử luồng lọc, giao diện và lưu checkpoint
+
+## Cảnh báo Chyusen sắp hết hạn
+- [x] Thêm nút Đăng ký ngay cho chương trình có hạn gần nhất trên Dashboard
+- [x] Làm nổi bật ô Sắp hết hạn khi có Chyusen cần chú ý
+- [x] Kiểm thử thao tác và lưu checkpoint

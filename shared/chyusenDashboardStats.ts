@@ -20,6 +20,12 @@ export function getNearestExpiringChyusen<T extends ChyusenDashboardEntry>(entri
     .sort((first, second) => (first.daysRemaining ?? Number.MAX_SAFE_INTEGER) - (second.daysRemaining ?? Number.MAX_SAFE_INTEGER))[0];
 }
 
+export function getNearestRegistrableChyusen<T extends ChyusenDashboardEntry & { sourceUrl?: string | null }>(entries: T[]) {
+  return entries
+    .filter((entry) => isChyusenExpiring(entry) && entry.applicationStatus === "not_registered" && Boolean(entry.sourceUrl))
+    .sort((first, second) => (first.daysRemaining ?? Number.MAX_SAFE_INTEGER) - (second.daysRemaining ?? Number.MAX_SAFE_INTEGER))[0];
+}
+
 export function summarizeChyusenDashboard(entries: ChyusenDashboardEntry[]) {
   return {
     expiring: entries.filter(isChyusenExpiring).length,
