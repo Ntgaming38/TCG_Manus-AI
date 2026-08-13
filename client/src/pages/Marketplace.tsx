@@ -130,8 +130,14 @@ export default function Marketplace() {
 }
 
 function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number; tone: "neutral" | "success" | "warning" | "danger" }) {
-  const toneClasses = { neutral: "border-slate-200 bg-slate-50 text-slate-700", success: "border-emerald-200 bg-emerald-50 text-emerald-700", warning: "border-amber-200 bg-amber-50 text-amber-700", danger: "border-red-200 bg-red-50 text-red-700" };
-  return <Card className={`border shadow-sm ${toneClasses[tone]}`}><CardContent className="flex items-center gap-3 p-4"><div className="rounded-xl bg-white/80 p-2">{icon}</div><div><p className="text-xs font-medium opacity-75">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div></CardContent></Card>;
+  const toneClasses = {
+    neutral: { card: "border-slate-700/90 bg-slate-950/80 text-slate-100 shadow-[0_10px_24px_rgba(0,0,0,0.18)]", icon: "bg-slate-800/90 text-slate-200" },
+    success: { card: "border-emerald-500/35 bg-emerald-950/35 text-emerald-100 shadow-[0_10px_24px_rgba(6,78,59,0.16)]", icon: "bg-emerald-500/15 text-emerald-300" },
+    warning: { card: "border-amber-500/40 bg-amber-950/35 text-amber-100 shadow-[0_10px_24px_rgba(120,53,15,0.16)]", icon: "bg-amber-500/15 text-amber-300" },
+    danger: { card: "border-red-500/40 bg-red-950/35 text-red-100 shadow-[0_10px_24px_rgba(127,29,29,0.16)]", icon: "bg-red-500/15 text-red-300" },
+  };
+  const palette = toneClasses[tone];
+  return <Card className={`border transition-colors duration-200 ${palette.card}`}><CardContent className="flex items-center gap-3 p-4"><div className={`rounded-xl p-2 ${palette.icon}`}>{icon}</div><div><p className="text-xs font-medium text-current/75">{label}</p><p className="mt-1 text-2xl font-bold text-current">{value}</p></div></CardContent></Card>;
 }
 
 function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {

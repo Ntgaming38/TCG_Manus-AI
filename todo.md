@@ -400,3 +400,7 @@
 - [x] Thêm nút Đăng ký ngay cho chương trình có hạn gần nhất trên Dashboard
 - [x] Làm nổi bật ô Sắp hết hạn khi có Chyusen cần chú ý
 - [x] Kiểm thử thao tác và lưu checkpoint
+
+## Màu tổng quan Marketplace
+- [x] Đổi bốn ô tổng quan Marketplace sang bảng màu tối phù hợp nền đen xám
+- [x] Kiểm thử giao diện Marketplace và lưu checkpoint
