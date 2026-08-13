@@ -10,6 +10,7 @@ import {
 } from "../drizzle/schema";
 import { getDb } from "./db";
 import { getChyusenTimeState, getChyusenUrgency } from "./chyusenUtils";
+import { createTrashItem, markLatestTrashItemRestored } from "./trashDb";
 
 export type ChyusenEntryInput = {
   title: string;
@@ -276,11 +277,17 @@ export async function deleteChyusenEntry(userId: number, entryId: number) {
   const deletedAt = new Date();
   const linkedSources = await db.select().from(chyusenSources)
     .where(and(eq(chyusenSources.userId, userId), eq(chyusenSources.entryId, entryId)));
+  const trash = await createTrashItem(userId, {
+    entityType: "chyusen",
+    entityId: entryId,
+    title: entry.title,
+    snapshot: { entry, sources: linkedSources },
+  });
   await db.update(chyusenEntries).set({ deletedAt }).where(eq(chyusenEntries.id, entryId));
   await db.update(chyusenNotifications).set({ deletedAt }).where(and(eq(chyusenNotifications.userId, userId), eq(chyusenNotifications.entryId, entryId)));
   await Promise.all(linkedSources.map((source) => db.update(chyusenSources).set({ isActive: 0, pausedByEntryDelete: 1, activeBeforeEntryDelete: source.isActive }).where(eq(chyusenSources.id, source.id))));
   await db.insert(chyusenHistory).values({ userId, entryId, fieldName: "deleted", oldValue: null, newValue: deletedAt.toISOString(), changeSource: "manual" });
-  return { id: entryId, title: entry.title, deletedAt };
+  return { id: entryId, title: entry.title, deletedAt, trashId: trash.id };
 }
 
 export async function restoreChyusenEntry(userId: number, entryId: number) {
@@ -304,6 +311,7 @@ export async function restoreChyusenEntry(userId: number, entryId: number) {
     }).where(eq(chyusenSources.id, source.id));
   }));
   await db.insert(chyusenHistory).values({ userId, entryId, fieldName: "restored", oldValue: entry.deletedAt.toISOString(), newValue: new Date().toISOString(), changeSource: "manual" });
+  await markLatestTrashItemRestored(userId, "chyusen", entryId);
   return { id: entryId, title: entry.title, restored: true };
 }
 
@@ -349,8 +357,18 @@ export async function markAllChyusenNotificationsRead(userId: number) {
 export async function deleteChyusenNotification(userId: number, notificationId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const [notification] = await db.select().from(chyusenNotifications)
+    .where(and(eq(chyusenNotifications.id, notificationId), eq(chyusenNotifications.userId, userId), isNull(chyusenNotifications.deletedAt))).limit(1);
+  if (!notification) throw new Error("Thông báo không tồn tại hoặc đã bị xóa.");
+  const trash = await createTrashItem(userId, {
+    entityType: "notification",
+    entityId: notificationId,
+    title: notification.title,
+    snapshot: { notification },
+  });
   await db.update(chyusenNotifications).set({ deletedAt: new Date() })
     .where(and(eq(chyusenNotifications.id, notificationId), eq(chyusenNotifications.userId, userId)));
+  return { id: notificationId, trashId: trash.id };
 }
 
 export async function createChyusenNotification(values: typeof chyusenNotifications.$inferInsert) {
@@ -426,7 +444,17 @@ export async function updateChyusenSource(userId: number, sourceId: number, inpu
 export async function deleteChyusenSource(userId: number, sourceId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const [source] = await db.select().from(chyusenSources)
+    .where(and(eq(chyusenSources.id, sourceId), eq(chyusenSources.userId, userId))).limit(1);
+  if (!source) throw new Error("Nguồn theo dõi không tồn tại.");
+  const trash = await createTrashItem(userId, {
+    entityType: "source",
+    entityId: sourceId,
+    title: source.label || source.sourceUrl,
+    snapshot: { source },
+  });
   await db.delete(chyusenSources).where(and(eq(chyusenSources.id, sourceId), eq(chyusenSources.userId, userId)));
+  return { id: sourceId, trashId: trash.id };
 }
 
 export async function recordChyusenSourceHistory(input: typeof chyusenSourceHistory.$inferInsert) {

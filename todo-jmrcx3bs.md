@@ -84,3 +84,12 @@
 - [x] Lưu trạng thái hoạt động ban đầu của nguồn theo dõi khi xóa mềm Chyusen.
 - [x] Khôi phục chính xác nguồn vốn tắt hoặc bật sau khi hoàn tác Chyusen.
 - [x] Kiểm thử trạng thái nguồn trước/sau hoàn tác và lưu checkpoint hoàn chỉnh.
+- [x] Khảo sát toàn bộ thao tác xóa của Card, Box, Pack, Kho, Mua Hàng, Bán Hàng, Marketplace, Chyusen, nguồn theo dõi và dữ liệu liên quan.
+- [x] Thiết kế Thùng rác thống nhất để lưu snapshot dữ liệu đã xóa theo người dùng và loại dữ liệu.
+- [x] Chuyển các thao tác xóa sang ghi nhận vào Thùng rác và hỗ trợ khôi phục an toàn.
+- [x] Thêm mục Thùng rác bên dưới Cài đặt cùng trang xem, lọc và khôi phục dữ liệu đã xóa.
+- [x] Kiểm thử khôi phục toàn bộ loại dữ liệu và lưu phiên bản hoàn chỉnh.
+- [x] Đồng bộ mục Thùng rác khi hoàn tác xóa Chyusen từ toast trong thời gian 10 giây.
+- [x] Làm mới danh sách Thùng rác ngay sau khi hoàn tác Chyusen từ toast.
+- [x] Xác minh trực tiếp luồng xóa, mục xuất hiện trong Thùng rác và khôi phục thành công từ giao diện.
+- [x] Lưu checkpoint sau khi hoàn tất đồng bộ và xác minh Thùng rác.

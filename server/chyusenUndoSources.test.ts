@@ -9,10 +9,11 @@ const fakeDb = {
     from: vi.fn(() => ({
       where: vi.fn(() => {
         const resolveRows = async () => queryResults.shift() || [];
-        return {
+        const query = {
           limit: vi.fn(resolveRows),
           then: <TResult1 = Array<Record<string, unknown>>, TResult2 = never>(onfulfilled?: ((value: Array<Record<string, unknown>>) => TResult1 | PromiseLike<TResult1>) | null, onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null) => resolveRows().then(onfulfilled, onrejected),
         };
+        return { ...query, orderBy: vi.fn(() => query) };
       }),
     })),
   })),
@@ -25,6 +26,7 @@ const fakeDb = {
   insert: vi.fn(() => ({
     values: vi.fn(async (values: Record<string, unknown>) => {
       insertValues.push(values);
+      return [{ insertId: insertValues.length }];
     }),
   })),
 };

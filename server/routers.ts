@@ -12,6 +12,8 @@ import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
 import { checkChyusenSourceNow } from "./chyusenMonitor";
 import { analyzeChyusenImage } from "./chyusenImageAnalysis";
+import { listTrashItems } from "./trashDb";
+import { restoreTrashItem } from "./trashRestore";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -358,6 +360,18 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ saleId: z.number() }))
       .mutation(({ ctx, input }) => db.deleteSale(ctx.user.id, input.saleId)),
+  }),
+
+  trash: router({
+    list: protectedProcedure
+      .input(z.object({ entityType: z.string().max(64).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const items = await listTrashItems(ctx.user.id);
+        return input?.entityType ? items.filter((item) => item.entityType === input.entityType) : items;
+      }),
+    restore: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => restoreTrashItem(ctx.user.id, input.id)),
   }),
 
   activities: router({

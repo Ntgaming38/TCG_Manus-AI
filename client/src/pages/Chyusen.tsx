@@ -119,6 +119,7 @@ export default function Chyusen() {
     utils.chyusen.sourceHistory.invalidate();
     utils.chyusen.notificationSettings.invalidate();
     utils.dashboard.stats.invalidate();
+    utils.trash.list.invalidate();
   };
   const openChyusenDetails = async (id: number) => {
     try {

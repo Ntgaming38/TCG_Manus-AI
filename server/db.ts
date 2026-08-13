@@ -12,6 +12,7 @@ import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
 import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../shared/marketplacePriceHistory';
+import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -148,6 +149,14 @@ export async function deleteProduct(id: number, userId: number) {
   // Get product info before deleting for logging
   const product = await getProductById(id);
   if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+  const relatedSales = await db.select().from(sales).where(and(eq(sales.productId, id), eq(sales.userId, userId)));
+  const relatedPurchases = await db.select().from(purchases).where(and(eq(purchases.productId, id), eq(purchases.userId, userId)));
+  const trash = await createTrashItem(userId, {
+    entityType: "product",
+    entityId: id,
+    title: product.name,
+    snapshot: { product, purchases: relatedPurchases, sales: relatedSales },
+  });
   // Delete related sales and purchases first
   await db.delete(sales).where(and(eq(sales.productId, id), eq(sales.userId, userId)));
   await db.delete(purchases).where(and(eq(purchases.productId, id), eq(purchases.userId, userId)));
@@ -161,6 +170,7 @@ export async function deleteProduct(id: number, userId: number) {
     entityId: id,
     ...serializeActivityChange(product, null),
   });
+  return { success: true, trashId: trash.id };
 }
 
 export async function getProductSuggestions(userId: number, search: string) {
@@ -749,8 +759,15 @@ export async function deletePurchase(userId: number, purchaseId: number) {
   // Check if this is the only purchase for this product
   const allPurchasesForProduct = await db.select().from(purchases)
     .where(and(eq(purchases.productId, purchase.productId), eq(purchases.userId, userId)));
+  const productDeleted = allPurchasesForProduct.length <= 1;
+  const trash = await createTrashItem(userId, {
+    entityType: "purchase",
+    entityId: purchaseId,
+    title: `Mua: ${product.name}`,
+    snapshot: { purchase, product, productDeleted },
+  });
 
-  if (allPurchasesForProduct.length <= 1) {
+  if (productDeleted) {
     // This is the only purchase - delete the product entirely
     await db.delete(purchases).where(eq(purchases.id, purchaseId));
     await db.delete(products).where(eq(products.id, purchase.productId));
@@ -783,7 +800,7 @@ export async function deletePurchase(userId: number, purchaseId: number) {
     ...serializeActivityChange(purchase, null),
   });
 
-  return { success: true };
+  return { success: true, trashId: trash.id };
 }
 
 // ========== UPDATE SALE ==========
@@ -890,6 +907,12 @@ export async function deleteSale(userId: number, saleId: number) {
   // Get product
   const product = await getProductById(sale.productId);
   if (!product) throw new Error("Sản phẩm không tồn tại");
+  const trash = await createTrashItem(userId, {
+    entityType: "sale",
+    entityId: saleId,
+    title: `Bán: ${product.name}`,
+    snapshot: { sale, product },
+  });
 
   // Restore quantity back to product
   const restoredQty = (product.quantity || 0) + sale.quantity;
@@ -921,7 +944,7 @@ export async function deleteSale(userId: number, saleId: number) {
     ...serializeActivityChange(sale, null),
   });
 
-  return { success: true };
+  return { success: true, trashId: trash.id };
 }
 
 // ========== SALES ==========

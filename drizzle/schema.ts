@@ -167,6 +167,24 @@ export const activityLogs = mysqlTable("activity_logs", {
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 
+/** Snapshot dữ liệu đã xóa, dùng để hiển thị và khôi phục an toàn từ Thùng rác. */
+export const trashItems = mysqlTable("trash_items", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  entityType: varchar("entityType", { length: 64 }).notNull(),
+  entityId: int("entityId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  snapshot: text("snapshot").notNull(),
+  deletedAt: timestamp("deletedAt").defaultNow().notNull(),
+  restoredAt: timestamp("restoredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("trash_items_user_deleted_idx").on(table.userId, table.deletedAt),
+  index("trash_items_user_type_idx").on(table.userId, table.entityType),
+]);
+
+export type TrashItem = typeof trashItems.$inferSelect;
+
 /**
  * Chyusen entries are always private to one user. Source information is retained
  * separately so a later public-page refresh never overwrites the saved entry

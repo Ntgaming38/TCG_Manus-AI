@@ -25,9 +25,14 @@ vi.mock("./db", async (importOriginal) => {
   };
 });
 
+vi.mock("./trashDb", () => ({ listTrashItems: vi.fn() }));
+vi.mock("./trashRestore", () => ({ restoreTrashItem: vi.fn() }));
+
 import { appRouter } from "./routers";
 import * as chyusenDb from "./chyusenDb";
 import * as db from "./db";
+import { listTrashItems } from "./trashDb";
+import { restoreTrashItem } from "./trashRestore";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -156,6 +161,27 @@ describe("appRouter", () => {
     it("yêu cầu đăng nhập trước khi xem nhật ký hoạt động", async () => {
       const caller = appRouter.createCaller(createUnauthContext());
       await expect(caller.activities.list()).rejects.toThrow();
+    });
+  });
+
+  describe("trash router", () => {
+    it("chỉ liệt kê Thùng rác của người dùng đang đăng nhập và hỗ trợ lọc loại dữ liệu", async () => {
+      vi.mocked(listTrashItems).mockResolvedValue([
+        { id: 41, entityType: "product", entityId: 8, title: "Pikachu", deletedAt: new Date() },
+        { id: 42, entityType: "sale", entityId: 9, title: "Bán Pikachu", deletedAt: new Date() },
+      ] as any);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.trash.list({ entityType: "sale" })).resolves.toHaveLength(1);
+      expect(listTrashItems).toHaveBeenCalledWith(1);
+    });
+
+    it("khôi phục một mục Thùng rác theo đúng người dùng đang đăng nhập", async () => {
+      vi.mocked(restoreTrashItem).mockResolvedValue({ id: 41, entityType: "product", title: "Pikachu", restored: true });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.trash.restore({ id: 41 })).resolves.toMatchObject({ restored: true });
+      expect(restoreTrashItem).toHaveBeenCalledWith(1, 41);
     });
   });
 

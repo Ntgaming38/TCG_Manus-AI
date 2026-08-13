@@ -16,6 +16,7 @@ import Chyusen from "./pages/Chyusen";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import ActivityHistory from "./pages/ActivityHistory";
+import Trash from "./pages/Trash";
 import DashboardLayout from "./components/DashboardLayout";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -63,6 +64,9 @@ function Router() {
       </Route>
       <Route path={"/cai-dat"}>
         <ProtectedRoute component={Settings} />
+      </Route>
+      <Route path={"/thung-rac"}>
+        <ProtectedRoute component={Trash} />
       </Route>
       <Route path={"/bao-cao"}>
         <ProtectedRoute component={Reports} />

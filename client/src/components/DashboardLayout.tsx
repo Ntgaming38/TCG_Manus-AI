@@ -23,7 +23,7 @@ import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift,
-  Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard, Ticket, Settings, History
+  Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard, Ticket, Settings, History, Trash2
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -48,6 +48,7 @@ const menuItems = [
   { icon: History, label: "Lịch Sử", path: "/lich-su" },
   { icon: FileText, label: "Báo Cáo", path: "/bao-cao" },
   { icon: Settings, label: "Cài đặt", path: "/cai-dat" },
+  { icon: Trash2, label: "Thùng rác", path: "/thung-rac" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
