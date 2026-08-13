@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
+import { extractAssistantText } from "./aiResponse";
 
 export const appRouter = router({
   system: systemRouter,
@@ -52,8 +53,8 @@ export const appRouter = router({
           };
 
           const response = await invokeLLM({
-            model: "gpt-5-mini",
-            maxTokens: 900,
+            model: "claude-haiku-4-5",
+            maxTokens: 1000,
             messages: [
               {
                 role: "system",
@@ -63,14 +64,14 @@ export const appRouter = router({
             ],
           });
 
-          const content = response.choices?.[0]?.message?.content;
-          if (typeof content === "string" && content.trim()) {
-            return content.trim();
+          const content = extractAssistantText(response);
+          if (!content) {
+            throw new Error(`LLM không trả về nội dung hiển thị được (finish_reason: ${response.choices?.[0]?.finish_reason ?? "unknown"}).`);
           }
-          return "Xin chào! Tôi đã ghi nhận câu hỏi của bạn. Kho hàng hiện tại đang có biên độ lợi nhuận ổn định. Bạn có muốn xem thẻ bài nào có ROI cao nhất không?";
+          return content;
         } catch (error) {
           console.error("AI chat error:", error);
-          return "Xin lỗi, hiện tại Trợ lý AI đang bận hoặc gặp sự cố kết nối tạm thời. Vui lòng thử lại câu hỏi sau ít phút.";
+          return "Xin lỗi, hiện tại Trợ lý AI chưa thể hoàn tất phân tích. Vui lòng thử lại sau ít phút.";
         }
       }),
 
