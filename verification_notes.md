@@ -21,3 +21,10 @@ Ngày xác minh: 13/08/2026
 - Trang Cài đặt hiện có nút **Thu gọn/Mở rộng** danh sách nguồn theo dõi và bộ lọc **Nguồn lỗi**, kèm số lượng nguồn không truy cập được.
 - Nút **Đồng bộ ngay** trên thẻ Marketplace sử dụng luồng đồng bộ thủ công hiện hữu, hiển thị trạng thái đang chạy và thông báo tổng hợp sau khi hoàn tất.
 - Đã xác minh desktop 1280×720 và mobile 375×812; tất cả điều khiển mới hiển thị đầy đủ. Typecheck, 62 Vitest tests và production build thành công.
+
+## Vùng chạm nút sidebar trên mobile
+
+Ngày xác minh: 13/08/2026
+
+- Nút mở sidebar ở góc trên bên trái được tăng lên 48×48 px, biểu tượng lớn hơn và có nền nhấn nhẹ để dễ nhận diện trên điện thoại.
+- Đã xác minh ở viewport 375×812; nút không che tiêu đề trang hay chuông thông báo. Typecheck và 73 Vitest tests đều đạt.

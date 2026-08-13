@@ -267,3 +267,7 @@
 - [x] Thêm bộ lọc nhanh chỉ hiển thị nguồn Chyusen đang lỗi
 - [x] Thêm nút Đồng bộ ngay Marketplace, tái sử dụng luồng đồng bộ thủ công hiện có và hiển thị kết quả
 - [x] Kiểm thử API, giao diện desktop/mobile và lưu checkpoint
+
+## Cải thiện điều hướng di động
+- [x] Tăng kích thước biểu tượng và vùng chạm nút mở sidebar ở góc trên bên trái trên mobile
+- [x] Xác minh mobile và lưu checkpoint

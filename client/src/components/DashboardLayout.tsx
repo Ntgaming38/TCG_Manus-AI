@@ -232,7 +232,7 @@ function DashboardLayoutContent({
         <div className="flex border-b border-primary/30 h-14 items-center justify-between bg-background/95 px-3 backdrop-blur sticky top-0 z-40">
           {isMobile ? (
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg" />
+              <SidebarTrigger className="h-12 w-12 min-h-12 min-w-12 rounded-xl bg-sidebar-accent/15 shadow-sm transition-colors hover:bg-sidebar-accent/25 [&>svg]:h-5 [&>svg]:w-5" />
               <span className="text-sm font-medium text-foreground">
                 {activeMenuItem?.label ?? "Menu"}
               </span>
