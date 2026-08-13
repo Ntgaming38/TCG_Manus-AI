@@ -64,3 +64,10 @@ Ngày xác minh: 13/08/2026
 ### Theo dõi sau khi hợp nhất phân trang
 
 - Hai lần chụp preview sau khi khởi động lại hiển thị skeleton vì phiên preview không có đăng nhập. Kiểm tra trong trình duyệt riêng xác nhận trạng thái này dẫn tới màn hình Đăng nhập, không phải lỗi tải trang Lịch sử. API và giao diện đã được xác minh bằng hồi quy tự động.
+
+## Nhãn Đồng Bộ
+
+Ngày xác minh: 13/08/2026
+
+- Nhãn hiển thị của bộ lọc đồng bộ được rút gọn từ **Đồng Bộ Auto** thành **Đồng Bộ**; giá trị lọc nội bộ và điều kiện tách lịch sử SNKRDUNK không thay đổi.
+- Typecheck và 78 Vitest tests đều đạt.

@@ -34,7 +34,7 @@ const fieldLabels: Record<string, string> = {
 
 const filters: Array<{ value: HistoryFilter; label: string }> = [
   { value: "all", label: "Tất cả" },
-  { value: "auto_sync", label: "Đồng Bộ Auto" },
+  { value: "auto_sync", label: "Đồng Bộ" },
   { value: "product", label: "Kho hàng" },
   { value: "purchase", label: "Mua hàng" },
   { value: "sale", label: "Bán hàng" },

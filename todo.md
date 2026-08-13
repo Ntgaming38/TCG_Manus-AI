@@ -289,3 +289,7 @@
 - [x] Thêm mục Đồng Bộ Auto sau Tất cả và trước Kho hàng
 - [x] Loại hoạt động đồng bộ giá SNKRDUNK khỏi Tất cả, chỉ hiển thị trong Đồng Bộ Auto
 - [x] Kiểm thử lọc và lưu checkpoint
+
+## Đổi nhãn bộ lọc đồng bộ
+- [x] Đổi nhãn Đồng Bộ Auto thành Đồng Bộ, giữ nguyên điều kiện lọc SNKRDUNK
+- [x] Xác minh và lưu checkpoint
