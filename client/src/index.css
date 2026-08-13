@@ -398,4 +398,20 @@
     animation: slide-up-fade 800ms cubic-bezier(0.23, 1, 0.32, 1) 200ms forwards;
     opacity: 0;
   }
+
+  /* Keep the Marketplace controls visible before potentially long source lists. */
+  .settings-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .settings-stack > * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .settings-stack > :nth-child(2) { order: 2; }
+  .settings-stack > :nth-child(3) { order: 3; }
+  .settings-stack > :nth-child(4) { order: 1; }
 }

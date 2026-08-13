@@ -258,3 +258,6 @@
 - [x] Thêm nút Kiểm tra ngay cho từng nguồn Chyusen với trạng thái/lỗi lần chạy gần nhất
 - [x] Thêm cấu hình auto-sync Marketplace vào trang Cài đặt, giữ lịch 6 giờ và nút thủ công
 - [x] Kiểm thử thao tác, lỗi nguồn, desktop/mobile và lưu checkpoint
+
+## Ưu tiên cấu hình Marketplace trong Cài đặt
+- [x] Chuyển thẻ Đồng bộ giá Marketplace lên trước danh sách nguồn theo dõi và xác minh responsive
