@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
+import { CARD_RARITY_OPTIONS } from "@shared/cardRarity";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -196,14 +197,9 @@ export default function Products() {
                       <Select value={newProduct.rarity} onValueChange={(v) => setNewProduct(p => ({ ...p, rarity: v }))}>
                         <SelectTrigger><SelectValue placeholder="Chọn" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Common">Common</SelectItem>
-                          <SelectItem value="Uncommon">Uncommon</SelectItem>
-                          <SelectItem value="Rare">Rare</SelectItem>
-                          <SelectItem value="AR">AR</SelectItem>
-                          <SelectItem value="SR">SR</SelectItem>
-                          <SelectItem value="SAR">SAR</SelectItem>
-                          <SelectItem value="UR">UR</SelectItem>
-                          <SelectItem value="Promo">Promo</SelectItem>
+                          {CARD_RARITY_OPTIONS.map((rarity) => (
+                            <SelectItem key={rarity.value} value={rarity.value}>{rarity.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

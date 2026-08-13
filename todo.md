@@ -190,3 +190,6 @@
 ## System prompt phân tích sâu cho Trợ lý AI
 - [x] Tách system prompt thành hằng số dễ bảo trì với quy trình phân tích Card 5 bước
 - [x] Bổ sung kiểm thử prompt và xác minh build trước khi lưu checkpoint
+
+## Cập nhật rarity Card
+- [x] Thay tùy chọn rarity UR thành MUR trong form quản lý Card và xác minh hiển thị/lưu dữ liệu
