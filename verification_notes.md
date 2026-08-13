@@ -52,3 +52,11 @@ Ngày xác minh: 13/08/2026
 - Đã loại bỏ hoàn toàn dòng **Màu chi tiết: Xóa / Sửa / Mua / Bán** phía trên bộ lọc Lịch sử.
 - Nhãn màu nằm ngay cạnh từng hoạt động được giữ nguyên, nên loại thao tác vẫn nhận biết trực tiếp mà không cần chú giải lặp lại.
 - Đã xác minh desktop/mobile; typecheck và 76 Vitest tests đều đạt.
+
+## Bộ lọc Đồng Bộ Auto trong Lịch sử
+
+Ngày xác minh: 13/08/2026
+
+- Bộ lọc **Đồng Bộ Auto** nằm ngay sau **Tất cả** và trước **Kho hàng** trên giao diện Lịch sử.
+- Mặc định Tất cả loại trừ các hành động đồng bộ giá SNKRDUNK; nhóm Đồng Bộ Auto hiển thị riêng các hành động này.
+- Đã xác minh vị trí trên mobile 375×812; typecheck và 77 Vitest tests đều đạt.

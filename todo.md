@@ -284,3 +284,8 @@
 ## Tinh gọn chú giải Lịch sử
 - [x] Xóa dòng chú giải Màu chi tiết: Xóa / Sửa / Mua / Bán, giữ nhãn màu trên từng hoạt động
 - [x] Kiểm thử giao diện và lưu checkpoint
+
+## Bộ lọc Đồng Bộ Auto trong Lịch sử
+- [x] Thêm mục Đồng Bộ Auto sau Tất cả và trước Kho hàng
+- [x] Loại hoạt động đồng bộ giá SNKRDUNK khỏi Tất cả, chỉ hiển thị trong Đồng Bộ Auto
+- [x] Kiểm thử lọc và lưu checkpoint

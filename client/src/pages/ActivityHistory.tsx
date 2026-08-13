@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-type HistoryFilter = "all" | "product" | "purchase" | "sale" | "shop";
+type HistoryFilter = "all" | "auto_sync" | "product" | "purchase" | "sale" | "shop";
 
 const fieldLabels: Record<string, string> = {
   name: "Tên", type: "Loại", quantity: "Số lượng", damagedQuantity: "Số lượng hỏng",
@@ -34,6 +34,7 @@ const fieldLabels: Record<string, string> = {
 
 const filters: Array<{ value: HistoryFilter; label: string }> = [
   { value: "all", label: "Tất cả" },
+  { value: "auto_sync", label: "Đồng Bộ Auto" },
   { value: "product", label: "Kho hàng" },
   { value: "purchase", label: "Mua hàng" },
   { value: "sale", label: "Bán hàng" },
@@ -49,6 +50,10 @@ export function getActivityTone(action: string, entityType: string | null) {
   if (action === "product_damaged") return { label: "Hàng hỏng", icon: ArchiveRestore, badgeClass: "border-amber-400/30 bg-amber-400/10 text-amber-300", buttonClass: "border-amber-400 bg-amber-400 text-black hover:bg-amber-300", accentClass: "border-amber-400/50", fieldClass: "bg-amber-500/10 text-amber-200", valueClass: "bg-amber-500/5 text-amber-100" };
   if (action.includes("synced")) return { label: "Đã đồng bộ", icon: TrendingUp, badgeClass: "border-violet-400/30 bg-violet-400/10 text-violet-300", buttonClass: "border-violet-400 bg-violet-400 text-black hover:bg-violet-300", accentClass: "border-violet-400/50", fieldClass: "bg-violet-500/10 text-violet-200", valueClass: "bg-violet-500/5 text-violet-100" };
   return { label: "Hoạt động", icon: Activity, badgeClass: "border-primary/30 bg-primary/10 text-primary", buttonClass: "border-primary bg-primary text-black hover:bg-primary/80", accentClass: "border-primary/50", fieldClass: "bg-primary/10 text-primary", valueClass: "bg-primary/5 text-foreground" };
+}
+
+export function isAutoSyncActivity(action: string) {
+  return action === "snkrdunk_price_synced" || (action.includes("snkrdunk") && action.includes("synced"));
 }
 
 function getEntityIcon(entityType: string | null) {
@@ -95,14 +100,19 @@ export default function ActivityHistory() {
   const [search, setSearch] = useState("");
   const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null);
   const queryInput = useMemo(() => ({
-    entityType: activeFilter === "all" ? undefined : activeFilter,
+    entityType: activeFilter === "all" || activeFilter === "auto_sync" ? undefined : activeFilter,
     search: search.trim() || undefined,
   }), [activeFilter, search]);
   const { data: activities = [], isLoading, isError, refetch } = trpc.activities.list.useQuery(queryInput);
+  const visibleActivities = useMemo(() => activities.filter((item) => {
+    if (activeFilter === "auto_sync") return isAutoSyncActivity(item.action);
+    if (activeFilter === "all") return !isAutoSyncActivity(item.action);
+    return true;
+  }), [activities, activeFilter]);
 
-  const additions = activities.filter((item) => item.action.endsWith("_created")).length;
-  const updates = activities.filter((item) => item.action.endsWith("_updated") || item.action === "market_price_updated" || item.action === "snkrdunk_url_updated").length;
-  const deletions = activities.filter((item) => item.action.endsWith("_deleted")).length;
+  const additions = visibleActivities.filter((item) => item.action.endsWith("_created")).length;
+  const updates = visibleActivities.filter((item) => item.action.endsWith("_updated") || item.action === "market_price_updated" || item.action === "snkrdunk_url_updated").length;
+  const deletions = visibleActivities.filter((item) => item.action.endsWith("_deleted")).length;
 
   return (
     <div className="space-y-6">
@@ -115,7 +125,7 @@ export default function ActivityHistory() {
           <p className="mt-1 text-sm text-muted-foreground">Theo dõi các thao tác thêm, sửa, xóa và cập nhật dữ liệu trong tài khoản của bạn.</p>
         </div>
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/10 px-3 py-1.5 text-primary">
-          {activities.length} hoạt động gần đây
+          {visibleActivities.length} hoạt động gần đây
         </Badge>
       </div>
 
@@ -146,11 +156,11 @@ export default function ActivityHistory() {
             <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải lịch sử...</div>
           ) : isError ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-center"><p className="text-sm text-muted-foreground">Không thể tải lịch sử hoạt động. Vui lòng thử lại.</p><Button variant="outline" size="sm" onClick={() => refetch()}>Tải lại</Button></div>
-          ) : activities.length === 0 ? (
+          ) : visibleActivities.length === 0 ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-center"><div className="rounded-full bg-secondary/60 p-3"><CheckCircle2 className="h-5 w-5 text-muted-foreground" /></div><div><p className="text-sm font-medium">Chưa có hoạt động phù hợp</p><p className="mt-1 text-xs text-muted-foreground">Các thao tác thêm, sửa, xóa và cập nhật sẽ được lưu tại đây.</p></div></div>
           ) : (
             <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-secondary/10">
-              {activities.map((item) => {
+              {visibleActivities.map((item) => {
                 const tone = getActivityTone(item.action, item.entityType);
                 const ActionIcon = tone.icon;
                 const EntityIcon = getEntityIcon(item.entityType);

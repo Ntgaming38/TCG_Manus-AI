@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getActivityTone, getChangedFields } from "../client/src/pages/ActivityHistory";
+import { getActivityTone, getChangedFields, isAutoSyncActivity } from "../client/src/pages/ActivityHistory";
 
 describe("ActivityHistory detail changes", () => {
   it("chỉ trả về các trường thực sự thay đổi để hiển thị trong Lịch sử", () => {
@@ -30,5 +30,11 @@ describe("ActivityHistory detail changes", () => {
     expect(getActivityTone("purchase_updated", "purchase").buttonClass).toContain("text-black");
     expect(getActivityTone("purchase_created", "purchase").buttonClass).toContain("text-black");
     expect(getActivityTone("sale_created", "sale").buttonClass).toContain("text-black");
+  });
+
+  it("chỉ nhận diện các hoạt động đồng bộ giá SNKRDUNK vào bộ lọc Đồng Bộ Auto", () => {
+    expect(isAutoSyncActivity("snkrdunk_price_synced")).toBe(true);
+    expect(isAutoSyncActivity("product_updated")).toBe(false);
+    expect(isAutoSyncActivity("market_price_updated")).toBe(false);
   });
 });
