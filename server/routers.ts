@@ -11,8 +11,9 @@ import * as chyusenDb from "./chyusenDb";
 import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
 import { checkChyusenSourceNow } from "./chyusenMonitor";
+import { analyzeChyusenImage } from "./chyusenImageAnalysis";
 
-const chyusenEntryInput = z.object({
+const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
   productName: z.string().trim().min(1).max(255),
   series: z.string().trim().max(100).optional(),
@@ -29,6 +30,7 @@ const chyusenEntryInput = z.object({
   resultDate: z.date().nullable().optional(),
   pickupStart: z.date().nullable().optional(),
   pickupEnd: z.date().nullable().optional(),
+  pickupNote: z.string().trim().max(500).optional(),
   requirements: z.string().trim().max(4000).optional(),
   applicationStatus: z.enum(["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]).optional(),
   resultStatus: z.enum(["pending", "won", "lost", "unknown"]).optional(),
@@ -38,6 +40,10 @@ const chyusenEntryInput = z.object({
   fieldConfidence: z.record(z.string(), z.enum(["detected", "needs_review", "missing"])).optional(),
   sourceContentHash: z.string().trim().max(64).optional(),
 });
+
+// UI lưu thủ công hiển thị validation bắt buộc; API vẫn giữ dữ liệu ngày tùy chọn
+// để tương thích với nguồn công khai chưa công bố đầy đủ lịch.
+const chyusenEntryInput = chyusenEntryBase;
 
 function validateChyusenSourceUrl(sourceUrl: string) {
   const result = validatePublicChyusenUrl(sourceUrl);
@@ -371,6 +377,10 @@ export const appRouter = router({
       .input(z.object({ sourceUrl: z.string().trim().url().max(2048) }))
       .mutation(({ input }) => parseChyusenUrl(validateChyusenSourceUrl(input.sourceUrl), true)),
 
+    analyzeImage: protectedProcedure
+      .input(z.object({ imageDataUrl: z.string().trim().min(64).max(7_000_000) }))
+      .mutation(({ input }) => analyzeChyusenImage(input.imageDataUrl)),
+
     refreshPreview: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
@@ -388,7 +398,7 @@ export const appRouter = router({
       })),
 
     update: protectedProcedure
-      .input(z.object({ id: z.number(), data: chyusenEntryInput.partial() }))
+      .input(z.object({ id: z.number(), data: chyusenEntryBase.partial() }))
       .mutation(({ ctx, input }) => chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
         ...input.data,
         sourceUrl: input.data.sourceUrl ? validateChyusenSourceUrl(input.data.sourceUrl) : undefined,

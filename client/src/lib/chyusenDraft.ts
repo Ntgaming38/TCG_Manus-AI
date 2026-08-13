@@ -15,6 +15,7 @@ export type ChyusenDraft = {
   resultDate: string;
   pickupStart: string;
   pickupEnd: string;
+  pickupNote: string;
   requirements: string;
   parserStatus: "manual" | "partial" | "detected" | "unavailable";
   parserNote: string;
@@ -24,7 +25,7 @@ export type ChyusenDraft = {
 
 export const EMPTY_CHYUSEN_DRAFT: ChyusenDraft = {
   title: "", productName: "", series: "Pokemon", productType: "other", shop: "Khác", customShopName: "", sourceUrl: "", externalProductId: "", imageUrl: "", price: "", quantityLimit: "",
-  applicationStart: "", applicationEnd: "", resultDate: "", pickupStart: "", pickupEnd: "", requirements: "", parserStatus: "manual", parserNote: "", fieldConfidence: {},
+  applicationStart: "", applicationEnd: "", resultDate: "", pickupStart: "", pickupEnd: "", pickupNote: "", requirements: "", parserStatus: "manual", parserNote: "", fieldConfidence: {},
 };
 
 function japanInputValue(value: Date | string | null | undefined) {
@@ -43,7 +44,7 @@ export function toChyusenDraft(data: Record<string, any>): ChyusenDraft {
     shop: data.shop || "Khác", customShopName: data.customShopName || "", sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
     price: data.price === undefined || data.price === null ? "" : String(data.price), quantityLimit: data.quantityLimit || "",
     applicationStart: japanInputValue(data.applicationStart), applicationEnd: japanInputValue(data.applicationEnd), resultDate: japanInputValue(data.resultDate),
-    pickupStart: japanInputValue(data.pickupStart), pickupEnd: japanInputValue(data.pickupEnd), requirements: data.requirements || "",
+    pickupStart: japanInputValue(data.pickupStart), pickupEnd: japanInputValue(data.pickupEnd), pickupNote: data.pickupNote || "", requirements: data.requirements || "",
     parserStatus: data.parserStatus || "manual", parserNote: data.parserNote || "", fieldConfidence: data.fieldConfidence || {}, sourceContentHash: data.sourceContentHash,
   };
 }

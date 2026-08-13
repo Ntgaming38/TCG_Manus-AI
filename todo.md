@@ -293,3 +293,10 @@
 ## Đổi nhãn bộ lọc đồng bộ
 - [x] Đổi nhãn Đồng Bộ Auto thành Đồng Bộ, giữ nguyên điều kiện lọc SNKRDUNK
 - [x] Xác minh và lưu checkpoint
+
+## Hoàn thiện lưu Chyusen thủ công
+- [x] Thêm toast lưu thủ công thành công và validation rõ ràng cho ngày hết hạn, ngày công bố
+- [x] Bỏ ngày nhận hàng kết thúc; đổi ngày nhận hàng bắt đầu thành Ngày nhận hàng với lựa chọn ghi chú thời điểm linh hoạt
+- [x] Bỏ dòng ảnh sản phẩm khỏi form thủ công
+- [x] Thêm tải ảnh và AI trích xuất nội dung để gợi ý điền form Chyusen
+- [ ] Kiểm thử dữ liệu, UI desktop/mobile và lưu checkpoint

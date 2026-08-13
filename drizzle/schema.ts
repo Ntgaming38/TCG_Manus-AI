@@ -189,6 +189,7 @@ export const chyusenEntries = mysqlTable("chyusen_entries", {
   resultDate: timestamp("resultDate"),
   pickupStart: timestamp("pickupStart"),
   pickupEnd: timestamp("pickupEnd"),
+  pickupNote: varchar("pickupNote", { length: 500 }),
   requirements: text("requirements"),
   applicationStatus: mysqlEnum("applicationStatus", ["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]).default("not_registered").notNull(),
   resultStatus: mysqlEnum("resultStatus", ["pending", "won", "lost", "unknown"]).default("pending").notNull(),

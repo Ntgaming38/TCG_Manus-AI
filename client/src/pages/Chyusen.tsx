@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { BellRing, CalendarClock, CheckCircle2, Clock3, ExternalLink, FileSearch, Gift, Link2, Pencil, Plus, Radio, Search, Settings2, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
+import { BellRing, CalendarClock, CheckCircle2, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, Radio, Search, Settings2, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { toChyusenDraft } from "@/lib/chyusenDraft";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
+import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
 
 type Draft = {
   title: string;
@@ -33,6 +34,7 @@ type Draft = {
   resultDate: string;
   pickupStart: string;
   pickupEnd: string;
+  pickupNote: string;
   requirements: string;
   parserStatus: "manual" | "partial" | "detected" | "unavailable";
   parserNote: string;
@@ -42,7 +44,7 @@ type Draft = {
 
 const EMPTY_DRAFT: Draft = {
   title: "", productName: "", series: "Pokemon", productType: "other", shop: "Khác", customShopName: "", sourceUrl: "", externalProductId: "", imageUrl: "", price: "", quantityLimit: "",
-  applicationStart: "", applicationEnd: "", resultDate: "", pickupStart: "", pickupEnd: "", requirements: "", parserStatus: "manual", parserNote: "", fieldConfidence: {},
+  applicationStart: "", applicationEnd: "", resultDate: "", pickupStart: "", pickupEnd: "", pickupNote: "", requirements: "", parserStatus: "manual", parserNote: "", fieldConfidence: {},
 };
 
 const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
@@ -74,7 +76,7 @@ function toDraft(data: any): Draft {
     shop: data.shop || "Khác", customShopName: data.customShopName || "", sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
     price: data.price === undefined || data.price === null ? "" : String(data.price), quantityLimit: data.quantityLimit || "",
     applicationStart: japanInputValue(data.applicationStart), applicationEnd: japanInputValue(data.applicationEnd), resultDate: japanInputValue(data.resultDate),
-    pickupStart: japanInputValue(data.pickupStart), pickupEnd: japanInputValue(data.pickupEnd), requirements: data.requirements || "",
+    pickupStart: japanInputValue(data.pickupStart), pickupEnd: japanInputValue(data.pickupEnd), pickupNote: data.pickupNote || "", requirements: data.requirements || "",
     parserStatus: data.parserStatus || "manual", parserNote: data.parserNote || "", fieldConfidence: data.fieldConfidence || {}, sourceContentHash: data.sourceContentHash,
   };
 }
@@ -123,6 +125,7 @@ export default function Chyusen() {
   const [editingSourceId, setEditingSourceId] = useState<number | null>(null);
   const [deleteSourceId, setDeleteSourceId] = useState<number | null>(null);
   const [sourceDraft, setSourceDraft] = useState<{ label: string; sourceUrl: string; checkIntervalMinutes: 60 | 180 | 360 | 720 | 1440; isActive: boolean }>({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true });
+  const [validationErrors, setValidationErrors] = useState<ChyusenManualValidationErrors>({});
 
   const invalidate = () => {
     utils.chyusen.list.invalidate();
@@ -143,11 +146,11 @@ export default function Chyusen() {
     },
   });
   const create = trpc.chyusen.create.useMutation({
-    onSuccess: () => { toast.success("Đã lưu Chyusen."); setShowDialog(false); setDraft(EMPTY_DRAFT); invalidate(); },
+    onSuccess: () => { toast.success("Đã lưu Chyusen thủ công thành công."); setShowDialog(false); setDraft(EMPTY_DRAFT); setValidationErrors({}); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const update = trpc.chyusen.update.useMutation({
-    onSuccess: () => { toast.success("Đã cập nhật Chyusen."); setShowDialog(false); setEditingId(null); setDraft(EMPTY_DRAFT); invalidate(); },
+    onSuccess: () => { toast.success("Đã cập nhật Chyusen thành công."); setShowDialog(false); setEditingId(null); setDraft(EMPTY_DRAFT); setValidationErrors({}); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const remove = trpc.chyusen.delete.useMutation({
@@ -173,6 +176,31 @@ export default function Chyusen() {
   const createSource = trpc.chyusen.createSource.useMutation({ onSuccess: () => { toast.success("Đã lưu nguồn theo dõi."); setShowSourceDialog(false); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { toast.success("Đã cập nhật nguồn theo dõi."); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
   const deleteSource = trpc.chyusen.deleteSource.useMutation({ onSuccess: () => { toast.success("Đã xóa nguồn theo dõi."); setDeleteSourceId(null); invalidate(); }, onError: (error) => toast.error(error.message) });
+  const analyzeImage = trpc.chyusen.analyzeImage.useMutation({
+    onSuccess: (data) => {
+      const extracted = toDraft({ ...data, parserStatus: "partial", parserNote: data.note, fieldConfidence: {} });
+      setDraft((current) => ({
+        ...current,
+        title: data.title || current.title,
+        productName: data.productName || current.productName,
+        series: data.series || current.series,
+        productType: data.productType || current.productType,
+        shop: data.shop || current.shop,
+        price: data.price === null ? current.price : String(data.price),
+        quantityLimit: data.quantityLimit || current.quantityLimit,
+        applicationStart: extracted.applicationStart || current.applicationStart,
+        applicationEnd: extracted.applicationEnd || current.applicationEnd,
+        resultDate: extracted.resultDate || current.resultDate,
+        pickupStart: extracted.pickupStart || current.pickupStart,
+        pickupNote: data.pickupNote || current.pickupNote,
+        requirements: data.requirements || current.requirements,
+        parserStatus: "partial",
+        parserNote: data.note || "AI đã đọc ảnh. Hãy kiểm tra lại trước khi lưu.",
+      }));
+      toast.success("AI đã đọc ảnh. Hãy kiểm tra lại thông tin trước khi lưu.");
+    },
+    onError: (error) => toast.error(error.message || "Không thể đọc ảnh. Hãy thử ảnh rõ hơn."),
+  });
 
   const filteredEntries = useMemo(() => entries.filter((entry: any) => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -187,7 +215,25 @@ export default function Chyusen() {
     return entryLabel ? `${sourceLabel} · ${entryLabel}` : sourceLabel;
   };
 
-  const updateDraft = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }));
+  const updateDraft = <K extends keyof Draft>(key: K, value: Draft[K]) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+    if (["title", "productName", "applicationEnd", "resultDate"].includes(String(key))) {
+      setValidationErrors((current) => ({ ...current, [key]: undefined }));
+    }
+  };
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!/image\/(png|jpeg|webp)/.test(file.type)) { toast.error("Chỉ hỗ trợ ảnh PNG, JPEG hoặc WEBP."); return; }
+    if (file.size > 4 * 1024 * 1024) { toast.error("Ảnh tối đa 4 MB để AI có thể đọc nhanh."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") analyzeImage.mutate({ imageDataUrl: reader.result });
+    };
+    reader.onerror = () => toast.error("Không thể đọc tệp ảnh này.");
+    reader.readAsDataURL(file);
+  };
   const openNewSource = () => { setEditingSourceId(null); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); setShowSourceDialog(true); };
   const openEditSource = (source: any) => { setEditingSourceId(source.id); setSourceDraft({ label: source.label || "", sourceUrl: source.sourceUrl || "", checkIntervalMinutes: source.checkIntervalMinutes || 360, isActive: Boolean(source.isActive) }); setShowSourceDialog(true); };
   const saveSource = () => {
@@ -198,8 +244,10 @@ export default function Chyusen() {
     }
   };
   const submit = () => {
-    if (!draft.title.trim() || !draft.productName.trim()) {
-      toast.error("Hãy nhập tên Chyusen và tên sản phẩm.");
+    const errors = validateChyusenManualDraft(draft);
+    setValidationErrors(errors);
+    if (Object.keys(errors).length) {
+      toast.error("Vui lòng hoàn tất các trường bắt buộc trước khi lưu.");
       return;
     }
     const { sourceUrl, ...draftWithoutSourceUrl } = draft;
@@ -210,13 +258,13 @@ export default function Chyusen() {
       customShopName: draft.customShopName || undefined,
       price: draft.price ? Number(draft.price) : null,
       applicationStart: fromInputValue(draft.applicationStart), applicationEnd: fromInputValue(draft.applicationEnd), resultDate: fromInputValue(draft.resultDate),
-      pickupStart: fromInputValue(draft.pickupStart), pickupEnd: fromInputValue(draft.pickupEnd),
+      pickupStart: fromInputValue(draft.pickupStart), pickupEnd: null, pickupNote: draft.pickupNote.trim() || undefined,
     };
     if (editingId) update.mutate({ id: editingId, data: payload });
     else create.mutate(payload);
   };
-  const openNew = () => { setEditingId(null); setDraft(EMPTY_DRAFT); setShowDialog(true); };
-  const openEdit = (entry: any) => { setEditingId(entry.id); setDraft(toDraft(entry)); setShowDialog(true); };
+  const openNew = () => { setEditingId(null); setDraft(EMPTY_DRAFT); setValidationErrors({}); setShowDialog(true); };
+  const openEdit = (entry: any) => { setEditingId(entry.id); setDraft(toDraft(entry)); setValidationErrors({}); setShowDialog(true); };
 
   return (
     <div className="space-y-6">
@@ -269,11 +317,12 @@ export default function Chyusen() {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setDraft(EMPTY_DRAFT); } }}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setDraft(EMPTY_DRAFT); setValidationErrors({}); } }}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>URL là tùy chọn: dán link để tự động điền khi đọc được, hoặc nhập thủ công và lưu trực tiếp.</DialogDescription></DialogHeader>
           <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選 <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Nếu link không đọc được, hệ thống sẽ để trống URL để bạn tiếp tục nhập tay và lưu bình thường.</p></div>
             {draft.parserNote && <div className={`rounded-lg border px-3 py-2 text-sm ${draft.parserStatus === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{draft.parserNote}</div>}
-            <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình"><Input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm"><Input value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series"><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pokemon">Pokémon</SelectItem><SelectItem value="One Piece">One Piece</SelectItem><SelectItem value="Other">Khác</SelectItem></SelectContent></Select></Field><Field label="Loại sản phẩm"><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as Draft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng"><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)"><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng"><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><Field label="Bắt đầu đăng ký"><Input type="datetime-local" value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", event.target.value)} /></Field><Field label="Hết hạn đăng ký"><Input type="datetime-local" value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", event.target.value)} /></Field><Field label="Công bố kết quả"><Input type="datetime-local" value={draft.resultDate} onChange={(event) => updateDraft("resultDate", event.target.value)} /></Field><Field label="Nhận hàng bắt đầu"><Input type="datetime-local" value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", event.target.value)} /></Field><Field label="Nhận hàng kết thúc"><Input type="datetime-local" value={draft.pickupEnd} onChange={(event) => updateDraft("pickupEnd", event.target.value)} /></Field><Field label="Ảnh sản phẩm (URL)"><Input value={draft.imageUrl} onChange={(event) => updateDraft("imageUrl", event.target.value)} /></Field></div>
+            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Đọc thông tin từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Tải ảnh thông báo Chyusen để AI gợi ý thông tin. Chỉ dữ liệu nhìn thấy rõ trong ảnh mới được điền; hãy kiểm tra trước khi lưu.</p><Input className="mt-3 cursor-pointer" type="file" accept="image/png,image/jpeg,image/webp" disabled={analyzeImage.isPending} onChange={handleImageUpload} />{analyzeImage.isPending && <p className="mt-2 text-xs font-medium text-primary">AI đang đọc nội dung ảnh...</p>}</div>
+            <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình" error={validationErrors.title}><Input aria-invalid={Boolean(validationErrors.title)} value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm" error={validationErrors.productName}><Input aria-invalid={Boolean(validationErrors.productName)} value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series"><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pokemon">Pokémon</SelectItem><SelectItem value="One Piece">One Piece</SelectItem><SelectItem value="Other">Khác</SelectItem></SelectContent></Select></Field><Field label="Loại sản phẩm"><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as Draft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng"><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)"><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng"><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><Field label="Bắt đầu đăng ký"><Input type="datetime-local" value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", event.target.value)} /></Field><Field label="Hết hạn đăng ký" error={validationErrors.applicationEnd}><Input aria-invalid={Boolean(validationErrors.applicationEnd)} type="datetime-local" value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", event.target.value)} /></Field><Field label="Công bố kết quả" error={validationErrors.resultDate}><Input aria-invalid={Boolean(validationErrors.resultDate)} type="datetime-local" value={draft.resultDate} onChange={(event) => updateDraft("resultDate", event.target.value)} /></Field><Field label="Ngày nhận hàng"><Input type="datetime-local" value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", event.target.value)} /></Field><Field label="Ghi chú thời điểm nhận hàng"><Input value={draft.pickupNote} onChange={(event) => updateDraft("pickupNote", event.target.value)} placeholder="VD: Khoảng đầu tháng 9" /></Field></div>
             <Field label="Điều kiện tham gia"><Textarea value={draft.requirements} onChange={(event) => updateDraft("requirements", event.target.value)} placeholder="VD: Thành viên Joshin, yêu cầu đăng nhập..." /></Field>
             {Object.keys(draft.fieldConfidence).length > 0 && <div className="rounded-lg border border-border p-3"><p className="mb-2 text-sm font-medium">Độ tin cậy dữ liệu</p><div className="flex flex-wrap gap-2">{Object.entries(draft.fieldConfidence).map(([field, value]) => <Badge key={field} variant="outline" className={value === "detected" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : value === "needs_review" ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-300 bg-slate-50 text-slate-700"}>{field}: {value === "detected" ? "đã nhận diện" : value === "needs_review" ? "cần kiểm tra" : "thiếu"}</Badge>)}</div></div>}
             <Button className="w-full bg-red-600 text-white hover:bg-red-700" onClick={submit} disabled={create.isPending || update.isPending}>{create.isPending || update.isPending ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Lưu 抽選"}</Button>
@@ -289,6 +338,6 @@ export default function Chyusen() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}</div>;
+function Field({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) {
+  return <div className="space-y-2"><Label className={error ? "text-destructive" : ""}>{label}{error ? " *" : ""}</Label>{children}{error && <p className="text-xs text-destructive">{error}</p>}</div>;
 }

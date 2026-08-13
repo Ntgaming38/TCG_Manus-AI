@@ -28,6 +28,7 @@ export type ChyusenEntryInput = {
   resultDate?: Date | null;
   pickupStart?: Date | null;
   pickupEnd?: Date | null;
+  pickupNote?: string;
   requirements?: string;
   applicationStatus?: "not_registered" | "registered" | "cancelled" | "won" | "lost" | "not_participating";
   resultStatus?: "pending" | "won" | "lost" | "unknown";
@@ -50,7 +51,7 @@ export type ChyusenSourceInput = {
 
 const editableFields = [
   "title", "productName", "series", "productType", "shop", "customShopName", "sourceUrl", "externalProductId", "imageUrl", "price",
-  "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupEnd", "requirements",
+  "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupEnd", "pickupNote", "requirements",
   "applicationStatus", "resultStatus", "sourceTimezone", "parserStatus", "parserNote", "fieldConfidence", "sourceContentHash",
 ] as const;
 
@@ -189,6 +190,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     resultDate: input.resultDate || null,
     pickupStart: input.pickupStart || null,
     pickupEnd: input.pickupEnd || null,
+    pickupNote: input.pickupNote || null,
     requirements: input.requirements || null,
     applicationStatus: input.applicationStatus || "not_registered",
     resultStatus: input.resultStatus || "pending",
