@@ -8,7 +8,7 @@ export type ChyusenDashboardEntry = {
 
 export function summarizeChyusenDashboard(entries: ChyusenDashboardEntry[]) {
   const isResolved = (entry: ChyusenDashboardEntry) => entry.applicationStatus === "won" || entry.applicationStatus === "lost" || entry.resultStatus === "won" || entry.resultStatus === "lost";
-  const isExpiring = (entry: ChyusenDashboardEntry) => !isResolved(entry) && entry.applicationStatus !== "registered" && entry.daysRemaining !== null && entry.daysRemaining !== undefined && entry.daysRemaining >= 0 && entry.daysRemaining <= 1;
+  const isExpiring = (entry: ChyusenDashboardEntry) => !isResolved(entry) && entry.daysRemaining !== null && entry.daysRemaining !== undefined && entry.daysRemaining >= 0 && entry.daysRemaining <= 1;
   return {
     expiring: entries.filter(isExpiring).length,
     deadlineToday: entries.some((entry) => isExpiring(entry) && entry.daysRemaining === 0),

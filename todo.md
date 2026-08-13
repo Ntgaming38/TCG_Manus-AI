@@ -386,3 +386,7 @@
 ## Chỉ báo hạn chót hôm nay
 - [x] Hiển thị Hôm nay là hạn cuối trong ô Sắp hết hạn khi có Chyusen hạn chót hôm nay
 - [x] Kiểm thử Dashboard và lưu checkpoint
+
+## Đồng bộ đếm hạn Chyusen
+- [x] Sửa Dashboard để đếm Chyusen hiện Hôm nay là hạn cuối trong ô Sắp hết hạn
+- [x] Kiểm thử mốc hạn hôm nay theo JST và lưu checkpoint
