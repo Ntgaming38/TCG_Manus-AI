@@ -140,12 +140,13 @@ describe("appRouter", () => {
 
   describe("activities router", () => {
     it("chỉ trả nhật ký của người dùng đang đăng nhập với bộ lọc đã chọn", async () => {
-      vi.mocked(db.listActivityLogs).mockResolvedValue([]);
+      vi.mocked(db.listActivityLogs).mockResolvedValue({ items: [], nextCursor: null, totalCount: 0 });
       const caller = appRouter.createCaller(createAuthContext());
+      const cursor = { id: 91, createdAt: new Date("2026-08-13T00:00:00.000Z") };
 
-      await caller.activities.list({ entityType: "sale", search: "Pikachu" });
+      await caller.activities.list({ entityType: "sale", search: "Pikachu", limit: 25, cursor });
 
-      expect(db.listActivityLogs).toHaveBeenCalledWith(1, { entityType: "sale", search: "Pikachu" });
+      expect(db.listActivityLogs).toHaveBeenCalledWith(1, { entityType: "sale", search: "Pikachu", limit: 25, cursor });
     });
 
     it("yêu cầu đăng nhập trước khi xem nhật ký hoạt động", async () => {

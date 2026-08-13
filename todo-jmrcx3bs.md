@@ -20,3 +20,9 @@
 - [x] Luôn hiển thị nhãn Xóa, Sửa, Mua hoặc Bán ngay sau tên sản phẩm trong Lịch sử trên điện thoại.
 - [x] Dùng nút nền màu phân loại với chữ đen cho nhãn thao tác để tăng độ tương phản trên giao diện sáng.
 - [x] Kiểm thử giao diện điện thoại và lưu phiên bản đã hoàn tất.
+- [x] Thiết kế truy vấn phân trang lịch sử với tổng số bản ghi và bộ lọc hiện hữu.
+- [x] Thêm cơ chế tải thêm lịch sử theo cursor cho mục Lịch Sử.
+- [x] Kiểm thử phân trang, xác minh giao diện và lưu phiên bản hoàn chỉnh.
+- [x] Trả về tổng số hoạt động phù hợp với bộ lọc cùng dữ liệu phân trang cursor.
+- [x] Hiển thị tiến độ số hoạt động đã tải trên tổng số, đồng thời làm rõ cơ chế tải thêm.
+- [x] Kiểm thử lại và lưu phiên bản sau khi hoàn thiện thông tin phân trang.
