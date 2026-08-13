@@ -409,3 +409,8 @@
 - [x] Đổi màu ô Tổng sản phẩm để phân biệt rõ hơn
 - [x] Đổi ô Đã đồng bộ sang xanh lá rõ ràng
 - [x] Kiểm thử giao diện Marketplace và lưu checkpoint
+
+## Tương tác tổng quan Marketplace
+- [x] Thêm hover và focus rõ ràng cho bốn ô thống kê Marketplace
+- [x] Cho phép bấm ô để lọc danh sách Tổng sản phẩm, Đã đồng bộ, Chờ đồng bộ, Chưa gắn link
+- [x] Kiểm thử bộ lọc và lưu checkpoint

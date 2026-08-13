@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
+import { marketplaceMetricFilter, type MarketplaceFilter } from "@shared/marketplaceMetricFilter";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -25,7 +26,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-type MarketplaceFilter = "all" | "synced" | "pending" | "unlinked";
 type PriceUpdatePayload = { id: number; marketPrice: number };
 type BulkResult = { updatedCount: number; skippedCount: number; errors: Array<{ productName: string; message: string }> };
 
@@ -105,10 +105,10 @@ export default function Marketplace() {
       </section>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard icon={<Package className="h-5 w-5" />} label="Tổng sản phẩm" value={productList.length} tone="neutral" />
-        <MetricCard icon={<CheckCircle2 className="h-5 w-5" />} label="Đã đồng bộ" value={syncedProducts.length} tone="success" />
-        <MetricCard icon={<Clock3 className="h-5 w-5" />} label="Chờ đồng bộ" value={pendingProducts.length} tone="warning" />
-        <MetricCard icon={<Link2 className="h-5 w-5" />} label="Chưa gắn link" value={productList.length - linkedProducts.length} tone="danger" />
+        <MetricCard icon={<Package className="h-5 w-5" />} label="Tổng sản phẩm" value={productList.length} tone="neutral" active={filter === marketplaceMetricFilter.total} onClick={() => setFilter(marketplaceMetricFilter.total)} />
+        <MetricCard icon={<CheckCircle2 className="h-5 w-5" />} label="Đã đồng bộ" value={syncedProducts.length} tone="success" active={filter === marketplaceMetricFilter.synced} onClick={() => setFilter(marketplaceMetricFilter.synced)} />
+        <MetricCard icon={<Clock3 className="h-5 w-5" />} label="Chờ đồng bộ" value={pendingProducts.length} tone="warning" active={filter === marketplaceMetricFilter.pending} onClick={() => setFilter(marketplaceMetricFilter.pending)} />
+        <MetricCard icon={<Link2 className="h-5 w-5" />} label="Chưa gắn link" value={productList.length - linkedProducts.length} tone="danger" active={filter === marketplaceMetricFilter.unlinked} onClick={() => setFilter(marketplaceMetricFilter.unlinked)} />
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card/70 p-3 shadow-sm lg:flex-row lg:items-center lg:justify-between">
@@ -129,7 +129,7 @@ export default function Marketplace() {
   );
 }
 
-function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number; tone: "neutral" | "success" | "warning" | "danger" }) {
+function MetricCard({ icon, label, value, tone, active, onClick }: { icon: React.ReactNode; label: string; value: number; tone: "neutral" | "success" | "warning" | "danger"; active: boolean; onClick: () => void }) {
   const toneClasses = {
     neutral: { card: "border-violet-500/40 bg-violet-950/40 text-violet-100 shadow-[0_10px_24px_rgba(76,29,149,0.18)]", icon: "bg-violet-500/15 text-violet-300" },
     success: { card: "border-green-500/50 bg-green-950/45 text-green-100 shadow-[0_10px_24px_rgba(20,83,45,0.2)]", icon: "bg-green-500/20 text-green-300" },
@@ -137,7 +137,7 @@ function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label
     danger: { card: "border-red-500/40 bg-red-950/35 text-red-100 shadow-[0_10px_24px_rgba(127,29,29,0.16)]", icon: "bg-red-500/15 text-red-300" },
   };
   const palette = toneClasses[tone];
-  return <Card className={`border transition-colors duration-200 ${palette.card}`}><CardContent className="flex items-center gap-3 p-4"><div className={`rounded-xl p-2 ${palette.icon}`}>{icon}</div><div><p className="text-xs font-medium text-current/75">{label}</p><p className="mt-1 text-2xl font-bold text-current">{value}</p></div></CardContent></Card>;
+  return <button type="button" onClick={onClick} aria-label={`Lọc ${label}`} aria-pressed={active} className={`w-full rounded-xl border text-left transition-[transform,box-shadow,border-color,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-0 active:scale-[0.98] ${active ? "ring-1 ring-current/60" : ""} ${palette.card}`}><span className="flex items-center gap-3 p-4"><span className={`rounded-xl p-2 ${palette.icon}`}>{icon}</span><span><span className="block text-xs font-medium text-current/75">{label}</span><span className="mt-1 block text-2xl font-bold text-current">{value}</span></span></span></button>;
 }
 
 function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
