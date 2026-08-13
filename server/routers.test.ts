@@ -9,6 +9,7 @@ vi.mock("./chyusenDb", async (importOriginal) => {
     markChyusenNotificationRead: vi.fn(),
     markChyusenPurchaseCreated: vi.fn(),
     updateChyusenSource: vi.fn(),
+    deleteChyusenSource: vi.fn(),
   };
 });
 
@@ -171,6 +172,15 @@ describe("appRouter", () => {
         isActive: false,
         checkIntervalMinutes: 180,
       });
+    });
+
+    it("xóa nguồn theo dõi theo đúng user đang đăng nhập", async () => {
+      vi.mocked(chyusenDb.deleteChyusenSource).mockResolvedValue(undefined);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.chyusen.deleteSource({ id: 14 });
+
+      expect(chyusenDb.deleteChyusenSource).toHaveBeenCalledWith(1, 14);
     });
   });
 });

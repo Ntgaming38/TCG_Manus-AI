@@ -235,3 +235,7 @@
 ## Sửa nguồn theo dõi Chyusen
 - [x] Thêm nút Sửa và form cập nhật URL, nhãn, trạng thái/tần suất cho từng nguồn theo dõi
 - [x] Kiểm thử cập nhật nguồn, xác minh build và lưu checkpoint
+
+## Xóa nguồn theo dõi Chyusen
+- [x] Thêm nút xóa và hộp xác nhận cho từng nguồn theo dõi
+- [x] Kiểm thử quyền xóa, build và lưu checkpoint
