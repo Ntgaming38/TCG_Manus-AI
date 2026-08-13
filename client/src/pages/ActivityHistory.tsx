@@ -41,14 +41,14 @@ const filters: Array<{ value: HistoryFilter; label: string }> = [
 ];
 
 export function getActivityTone(action: string, entityType: string | null) {
-  if (action.endsWith("_deleted")) return { label: "Đã xóa", icon: Trash2, badgeClass: "border-rose-400/40 bg-rose-500/15 text-rose-300", accentClass: "border-rose-400/60", fieldClass: "bg-rose-500/10 text-rose-200", valueClass: "bg-rose-500/5 text-rose-100" };
-  if (action.endsWith("_updated") || action === "market_price_updated" || action === "snkrdunk_url_updated") return { label: "Đã sửa", icon: Pencil, badgeClass: "border-orange-400/40 bg-orange-500/15 text-orange-300", accentClass: "border-orange-400/60", fieldClass: "bg-orange-500/10 text-orange-200", valueClass: "bg-orange-500/5 text-orange-100" };
-  if (entityType === "purchase") return { label: "Đã mua", icon: ShoppingBag, badgeClass: "border-emerald-400/40 bg-emerald-500/15 text-emerald-300", accentClass: "border-emerald-400/60", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
-  if (entityType === "sale") return { label: "Đã bán", icon: TrendingUp, badgeClass: "border-yellow-400/40 bg-yellow-500/15 text-yellow-300", accentClass: "border-yellow-400/60", fieldClass: "bg-yellow-500/10 text-yellow-200", valueClass: "bg-yellow-500/5 text-yellow-100" };
-  if (action.endsWith("_created")) return { label: "Đã thêm", icon: Plus, badgeClass: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300", accentClass: "border-emerald-400/50", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
-  if (action === "product_damaged") return { label: "Hàng hỏng", icon: ArchiveRestore, badgeClass: "border-amber-400/30 bg-amber-400/10 text-amber-300", accentClass: "border-amber-400/50", fieldClass: "bg-amber-500/10 text-amber-200", valueClass: "bg-amber-500/5 text-amber-100" };
-  if (action.includes("synced")) return { label: "Đã đồng bộ", icon: TrendingUp, badgeClass: "border-violet-400/30 bg-violet-400/10 text-violet-300", accentClass: "border-violet-400/50", fieldClass: "bg-violet-500/10 text-violet-200", valueClass: "bg-violet-500/5 text-violet-100" };
-  return { label: "Hoạt động", icon: Activity, badgeClass: "border-primary/30 bg-primary/10 text-primary", accentClass: "border-primary/50", fieldClass: "bg-primary/10 text-primary", valueClass: "bg-primary/5 text-foreground" };
+  if (action.endsWith("_deleted")) return { label: "Đã xóa", icon: Trash2, badgeClass: "border-rose-400/40 bg-rose-500/15 text-rose-300", buttonClass: "border-rose-400 bg-rose-400 text-black hover:bg-rose-300", accentClass: "border-rose-400/60", fieldClass: "bg-rose-500/10 text-rose-200", valueClass: "bg-rose-500/5 text-rose-100" };
+  if (action.endsWith("_updated") || action === "market_price_updated" || action === "snkrdunk_url_updated") return { label: "Đã sửa", icon: Pencil, badgeClass: "border-orange-400/40 bg-orange-500/15 text-orange-300", buttonClass: "border-orange-400 bg-orange-400 text-black hover:bg-orange-300", accentClass: "border-orange-400/60", fieldClass: "bg-orange-500/10 text-orange-200", valueClass: "bg-orange-500/5 text-orange-100" };
+  if (entityType === "purchase") return { label: "Đã mua", icon: ShoppingBag, badgeClass: "border-emerald-400/40 bg-emerald-500/15 text-emerald-300", buttonClass: "border-emerald-400 bg-emerald-400 text-black hover:bg-emerald-300", accentClass: "border-emerald-400/60", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
+  if (entityType === "sale") return { label: "Đã bán", icon: TrendingUp, badgeClass: "border-yellow-400/40 bg-yellow-500/15 text-yellow-300", buttonClass: "border-yellow-400 bg-yellow-400 text-black hover:bg-yellow-300", accentClass: "border-yellow-400/60", fieldClass: "bg-yellow-500/10 text-yellow-200", valueClass: "bg-yellow-500/5 text-yellow-100" };
+  if (action.endsWith("_created")) return { label: "Đã thêm", icon: Plus, badgeClass: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300", buttonClass: "border-emerald-400 bg-emerald-400 text-black hover:bg-emerald-300", accentClass: "border-emerald-400/50", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
+  if (action === "product_damaged") return { label: "Hàng hỏng", icon: ArchiveRestore, badgeClass: "border-amber-400/30 bg-amber-400/10 text-amber-300", buttonClass: "border-amber-400 bg-amber-400 text-black hover:bg-amber-300", accentClass: "border-amber-400/50", fieldClass: "bg-amber-500/10 text-amber-200", valueClass: "bg-amber-500/5 text-amber-100" };
+  if (action.includes("synced")) return { label: "Đã đồng bộ", icon: TrendingUp, badgeClass: "border-violet-400/30 bg-violet-400/10 text-violet-300", buttonClass: "border-violet-400 bg-violet-400 text-black hover:bg-violet-300", accentClass: "border-violet-400/50", fieldClass: "bg-violet-500/10 text-violet-200", valueClass: "bg-violet-500/5 text-violet-100" };
+  return { label: "Hoạt động", icon: Activity, badgeClass: "border-primary/30 bg-primary/10 text-primary", buttonClass: "border-primary bg-primary text-black hover:bg-primary/80", accentClass: "border-primary/50", fieldClass: "bg-primary/10 text-primary", valueClass: "bg-primary/5 text-foreground" };
 }
 
 function getEntityIcon(entityType: string | null) {
@@ -136,10 +136,10 @@ export default function ActivityHistory() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2 text-xs">
             <span className="mr-1 text-muted-foreground">Màu chi tiết:</span>
-            <Badge variant="outline" className="border-rose-400/40 bg-rose-500/15 text-rose-300">Xóa</Badge>
-            <Badge variant="outline" className="border-orange-400/40 bg-orange-500/15 text-orange-300">Sửa</Badge>
-            <Badge variant="outline" className="border-emerald-400/40 bg-emerald-500/15 text-emerald-300">Mua</Badge>
-            <Badge variant="outline" className="border-yellow-400/40 bg-yellow-500/15 text-yellow-300">Bán</Badge>
+            <Badge variant="outline" className="border-rose-400 bg-rose-400 text-black">Xóa</Badge>
+            <Badge variant="outline" className="border-orange-400 bg-orange-400 text-black">Sửa</Badge>
+            <Badge variant="outline" className="border-emerald-400 bg-emerald-400 text-black">Mua</Badge>
+            <Badge variant="outline" className="border-yellow-400 bg-yellow-400 text-black">Bán</Badge>
           </div>
           <div className="flex flex-wrap gap-2" aria-label="Lọc lịch sử theo nhóm dữ liệu">
             {filters.map((filter) => (
@@ -167,10 +167,9 @@ export default function ActivityHistory() {
                   <div key={item.id} className="transition-colors hover:bg-secondary/40">
                     <div className="flex items-start gap-3 px-4 py-3.5">
                       <div className="mt-0.5 rounded-lg bg-background p-2 shadow-sm"><EntityIcon className="h-4 w-4 text-primary" /></div>
-                      <div className="min-w-0 flex-1"><p className="text-sm font-medium leading-5 text-foreground">{item.description || "Hoạt động trong hệ thống"}</p><p className="mt-1 text-xs text-muted-foreground">{formatActivityTime(item.createdAt)}</p></div>
+                      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><p className="min-w-0 text-sm font-medium leading-5 text-foreground">{item.description || "Hoạt động trong hệ thống"}</p><Badge variant="outline" className={`inline-flex shrink-0 items-center gap-1 ${tone.buttonClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge></div><p className="mt-1 text-xs text-muted-foreground">{formatActivityTime(item.createdAt)}</p></div>
                       <div className="flex shrink-0 items-center gap-2">
                         {changes.length > 0 && <Button variant="ghost" size="sm" onClick={() => setExpandedActivityId(isExpanded ? null : item.id)} className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"><span className="hidden md:inline">Chi tiết</span>{isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</Button>}
-                        <Badge variant="outline" className={`hidden shrink-0 items-center gap-1 sm:inline-flex ${tone.badgeClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge>
                       </div>
                     </div>
                     {isExpanded && changes.length > 0 && (

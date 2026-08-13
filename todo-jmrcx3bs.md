@@ -17,3 +17,6 @@
 - [x] Phân màu hoạt động lịch sử: xóa đỏ, sửa cam, mua xanh lá và bán vàng.
 - [x] Làm nổi bật các trường dữ liệu đã thay đổi trong phần xem chi tiết lịch sử.
 - [x] Kiểm thử, xác minh trực quan và lưu phiên bản cho các điều chỉnh mới.
+- [x] Luôn hiển thị nhãn Xóa, Sửa, Mua hoặc Bán ngay sau tên sản phẩm trong Lịch sử trên điện thoại.
+- [x] Dùng nút nền màu phân loại với chữ đen cho nhãn thao tác để tăng độ tương phản trên giao diện sáng.
+- [x] Kiểm thử giao diện điện thoại và lưu phiên bản đã hoàn tất.

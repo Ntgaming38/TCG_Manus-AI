@@ -24,4 +24,11 @@ describe("ActivityHistory detail changes", () => {
     expect(getActivityTone("purchase_created", "purchase").badgeClass).toContain("emerald");
     expect(getActivityTone("sale_created", "sale").badgeClass).toContain("yellow");
   });
+
+  it("dùng nút nền màu với chữ đen cho nhãn thao tác cạnh tên sản phẩm", () => {
+    expect(getActivityTone("sale_deleted", "sale").buttonClass).toContain("text-black");
+    expect(getActivityTone("purchase_updated", "purchase").buttonClass).toContain("text-black");
+    expect(getActivityTone("purchase_created", "purchase").buttonClass).toContain("text-black");
+    expect(getActivityTone("sale_created", "sale").buttonClass).toContain("text-black");
+  });
 });
