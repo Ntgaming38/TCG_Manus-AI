@@ -12,7 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
 import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
-import { Plus, Search, Filter, Package, CreditCard, Box, Gift, Columns3, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -441,7 +441,7 @@ export default function Products() {
           <Button type="button" size="sm" variant={viewMode === "grid" ? "secondary" : "ghost"} aria-label="Hiển thị thẻ ảnh" aria-pressed={viewMode === "grid"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /><span className="hidden sm:inline">Thẻ ảnh</span></Button>
           <Button type="button" size="sm" variant={viewMode === "list" ? "secondary" : "ghost"} aria-label="Hiển thị danh sách" aria-pressed={viewMode === "list"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("list")}><List className="h-4 w-4" /><span className="hidden sm:inline">Danh sách</span></Button>
         </div>
-        {viewMode === "list" && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" size="sm" variant="outline" className="h-10 gap-2"><Columns3 className="h-4 w-4" /><span className="hidden sm:inline">Cột</span></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-52"><div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Cột trong danh sách</div>{PRODUCT_LIST_COLUMN_OPTIONS.map((column) => <DropdownMenuItem key={column.key} onSelect={(event) => { event.preventDefault(); toggleListColumn(column.key); }} className="gap-2"><input type="checkbox" className="pointer-events-none accent-primary" checked={visibleListColumns.includes(column.key)} readOnly /><span>{column.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>}
+        {viewMode === "list" && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" size="icon" variant="outline" title="Tùy chọn cột" aria-label="Tùy chọn cột danh sách" className="h-10 w-10"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-52"><div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Cột trong danh sách</div>{PRODUCT_LIST_COLUMN_OPTIONS.map((column) => <DropdownMenuItem key={column.key} onSelect={(event) => { event.preventDefault(); toggleListColumn(column.key); }} className="gap-2"><input type="checkbox" className="pointer-events-none accent-primary" checked={visibleListColumns.includes(column.key)} readOnly /><span>{column.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>}
       </div>
 
       {/* Products Grid */}

@@ -173,3 +173,10 @@ Ngày xác minh: 13/08/2026
 - Chế độ Danh sách không còn hiển thị ảnh sản phẩm. Mỗi hàng chỉ giữ tên, loại, các badge/cột do người dùng chọn và menu thao tác.
 - Hàng được giảm padding và thay thông tin cố định bằng các cột đã chọn, giúp hiển thị nhiều loại Card, Box, Pack hơn trong cùng một màn hình.
 - Typecheck và 98 Vitest tests đều đạt.
+
+## Biểu tượng tùy chọn cột
+
+Ngày xác minh: 13/08/2026
+
+- Khi chọn chế độ Danh sách, điều khiển cột sau nút Danh sách nay là biểu tượng ba chấm dọc; có nhãn truy cập và tooltip “Tùy chọn cột”.
+- Menu vẫn mở các checkbox chọn cột như trước. Typecheck và 98 Vitest tests đều đạt.

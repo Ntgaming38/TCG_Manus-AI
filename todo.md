@@ -361,3 +361,7 @@
 - [x] Bỏ ảnh và giảm chiều cao hàng trong chế độ Danh sách
 - [x] Chỉ hiển thị tên, loại và các cột người dùng đang chọn
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Biểu tượng menu cột danh sách
+- [x] Đổi nút chọn cột phía sau chế độ Danh sách thành ba chấm dọc
+- [x] Xác minh giao diện và lưu checkpoint
