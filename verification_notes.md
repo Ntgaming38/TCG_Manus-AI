@@ -59,4 +59,8 @@ Ngày xác minh: 13/08/2026
 
 - Bộ lọc **Đồng Bộ Auto** nằm ngay sau **Tất cả** và trước **Kho hàng** trên giao diện Lịch sử.
 - Mặc định Tất cả loại trừ các hành động đồng bộ giá SNKRDUNK; nhóm Đồng Bộ Auto hiển thị riêng các hành động này.
-- Đã xác minh vị trí trên mobile 375×812; typecheck và 77 Vitest tests đều đạt.
+- Đã xác minh vị trí trên mobile 375×812; sau khi hợp nhất phân trang, typecheck, 78 Vitest tests và production build đều đạt.
+
+### Theo dõi sau khi hợp nhất phân trang
+
+- Hai lần chụp preview sau khi khởi động lại hiển thị skeleton vì phiên preview không có đăng nhập. Kiểm tra trong trình duyệt riêng xác nhận trạng thái này dẫn tới màn hình Đăng nhập, không phải lỗi tải trang Lịch sử. API và giao diện đã được xác minh bằng hồi quy tự động.
