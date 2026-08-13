@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
@@ -23,6 +24,7 @@ export default function Products() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState<{ id: number; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [newProduct, setNewProduct] = useState({
@@ -62,6 +64,7 @@ export default function Products() {
 
   const deleteProduct = trpc.products.delete.useMutation({
     onSuccess: () => {
+      setDeleteCandidate(null);
       toast.success("Đã xóa sản phẩm!");
       refetch();
     },
@@ -96,9 +99,7 @@ export default function Products() {
   };
 
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Bạn có chắc muốn xóa "${name}"?`)) {
-      deleteProduct.mutate({ id });
-    }
+    setDeleteCandidate({ id, name });
   };
 
   const openEdit = (product: any) => {
@@ -438,9 +439,10 @@ export default function Products() {
                     <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
                       {product.status === 'in_stock' ? 'Trong kho' : product.status === 'sold' ? 'Đã bán' : product.status}
                     </Badge>
+                    <div className="group relative">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80">
+                        <Button variant="ghost" size="icon" aria-label="Tùy chọn" className="h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 sm:h-8 sm:w-8">
                           <MoreVertical className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -462,6 +464,8 @@ export default function Products() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    <span role="tooltip" className="pointer-events-none absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded bg-black/85 px-2 py-1 text-[11px] text-white opacity-0 shadow transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Tùy chọn</span>
+                    </div>
                   </div>
                 </div>
                 {/* Product image */}
@@ -500,6 +504,12 @@ export default function Products() {
           ))}
         </div>
       )}
+      <AlertDialog open={deleteCandidate !== null} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Xóa sản phẩm khỏi kho?</AlertDialogTitle><AlertDialogDescription>Bạn có chắc muốn xóa <strong className="text-foreground">{deleteCandidate?.name}</strong>? Thao tác này không thể hoàn tác. Nếu sản phẩm đã phát sinh giao dịch bán, hệ thống sẽ giữ nguyên dữ liệu và thông báo lý do.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel disabled={deleteProduct.isPending}>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 text-white hover:bg-red-700" disabled={deleteProduct.isPending} onClick={() => deleteCandidate && deleteProduct.mutate({ id: deleteCandidate.id })}>{deleteProduct.isPending ? "Đang xóa..." : "Xóa sản phẩm"}</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

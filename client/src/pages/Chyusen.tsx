@@ -20,7 +20,7 @@ import { getChyusenAiFilledFields } from "@shared/chyusenAiFields";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
 
-const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
+const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Bandai Premium", "Pokémon Center", "Rakuten", "Khác"];
 
 function displayDate(value: Date | string | null | undefined) {
   return formatChyusenDayMonth(value) || "Chưa có thông tin";
@@ -219,7 +219,8 @@ export default function Chyusen() {
     }
   };
   const submit = () => {
-    const errors = validateChyusenManualDraft(draft);
+    const draftForSubmission = { ...draft, title: draft.productName.trim() || draft.title };
+    const errors = validateChyusenManualDraft(draftForSubmission);
     setValidationErrors(errors);
     if (Object.keys(errors).length) {
       toast.error("Vui lòng hoàn tất các trường bắt buộc trước khi lưu.");
@@ -227,7 +228,7 @@ export default function Chyusen() {
     }
     let payload;
     try {
-      payload = buildChyusenSubmission(draft);
+      payload = buildChyusenSubmission(draftForSubmission);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ngày tháng không hợp lệ.");
       return;
@@ -319,6 +320,7 @@ export default function Chyusen() {
 }
 
 function Field({ label, children, error, aiConfidence }: { label: string; children: React.ReactNode; error?: string; aiConfidence?: "high" | "medium" | "low" }) {
+  if (label === "Tên chương trình") return null;
   const confidenceLabel = aiConfidence === "high" ? "AI · Cao" : aiConfidence === "medium" ? "AI · Trung bình" : aiConfidence === "low" ? "AI · Thấp" : null;
   const confidenceClass = aiConfidence === "high" ? "border-emerald-400/55 bg-emerald-500/10" : aiConfidence === "medium" ? "border-sky-400/55 bg-sky-500/10" : aiConfidence === "low" ? "border-amber-400/55 bg-amber-500/10" : "";
   return <div data-ai-filled={aiConfidence ? "true" : undefined} className={`space-y-2 rounded-lg transition-colors ${aiConfidence ? `border p-3 shadow-[0_0_0_1px_rgba(56,189,248,0.12)] ${confidenceClass}` : ""}`}><Label className={error ? "text-destructive" : ""}>{label}{error ? " *" : ""}{confidenceLabel && <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-current/40 bg-black/10 px-1.5 py-0.5 text-[10px] font-semibold"><Sparkles className="h-2.5 w-2.5" />{confidenceLabel}</span>}</Label>{children}{error && <p className="text-xs text-destructive">{error}</p>}</div>;

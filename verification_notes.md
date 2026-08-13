@@ -111,3 +111,11 @@ Ngày xác minh: 13/08/2026
 
 - Menu ba chấm dọc trên Card, Box và Pack dùng biểu tượng trắng cùng nền trắng bán trong suốt; hover và focus ring vẫn rõ trên nền tối.
 - Đã xác minh trực quan Card trên mobile 375×812, nơi biểu tượng hiện dễ thấy ở góc phải thẻ. Typecheck và 97 Vitest tests đều đạt.
+
+## Menu kho và form Chyusen gọn hơn
+
+Ngày xác minh: 13/08/2026
+
+- Menu ba chấm trên mobile có vùng chạm 44×44 px và tooltip **Tùy chọn**; xóa sản phẩm nay cần xác nhận qua hộp thoại riêng.
+- Form Chyusen đã bỏ trường Tên chương trình, bắt đầu bằng Tên sản phẩm và tự dùng tên đó làm tiêu đề khi lưu. Danh sách cửa hàng bổ sung Bandai Premium, Pokémon Center và Rakuten.
+- Đã xác minh mobile Card 375×812 và form Chyusen desktop 1280×720; typecheck và 97 Vitest tests đều đạt.

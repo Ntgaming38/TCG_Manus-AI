@@ -320,3 +320,10 @@
 ## Tương phản menu thao tác kho
 - [x] Đổi biểu tượng ba chấm dọc sửa/xóa Card, Box, Pack sang màu trắng và giữ hover/focus rõ ràng
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Menu kho và form Chyusen gọn hơn
+- [x] Tăng vùng chạm menu ba chấm lên 44 px trên mobile và thêm tooltip Tùy chọn
+- [x] Thay xác nhận xóa sản phẩm bằng hộp thoại an toàn
+- [x] Bỏ trường Tên chương trình trong form Chyusen và tự dùng tên sản phẩm làm tiêu đề
+- [x] Thêm Bandai Premium, Pokémon Center, Rakuten vào danh sách cửa hàng Chyusen
+- [x] Kiểm thử desktop/mobile và lưu checkpoint
