@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import Chyusen from "./pages/Chyusen";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
+import ActivityHistory from "./pages/ActivityHistory";
 import DashboardLayout from "./components/DashboardLayout";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -65,6 +66,9 @@ function Router() {
       </Route>
       <Route path={"/bao-cao"}>
         <ProtectedRoute component={Reports} />
+      </Route>
+      <Route path={"/lich-su"}>
+        <ProtectedRoute component={ActivityHistory} />
       </Route>
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

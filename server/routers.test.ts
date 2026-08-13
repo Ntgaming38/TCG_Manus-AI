@@ -13,8 +13,17 @@ vi.mock("./chyusenDb", async (importOriginal) => {
   };
 });
 
+vi.mock("./db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db")>();
+  return {
+    ...actual,
+    listActivityLogs: vi.fn(),
+  };
+});
+
 import { appRouter } from "./routers";
 import * as chyusenDb from "./chyusenDb";
+import * as db from "./db";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -126,6 +135,22 @@ describe("appRouter", () => {
       const ctx = createUnauthContext();
       const caller = appRouter.createCaller(ctx);
       await expect(caller.reports.overview()).rejects.toThrow();
+    });
+  });
+
+  describe("activities router", () => {
+    it("chỉ trả nhật ký của người dùng đang đăng nhập với bộ lọc đã chọn", async () => {
+      vi.mocked(db.listActivityLogs).mockResolvedValue([]);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.activities.list({ entityType: "sale", search: "Pikachu" });
+
+      expect(db.listActivityLogs).toHaveBeenCalledWith(1, { entityType: "sale", search: "Pikachu" });
+    });
+
+    it("yêu cầu đăng nhập trước khi xem nhật ký hoạt động", async () => {
+      const caller = appRouter.createCaller(createUnauthContext());
+      await expect(caller.activities.list()).rejects.toThrow();
     });
   });
 

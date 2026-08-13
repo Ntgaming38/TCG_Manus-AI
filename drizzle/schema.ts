@@ -156,6 +156,8 @@ export const activityLogs = mysqlTable("activity_logs", {
   description: text("description"),
   entityType: varchar("entityType", { length: 50 }),
   entityId: int("entityId"),
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

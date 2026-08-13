@@ -24,6 +24,13 @@ export async function getDb() {
   return _db;
 }
 
+export function serializeActivityChange(before: unknown, after: unknown) {
+  return {
+    oldValue: before == null ? null : JSON.stringify(before),
+    newValue: after == null ? null : JSON.stringify(after),
+  };
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
@@ -94,6 +101,7 @@ export async function createProduct(data: InsertProduct) {
     description: `Thêm sản phẩm: ${data.name} (${data.type})`,
     entityType: "product",
     entityId: result[0].insertId,
+    ...serializeActivityChange(null, data),
   });
   return { id: result[0].insertId };
 }
@@ -126,6 +134,7 @@ export async function updateProduct(id: number, userId: number, data: Partial<In
       description: `Sửa sản phẩm: ${product.name}`,
       entityType: "product",
       entityId: id,
+      ...serializeActivityChange(product, { ...product, ...data }),
     });
   }
 }
@@ -147,6 +156,7 @@ export async function deleteProduct(id: number, userId: number) {
     description: `Xoá sản phẩm: ${product.name} (${product.type})`,
     entityType: "product",
     entityId: id,
+    ...serializeActivityChange(product, null),
   });
 }
 
@@ -182,6 +192,17 @@ export async function updateMarketPrice(id: number, userId: number, marketPrice:
       oldPrice: product.marketPrice,
       newPrice: marketPrice,
       source: "manual",
+    });
+    await db.insert(activityLogs).values({
+      userId,
+      action: "market_price_updated",
+      description: `Cập nhật giá thị trường: ${product.name} từ ¥${Number(product.marketPrice || 0).toLocaleString()} thành ¥${Number(marketPrice).toLocaleString()}`,
+      entityType: "product",
+      entityId: id,
+      ...serializeActivityChange(
+        { name: product.name, marketPrice: product.marketPrice },
+        { name: product.name, marketPrice },
+      ),
     });
   }
 }
@@ -401,6 +422,10 @@ export async function markProductAsDamaged(userId: number, data: {
     description: `Đánh dấu ${data.damagedQty}x ${product.name} bị hỏng${data.damageNote ? ': ' + data.damageNote : ''}`,
     entityType: "product",
     entityId: data.productId,
+    ...serializeActivityChange(
+      { name: product.name, damagedQuantity: product.damagedQuantity, damageNote: product.damageNote },
+      { name: product.name, damagedQuantity: newDamagedQty, damageNote: newNote || null },
+    ),
   });
 
   return { newDamagedQty };
@@ -415,6 +440,30 @@ export async function getDamagedProducts(userId: number) {
       sql`${products.damagedQuantity} > 0`
     ))
     .orderBy(desc(products.updatedAt));
+}
+
+// ========== ACTIVITY LOGS ==========
+
+export type ActivityLogFilters = {
+  entityType?: "product" | "purchase" | "sale" | "shop";
+  action?: string;
+  search?: string;
+};
+
+/** Returns the newest audit events for the signed-in user only. */
+export async function listActivityLogs(userId: number, filters?: ActivityLogFilters) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [eq(activityLogs.userId, userId)];
+  if (filters?.entityType) conditions.push(eq(activityLogs.entityType, filters.entityType));
+  if (filters?.action) conditions.push(eq(activityLogs.action, filters.action));
+  if (filters?.search?.trim()) conditions.push(like(activityLogs.description, `%${filters.search.trim()}%`));
+
+  return db.select().from(activityLogs)
+    .where(and(...conditions))
+    .orderBy(desc(activityLogs.createdAt))
+    .limit(250);
 }
 
 // ========== PURCHASES ==========
@@ -490,7 +539,7 @@ export async function createPurchase(userId: number, data: {
   }
 
   // Create purchase record
-  await db.insert(purchases).values({
+  const purchaseResult = await db.insert(purchases).values({
     userId,
     productId,
     shop: data.shop || null,
@@ -507,10 +556,18 @@ export async function createPurchase(userId: number, data: {
     action: "purchase_created",
     description: `Mua ${data.quantity}x ${data.productName} - ¥${totalPrice.toLocaleString()}`,
     entityType: "purchase",
-    entityId: productId,
+    entityId: purchaseResult[0].insertId,
+    ...serializeActivityChange(null, {
+      productId,
+      productName: data.productName,
+      quantity: data.quantity,
+      totalPrice,
+      shop: data.shop || null,
+      note: data.note || null,
+    }),
   });
 
-  return { productId };
+  return { productId, purchaseId: purchaseResult[0].insertId };
 }
 
 // ========== UPDATE PURCHASE ==========
@@ -581,7 +638,11 @@ export async function updatePurchase(userId: number, data: {
     action: "purchase_updated",
     description: `Sửa giao dịch mua #${data.purchaseId}: ${product.name}`,
     entityType: "purchase",
-    entityId: purchase.productId,
+    entityId: data.purchaseId,
+    ...serializeActivityChange(
+      { productId: purchase.productId, quantity: oldQty, totalPrice: oldTotalPrice, shop: purchase.shop, note: purchase.note },
+      { productId: purchase.productId, quantity: newQty, totalPrice: newTotalPrice, shop: data.shop !== undefined ? data.shop || null : purchase.shop, note: data.note !== undefined ? data.note || null : purchase.note },
+    ),
   });
 
   return { success: true };
@@ -647,7 +708,8 @@ export async function deletePurchase(userId: number, purchaseId: number) {
     action: "purchase_deleted",
     description: `Xóa giao dịch mua #${purchaseId}: ${product.name}`,
     entityType: "purchase",
-    entityId: purchase.productId,
+    entityId: purchaseId,
+    ...serializeActivityChange(purchase, null),
   });
 
   return { success: true };
@@ -732,7 +794,11 @@ export async function updateSale(userId: number, data: {
     action: "sale_updated",
     description: `Sửa giao dịch bán #${data.saleId}: ${product.name} - Lợi nhuận mới: ¥${profit.toLocaleString()}`,
     entityType: "sale",
-    entityId: sale.productId,
+    entityId: data.saleId,
+    ...serializeActivityChange(
+      { productId: sale.productId, quantity: oldQty, totalRevenue: sale.totalRevenue, note: sale.note, profit: sale.profit },
+      { productId: sale.productId, quantity: newQty, totalRevenue, note: data.note !== undefined ? data.note || null : sale.note, profit },
+    ),
   });
 
   return { success: true, profit };
@@ -780,7 +846,8 @@ export async function deleteSale(userId: number, saleId: number) {
     action: "sale_deleted",
     description: `Xóa giao dịch bán #${saleId}: ${product.name} - Hoàn lại ${sale.quantity} sản phẩm`,
     entityType: "sale",
-    entityId: sale.productId,
+    entityId: saleId,
+    ...serializeActivityChange(sale, null),
   });
 
   return { success: true };
@@ -846,7 +913,7 @@ export async function createSale(userId: number, data: {
   const profit = totalRevenue - totalCost - costBasis;
 
   // Create sale record
-  await db.insert(sales).values({
+  const saleResult = await db.insert(sales).values({
     userId,
     productId: data.productId,
     quantity: data.quantity,
@@ -881,7 +948,16 @@ export async function createSale(userId: number, data: {
     action: "sale_created",
     description: `Bán ${data.quantity}x ${product.name}${data.isDamaged ? ' (hàng hỏng)' : ''} - Lợi nhuận: ¥${profit.toLocaleString()}`,
     entityType: "sale",
-    entityId: data.productId,
+    entityId: saleResult[0].insertId,
+    ...serializeActivityChange(null, {
+      productId: data.productId,
+      productName: product.name,
+      quantity: data.quantity,
+      totalRevenue,
+      profit,
+      platform: data.platform || "snkrdunk",
+      note: data.note || null,
+    }),
   });
 
   return { profit };
@@ -1052,5 +1128,14 @@ export async function listShops(userId: number) {
 export async function createShop(data: InsertShop) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(shops).values(data);
+  const result = await db.insert(shops).values(data);
+  await db.insert(activityLogs).values({
+    userId: data.userId,
+    action: "shop_created",
+    description: `Thêm cửa hàng: ${data.name}`,
+    entityType: "shop",
+    entityId: result[0].insertId,
+    ...serializeActivityChange(null, data),
+  });
+  return { id: result[0].insertId };
 }

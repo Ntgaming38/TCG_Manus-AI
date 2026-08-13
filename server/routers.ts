@@ -347,6 +347,16 @@ export const appRouter = router({
       .mutation(({ ctx, input }) => db.deleteSale(ctx.user.id, input.saleId)),
   }),
 
+  activities: router({
+    list: protectedProcedure
+      .input(z.object({
+        entityType: z.enum(["product", "purchase", "sale", "shop"]).optional(),
+        action: z.string().trim().min(1).max(100).optional(),
+        search: z.string().trim().max(100).optional(),
+      }).optional())
+      .query(({ ctx, input }) => db.listActivityLogs(ctx.user.id, input)),
+  }),
+
   chyusen: router({
     list: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenEntries(ctx.user.id)),
 
