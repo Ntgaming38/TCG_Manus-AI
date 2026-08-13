@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
-import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [cardSort, setCardSort] = useState<"rarity" | "roi" | "marketPrice">("rarity");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -416,6 +417,10 @@ export default function Products() {
             </SelectContent>
           </Select>
         )}
+        <div className="ml-auto inline-flex rounded-lg border border-border bg-secondary/30 p-1" aria-label="Chế độ hiển thị">
+          <Button type="button" size="sm" variant={viewMode === "grid" ? "secondary" : "ghost"} aria-label="Hiển thị thẻ ảnh" aria-pressed={viewMode === "grid"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /><span className="hidden sm:inline">Thẻ ảnh</span></Button>
+          <Button type="button" size="sm" variant={viewMode === "list" ? "secondary" : "ghost"} aria-label="Hiển thị danh sách" aria-pressed={viewMode === "list"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("list")}><List className="h-4 w-4" /><span className="hidden sm:inline">Danh sách</span></Button>
+        </div>
       </div>
 
       {/* Products Grid */}
@@ -426,7 +431,7 @@ export default function Products() {
           <p className="text-sm text-muted-foreground/70 mt-1">Bấm "Thêm mới" để bắt đầu</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        viewMode === "grid" ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sortedProducts.map((product: any) => (
             <Card key={product.id} className="bg-card neon-card hover:border-primary/30 transition-colors group">
               <CardContent className="p-4">
@@ -439,33 +444,7 @@ export default function Products() {
                     <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
                       {product.status === 'in_stock' ? 'Trong kho' : product.status === 'sold' ? 'Đã bán' : product.status}
                     </Badge>
-                    <div className="group relative">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Tùy chọn" className="h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 sm:h-8 sm:w-8">
-                          <MoreVertical className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEdit(product)}>
-                          <Pencil className="h-3 w-3 mr-2" />
-                          Sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          setUploadingId(product.id);
-                          fileInputRef.current?.click();
-                        }}>
-                          <ImagePlus className="h-3 w-3 mr-2" />
-                          Upload ảnh
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-400" onClick={() => handleDelete(product.id, product.name)}>
-                          <Trash2 className="h-3 w-3 mr-2" />
-                          Xóa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <span role="tooltip" className="pointer-events-none absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded bg-black/85 px-2 py-1 text-[11px] text-white opacity-0 shadow transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Tùy chọn</span>
-                    </div>
+                    <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onDelete={handleDelete} />
                   </div>
                 </div>
                 {/* Product image */}
@@ -502,6 +481,18 @@ export default function Products() {
               </CardContent>
             </Card>
           ))}
+        </div> : <div className="space-y-2">
+          {sortedProducts.map((product: any) => {
+            const difference = Number(product.marketPrice) - Number(product.buyPrice);
+            return <Card key={product.id} className="bg-card neon-card transition-colors hover:border-primary/30"><CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:p-4">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {product.image ? <img src={product.image} alt={product.name} className="h-14 w-14 shrink-0 rounded-lg border border-border/70 object-cover sm:h-16 sm:w-16" /> : <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-secondary/50 text-primary sm:h-16 sm:w-16">{getTypeIcon(product.type)}</div>}
+                <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-semibold">{product.name}</h3>{product.type === "card" && <RarityBadge rarity={product.rarity} />}</div><p className="mt-1 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p><div className="mt-2 flex flex-wrap gap-1.5"><Badge variant="secondary" className="text-xs">{getTypeIcon(product.type)}<span className="ml-1 capitalize">{product.type}</span></Badge><Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-xs">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge></div></div>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-border/50 pt-3 text-xs sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><span className="text-muted-foreground">SL <strong className="ml-1 text-foreground">{product.quantity}</strong></span><span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">¥{Number(product.buyPrice).toLocaleString()}</strong></span><span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">¥{Number(product.marketPrice).toLocaleString()}</strong></span><span className="text-muted-foreground">Lãi <strong className={difference >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{difference >= 0 ? "+" : ""}¥{difference.toLocaleString()}</strong></span></div>
+              <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onDelete={handleDelete} />
+            </CardContent></Card>;
+          })}
         </div>
       )}
       <AlertDialog open={deleteCandidate !== null} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
@@ -512,4 +503,8 @@ export default function Products() {
       </AlertDialog>
     </div>
   );
+}
+
+function ProductActionMenu({ product, onEdit, onUpload, onDelete }: { product: any; onEdit: (product: any) => void; onUpload: (id: number) => void; onDelete: (id: number, name: string) => void }) {
+  return <div className="group relative shrink-0"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Tùy chọn" className="h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 sm:h-8 sm:w-8"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => onEdit(product)}><Pencil className="mr-2 h-3 w-3" />Sửa</DropdownMenuItem><DropdownMenuItem onClick={() => onUpload(product.id)}><ImagePlus className="mr-2 h-3 w-3" />Upload ảnh</DropdownMenuItem><DropdownMenuItem className="text-red-400" onClick={() => onDelete(product.id, product.name)}><Trash2 className="mr-2 h-3 w-3" />Xóa</DropdownMenuItem></DropdownMenuContent></DropdownMenu><span role="tooltip" className="pointer-events-none absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded bg-black/85 px-2 py-1 text-[11px] text-white opacity-0 shadow transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Tùy chọn</span></div>;
 }

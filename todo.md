@@ -341,3 +341,8 @@
 ## Nơi bán mặc định
 - [x] Thêm Người Dùng vào lựa chọn Nơi bán và đặt mặc định cho giao dịch bán mới
 - [x] Kiểm thử form bán hàng và lưu checkpoint
+
+## Chế độ hiển thị Card, Box và Pack
+- [x] Thêm chuyển đổi giữa dạng thẻ ảnh và dạng danh sách cho sản phẩm
+- [x] Giữ thao tác sửa, upload ảnh, xóa, lọc và sắp xếp trong hai chế độ
+- [x] Kiểm thử desktop/mobile và lưu checkpoint

@@ -142,3 +142,11 @@ Ngày xác minh: 13/08/2026
 
 - Lựa chọn **Người Dùng** đã được thêm vào danh sách Nơi bán và được chọn mặc định khi tạo giao dịch bán mới, cũng như sau khi lưu xong một giao dịch.
 - Đã xác minh trang Bán Hàng trên mobile 375×812; typecheck và 98 Vitest tests đều đạt.
+
+## Chế độ hiển thị Card, Box và Pack
+
+Ngày xác minh: 13/08/2026
+
+- Bộ chuyển đổi **Thẻ ảnh / Danh sách** xuất hiện cạnh bộ lọc trên trang Card, Box và Pack. Chế độ thẻ ảnh được giữ làm mặc định.
+- Chế độ danh sách giữ thông tin tồn, giá mua, giá thị trường, lãi và menu Sửa/Upload ảnh/Xóa; các bộ lọc và sắp xếp được dùng chung cho cả hai chế độ.
+- Đã xác minh Card desktop 1280×720 và mobile 375×812 với dữ liệu thực; typecheck và 98 Vitest tests đều đạt.
