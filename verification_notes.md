@@ -80,3 +80,11 @@ Ngày xác minh: 13/08/2026
 - Chỉ còn **Ngày nhận hàng** theo dạng `dd/mm`, kèm ghi chú linh hoạt như “Khoảng đầu tháng 9”; ngày nhận hàng kết thúc và dòng URL ảnh sản phẩm đã được bỏ.
 - Người dùng có thể tải PNG/JPEG/WEBP tối đa 4 MB để AI đọc nội dung ảnh và gợi ý điền các trường, luôn yêu cầu kiểm tra trước khi lưu.
 - Đã hợp nhất định dạng ngày dd/mm từ dự án chia sẻ, xác minh schema `pickupNote` trong DB, typecheck và 93 Vitest tests đều đạt; production build thành công.
+
+## Nhận diện trường AI điền trong Chyusen
+
+Ngày xác minh: 13/08/2026
+
+- Khi AI đọc ảnh, từng trường có dữ liệu được điền sẽ nhận nền/viền xanh cùng nhãn **AI điền**; người dùng sửa một trường thì nhãn của chính trường đó tự mất.
+- Khối tóm tắt cho biết số trường AI đã điền và nút **Chỉnh sửa nhanh** đưa focus tới trường AI đầu tiên.
+- Đã thêm hồi quy cho logic nhận diện trường AI, đồng thời xác minh Chyusen trên desktop 1280×720 và mobile 375×812. Typecheck và 97 Vitest tests đều đạt.

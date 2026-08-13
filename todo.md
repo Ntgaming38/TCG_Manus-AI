@@ -300,3 +300,8 @@
 - [x] Bỏ dòng ảnh sản phẩm khỏi form thủ công
 - [x] Thêm tải ảnh và AI trích xuất nội dung để gợi ý điền form Chyusen
 - [x] Kiểm thử dữ liệu, UI desktop/mobile và lưu checkpoint
+
+## Nhận diện dữ liệu AI điền trong Chyusen
+- [x] Làm nổi bật các trường được AI tự điền và hiển thị trạng thái cần kiểm tra
+- [x] Thêm thao tác chỉnh sửa nhanh cho trường AI điền
+- [x] Kiểm thử desktop/mobile và lưu checkpoint
