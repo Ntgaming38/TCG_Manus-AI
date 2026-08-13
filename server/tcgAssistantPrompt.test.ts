@@ -11,6 +11,7 @@ describe("TCG assistant system prompt", () => {
     expect(TCG_ASSISTANT_SYSTEM_PROMPT).toContain("5. Kết thúc bằng 1–2 bước kiểm tra");
     expect(TCG_ASSISTANT_SYSTEM_PROMPT).toContain("Không tự tạo giá, số lượng, ROI");
     expect(TCG_ASSISTANT_SYSTEM_PROMPT).toContain("Không bảo đảm lợi nhuận");
+    expect(TCG_ASSISTANT_SYSTEM_PROMPT).toContain("¥");
   });
 
   it("đính kèm chính xác ngữ cảnh kho hàng được cung cấp", () => {

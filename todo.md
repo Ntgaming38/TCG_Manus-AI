@@ -327,3 +327,8 @@
 - [x] Bỏ trường Tên chương trình trong form Chyusen và tự dùng tên sản phẩm làm tiêu đề
 - [x] Thêm Bandai Premium, Pokémon Center, Rakuten vào danh sách cửa hàng Chyusen
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Sửa Trợ lý AI trên điện thoại và tiền tệ
+- [x] Sửa modal Trợ lý AI responsive trên mobile, tránh tràn nội dung và giữ ô nhập luôn thao tác được
+- [x] Chuẩn hóa system prompt và hiển thị phân tích AI sang ¥ (JPY), không dùng VNĐ
+- [x] Kiểm thử mobile và lưu checkpoint

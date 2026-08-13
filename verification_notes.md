@@ -119,3 +119,11 @@ Ngày xác minh: 13/08/2026
 - Menu ba chấm trên mobile có vùng chạm 44×44 px và tooltip **Tùy chọn**; xóa sản phẩm nay cần xác nhận qua hộp thoại riêng.
 - Form Chyusen đã bỏ trường Tên chương trình, bắt đầu bằng Tên sản phẩm và tự dùng tên đó làm tiêu đề khi lưu. Danh sách cửa hàng bổ sung Bandai Premium, Pokémon Center và Rakuten.
 - Đã xác minh mobile Card 375×812 và form Chyusen desktop 1280×720; typecheck và 97 Vitest tests đều đạt.
+
+## Trợ lý AI mobile và tiền tệ JPY
+
+Ngày xác minh: 13/08/2026
+
+- Modal Trợ lý AI dùng chiều cao theo viewport trên điện thoại, vùng chat co giãn/có cuộn độc lập và ô nhập luôn nằm trong khung; nội dung Markdown, bảng và chuỗi dài được giới hạn để không tràn ngang.
+- System prompt yêu cầu dùng ¥/JPY; phản hồi mới và lịch sử chat cũ có hậu tố VNĐ/VND được chuẩn hóa thành ¥ trước khi hiển thị.
+- Đã xác minh trang mobile 375×812 sau khi ổn định dịch vụ, typecheck, 98 Vitest tests và production build đều đạt.

@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
+import { normalizeAiCurrencyToYen } from "@shared/aiCurrency";
 
 const STORAGE_KEY = "tcg-manager-ai-assistant-history";
 
@@ -20,7 +21,7 @@ export function SidebarAIAssistant() {
       const stored = sessionStorage.getItem(STORAGE_KEY);
       if (!stored) return;
       const parsed = JSON.parse(stored) as Message[];
-      if (Array.isArray(parsed)) setMessages(parsed.filter((item) => item?.role !== "system" && typeof item?.content === "string").slice(-12));
+      if (Array.isArray(parsed)) setMessages(parsed.filter((item) => item?.role !== "system" && typeof item?.content === "string").slice(-12).map((item) => ({ ...item, content: item.role === "assistant" ? normalizeAiCurrencyToYen(item.content) : item.content })));
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
     }
@@ -60,7 +61,7 @@ export function SidebarAIAssistant() {
   }, [analysisContext]);
 
   const assistantMutation = trpc.ai.chat.useMutation({
-    onSuccess: (answer: string) => setMessages((current): Message[] => [...current, { role: "assistant" as const, content: answer }].slice(-12)),
+    onSuccess: (answer: string) => setMessages((current): Message[] => [...current, { role: "assistant" as const, content: normalizeAiCurrencyToYen(answer) }].slice(-12)),
     onError: (error: any) => {
       toast.error("Trợ lý AI chưa thể trả lời", { description: error.message });
       setMessages((current): Message[] => [...current, { role: "assistant" as const, content: "Xin lỗi, hiện tại Trợ lý AI đang bận hoặc gặp sự cố kết nối tạm thời. Vui lòng thử lại câu hỏi sau ít phút." }].slice(-12));
@@ -100,18 +101,18 @@ export function SidebarAIAssistant() {
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl gap-4 border-primary/25 p-0 sm:rounded-2xl">
-        <DialogHeader className="border-b border-border bg-primary/5 px-5 py-4 text-left">
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="flex items-center gap-2 text-lg">
+      <DialogContent className="flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 overflow-hidden border-primary/25 p-0 sm:h-[min(82vh,680px)] sm:max-h-[90vh] sm:max-w-2xl sm:gap-4 sm:rounded-2xl">
+        <DialogHeader className="shrink-0 border-b border-border bg-primary/5 px-4 py-3 text-left sm:px-5 sm:py-4">
+          <div className="flex items-start justify-between gap-2 sm:items-center sm:gap-3">
+            <DialogTitle className="min-w-0 flex items-center gap-2 text-base leading-tight sm:text-lg">
               <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary"><Bot className="size-4" /></span>
               Trợ lý AI TCG Manager
             </DialogTitle>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" disabled={messages.length === 0 || assistantMutation.isPending} className="gap-1.5 text-muted-foreground hover:text-destructive">
+                <Button variant="ghost" size="icon" aria-label="Xóa lịch sử trò chuyện" disabled={messages.length === 0 || assistantMutation.isPending} className="size-9 shrink-0 text-muted-foreground hover:text-destructive sm:w-auto sm:px-3">
                   <Trash2 className="size-3.5" />
-                  Xóa lịch sử
+                  <span className="hidden sm:inline">Xóa lịch sử</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -126,18 +127,18 @@ export function SidebarAIAssistant() {
               </AlertDialogContent>
             </AlertDialog>
           </div>
-          <DialogDescription>
+          <DialogDescription className="mt-2 text-xs leading-5 sm:text-sm">
             Phân tích sâu về xu hướng giá, tỷ suất ROI và lợi nhuận chưa thực hiện của các thẻ bài trong kho.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-4 pb-4 sm:px-5">
+        <div className="flex min-h-0 flex-1 px-3 pb-3 sm:px-5 sm:pb-4">
           <AIChatBox
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={assistantMutation.isPending}
             placeholder={placeholder}
-            height="min(70vh, 580px)"
+            height="100%"
             emptyStateMessage="Tôi có thể phân tích xu hướng giá, ROI và lợi nhuận thẻ bài dựa trên kho hàng thực tế của bạn."
             suggestedPrompts={dynamicPrompts}
             className="border-primary/20 shadow-none"
