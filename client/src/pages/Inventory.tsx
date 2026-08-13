@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import { RarityBadge } from "@/components/RarityBadge";
 import { Search, Package, Warehouse, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -232,7 +233,10 @@ export default function Inventory() {
                       </Badge>
                     </div>
                   </div>
-                  <h3 className="font-semibold text-sm">{product.name}</h3>
+                  <div className="mt-2 flex min-w-0 items-center gap-2">
+                    <h3 className="min-w-0 flex-1 truncate font-semibold text-sm">{product.name}</h3>
+                    {product.type === "card" && <RarityBadge rarity={product.rarity} />}
+                  </div>
                   <p className="text-xs text-muted-foreground">{product.series}</p>
                   
                   {product.damageNote && (

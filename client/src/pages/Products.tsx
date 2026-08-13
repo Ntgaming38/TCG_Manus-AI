@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
 import { CARD_RARITY_OPTIONS } from "@shared/cardRarity";
+import { RarityBadge } from "@/components/RarityBadge";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -411,7 +412,10 @@ export default function Products() {
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                   </div>
                 )}
-                <h3 className="font-semibold text-sm truncate">{product.name}</h3>
+                <div className="mt-3 flex min-w-0 items-center gap-2">
+                  <h3 className="min-w-0 flex-1 truncate font-semibold text-sm">{product.name}</h3>
+                  {product.type === "card" && <RarityBadge rarity={product.rarity} />}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">{product.series} - {product.setName || 'N/A'}</p>
                 <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 gap-2 text-xs">
                   <div>

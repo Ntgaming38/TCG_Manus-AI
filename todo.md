@@ -193,3 +193,6 @@
 
 ## Cập nhật rarity Card
 - [x] Thay tùy chọn rarity UR thành MUR trong form quản lý Card và xác minh hiển thị/lưu dữ liệu
+
+## Badge rarity Card
+- [x] Thêm badge rarity màu riêng, dễ đọc và dùng chung cho các vị trí hiển thị Card
