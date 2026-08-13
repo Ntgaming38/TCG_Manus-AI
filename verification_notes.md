@@ -36,3 +36,11 @@ Ngày xác minh: 13/08/2026
 - Sidebar mobile có thể mở bằng thao tác vuốt ngang từ trong dải 28 px ở mép trái, với khoảng vuốt tối thiểu 64 px; các thao tác cuộn dọc hoặc vuốt từ ngoài mép không kích hoạt sidebar.
 - Hiệu ứng Sheet mở/đóng dùng thời lượng 250/200 ms, và tắt hiệu ứng khi thiết bị bật giảm chuyển động.
 - Logic cử chỉ có 2 kiểm thử hồi quy; toàn bộ 75 Vitest tests, typecheck và production build đều thành công. Bố cục mobile 375×812 đã được xác minh.
+
+## Nền xám than theo ảnh tham chiếu
+
+Ngày xác minh: 13/08/2026
+
+- Nền ứng dụng, thẻ, popover, input và viền đã chuyển sang bảng màu xám than đồng nhất theo ảnh tham chiếu; chữ chính/chữ phụ được đổi sang trắng-xám để giữ khả năng đọc.
+- Đã xác minh desktop 1280×720 và mobile 375×812: logo, số liệu, nhãn đỏ/xanh và đường viền vẫn đủ tương phản trên nền mới.
+- Typecheck và 76 Vitest tests đều đạt.

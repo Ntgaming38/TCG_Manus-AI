@@ -128,6 +128,30 @@
   --sidebar-ring: oklch(0.88 0.18 90);
 }
 
+/* Charcoal theme derived from the supplied solid-color reference. */
+:root,
+.dark {
+  --background: oklch(0.235 0.006 255);
+  --foreground: oklch(0.965 0.004 250);
+  --card: oklch(0.285 0.008 255);
+  --card-foreground: oklch(0.965 0.004 250);
+  --popover: oklch(0.31 0.008 255);
+  --popover-foreground: oklch(0.965 0.004 250);
+  --secondary: oklch(0.33 0.008 255);
+  --secondary-foreground: oklch(0.92 0.005 250);
+  --muted: oklch(0.30 0.007 255);
+  --muted-foreground: oklch(0.74 0.01 250);
+  --accent: oklch(0.31 0.025 145);
+  --accent-foreground: oklch(0.97 0.004 250);
+  --border: oklch(0.40 0.009 255);
+  --input: oklch(0.32 0.008 255);
+  --sidebar: oklch(0.18 0.012 255);
+  --sidebar-foreground: oklch(0.90 0.006 250);
+  --sidebar-primary-foreground: oklch(0.18 0.012 255);
+  --sidebar-accent: oklch(0.25 0.025 220);
+  --sidebar-border: oklch(0.34 0.012 255);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

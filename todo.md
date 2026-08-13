@@ -276,3 +276,7 @@
 - [x] Thêm vuốt từ mép trái để mở sidebar trên mobile, không cản trở thao tác cuộn nội dung
 - [x] Thêm hiệu ứng mở/đóng sidebar mượt mà và tôn trọng tùy chọn giảm chuyển động
 - [x] Kiểm thử cử chỉ, desktop/mobile và lưu checkpoint
+
+## Nền xám than cho giao diện
+- [x] Thay nền trắng bằng tông xám than theo ảnh tham chiếu và cập nhật màu surface/viền/chữ
+- [x] Xác minh độ tương phản desktop/mobile, kiểm thử và lưu checkpoint
