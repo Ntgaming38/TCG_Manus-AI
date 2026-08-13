@@ -32,6 +32,7 @@ import { Button } from "./ui/button";
 import { SidebarAIAssistant } from "./SidebarAIAssistant";
 import { trpc } from "@/lib/trpc";
 import { getUnreadChyusenCount } from "@shared/chyusenNotifications";
+import { shouldOpenMobileSidebarFromSwipe } from "@shared/mobileSidebarGesture";
 import { NotificationCenter } from "./NotificationCenter";
 
 const menuItems = [
@@ -115,7 +116,7 @@ function DashboardLayoutContent({
 }) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -127,6 +128,31 @@ function DashboardLayoutContent({
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
   }, [isCollapsed]);
+
+  useEffect(() => {
+    if (!isMobile || openMobile) return;
+    let touchStart: { x: number; y: number } | null = null;
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      touchStart = touch ? { x: touch.clientX, y: touch.clientY } : null;
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      const touch = event.changedTouches[0];
+      if (!touchStart || !touch) return;
+      if (shouldOpenMobileSidebarFromSwipe({ startX: touchStart.x, startY: touchStart.y, endX: touch.clientX, endY: touch.clientY })) {
+        setOpenMobile(true);
+      }
+      touchStart = null;
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMobile, openMobile, setOpenMobile]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -154,7 +180,7 @@ function DashboardLayoutContent({
   return (
     <>
       <div className="relative" ref={sidebarRef}>
-        <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
+          <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
           <SidebarHeader className="h-16 justify-center border-b border-primary/30">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button

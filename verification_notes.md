@@ -28,3 +28,11 @@ Ngày xác minh: 13/08/2026
 
 - Nút mở sidebar ở góc trên bên trái được tăng lên 48×48 px, biểu tượng lớn hơn và có nền nhấn nhẹ để dễ nhận diện trên điện thoại.
 - Đã xác minh ở viewport 375×812; nút không che tiêu đề trang hay chuông thông báo. Typecheck và 73 Vitest tests đều đạt.
+
+## Vuốt mở và chuyển động sidebar
+
+Ngày xác minh: 13/08/2026
+
+- Sidebar mobile có thể mở bằng thao tác vuốt ngang từ trong dải 28 px ở mép trái, với khoảng vuốt tối thiểu 64 px; các thao tác cuộn dọc hoặc vuốt từ ngoài mép không kích hoạt sidebar.
+- Hiệu ứng Sheet mở/đóng dùng thời lượng 250/200 ms, và tắt hiệu ứng khi thiết bị bật giảm chuyển động.
+- Logic cử chỉ có 2 kiểm thử hồi quy; toàn bộ 75 Vitest tests, typecheck và production build đều thành công. Bố cục mobile 375×812 đã được xác minh.

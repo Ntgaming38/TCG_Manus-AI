@@ -271,3 +271,8 @@
 ## Cải thiện điều hướng di động
 - [x] Tăng kích thước biểu tượng và vùng chạm nút mở sidebar ở góc trên bên trái trên mobile
 - [x] Xác minh mobile và lưu checkpoint
+
+## Cử chỉ và chuyển động sidebar di động
+- [x] Thêm vuốt từ mép trái để mở sidebar trên mobile, không cản trở thao tác cuộn nội dung
+- [x] Thêm hiệu ứng mở/đóng sidebar mượt mà và tôn trọng tùy chọn giảm chuyển động
+- [x] Kiểm thử cử chỉ, desktop/mobile và lưu checkpoint
