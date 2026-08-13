@@ -352,7 +352,10 @@ export const appRouter = router({
       .input(z.object({
         entityType: z.enum(["product", "purchase", "sale", "shop"]).optional(),
         action: z.string().trim().min(1).max(100).optional(),
+        syncScope: z.enum(["only", "exclude"]).optional(),
         search: z.string().trim().max(100).optional(),
+        limit: z.number().int().min(10).max(100).default(25),
+        cursor: z.object({ id: z.number().int().positive(), createdAt: z.date() }).optional(),
       }).optional())
       .query(({ ctx, input }) => db.listActivityLogs(ctx.user.id, input)),
   }),

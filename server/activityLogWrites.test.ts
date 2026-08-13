@@ -9,10 +9,11 @@ const state = vi.hoisted(() => ({
 
 function mockSelectResult() {
   const response = state.selectResponses.shift() || [];
-  return {
+  const query = {
     limit: vi.fn(async () => response),
     then: (resolve: (value: any[]) => unknown, reject?: (reason: unknown) => unknown) => Promise.resolve(response).then(resolve, reject),
   };
+  return { ...query, orderBy: vi.fn(() => query) };
 }
 
 state.db = {
@@ -37,7 +38,7 @@ vi.mock("drizzle-orm/mysql2", () => ({ drizzle: vi.fn(() => state.db) }));
 
 import {
   createProduct, createPurchase, createSale, deleteProduct, deletePurchase, deleteSale,
-  updateProduct, updatePurchase, updateSale,
+  listActivityLogs, updateProduct, updatePurchase, updateSale,
 } from "./db";
 
 const product = {
@@ -126,5 +127,19 @@ describe("activity log writes", () => {
     const deleteLog = latestActivity("sale_deleted");
     expect(JSON.parse(deleteLog.oldValue)).toMatchObject({ id: sale.id, quantity: 2 });
     expect(deleteLog.newValue).toBeNull();
+  });
+
+  it("trả về trang lịch sử giới hạn cùng cursor của phần dữ liệu còn lại", async () => {
+    const rows = Array.from({ length: 11 }, (_, index) => ({
+      id: 111 - index,
+      createdAt: new Date(`2026-08-13T${String(11 - index).padStart(2, "0")}:00:00.000Z`),
+    }));
+    state.selectResponses = [[{ totalCount: 11 }], rows];
+
+    const page = await listActivityLogs(1, { limit: 10 });
+
+    expect(page.items).toEqual(rows.slice(0, 10));
+    expect(page.nextCursor).toEqual({ id: rows[9].id, createdAt: rows[9].createdAt });
+    expect(page.totalCount).toBe(11);
   });
 });

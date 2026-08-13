@@ -159,7 +159,9 @@ export const activityLogs = mysqlTable("activity_logs", {
   oldValue: text("oldValue"),
   newValue: text("newValue"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  index("activity_logs_user_created_idx").on(table.userId, table.createdAt, table.id),
+]);
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 

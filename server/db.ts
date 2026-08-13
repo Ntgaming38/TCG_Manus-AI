@@ -1,4 +1,4 @@
-import { eq, and, like, sql, desc, inArray, asc, isNotNull } from "drizzle-orm";
+import { eq, and, like, sql, desc, inArray, asc, isNotNull, lt, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, marketplaceSyncConfig } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
@@ -447,23 +447,48 @@ export async function getDamagedProducts(userId: number) {
 export type ActivityLogFilters = {
   entityType?: "product" | "purchase" | "sale" | "shop";
   action?: string;
+  syncScope?: "only" | "exclude";
   search?: string;
+  limit?: number;
+  cursor?: { id: number; createdAt: Date };
 };
 
-/** Returns the newest audit events for the signed-in user only. */
+/** Returns one cursor-based activity page for the signed-in user only. */
 export async function listActivityLogs(userId: number, filters?: ActivityLogFilters) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { items: [], nextCursor: null, totalCount: 0 };
 
-  const conditions = [eq(activityLogs.userId, userId)];
-  if (filters?.entityType) conditions.push(eq(activityLogs.entityType, filters.entityType));
-  if (filters?.action) conditions.push(eq(activityLogs.action, filters.action));
-  if (filters?.search?.trim()) conditions.push(like(activityLogs.description, `%${filters.search.trim()}%`));
+  const baseConditions = [eq(activityLogs.userId, userId)];
+  if (filters?.entityType) baseConditions.push(eq(activityLogs.entityType, filters.entityType));
+  if (filters?.action) baseConditions.push(eq(activityLogs.action, filters.action));
+  if (filters?.syncScope === "only") baseConditions.push(eq(activityLogs.action, "snkrdunk_price_synced"));
+  if (filters?.syncScope === "exclude") baseConditions.push(ne(activityLogs.action, "snkrdunk_price_synced"));
+  if (filters?.search?.trim()) baseConditions.push(like(activityLogs.description, `%${filters.search.trim()}%`));
+  const conditions = [...baseConditions];
+  if (filters?.cursor) {
+    conditions.push(or(
+      lt(activityLogs.createdAt, filters.cursor.createdAt),
+      and(eq(activityLogs.createdAt, filters.cursor.createdAt), lt(activityLogs.id, filters.cursor.id)),
+    )!);
+  }
 
-  return db.select().from(activityLogs)
+  const pageSize = Math.min(Math.max(filters?.limit ?? 25, 10), 100);
+  const totalCount = filters?.cursor
+    ? null
+    : (await db.select({ totalCount: sql<number>`COUNT(*)`.mapWith(Number).as("totalCount") }).from(activityLogs).where(and(...baseConditions)))[0]?.totalCount ?? 0;
+  const rows = await db.select().from(activityLogs)
     .where(and(...conditions))
-    .orderBy(desc(activityLogs.createdAt))
-    .limit(250);
+    .orderBy(desc(activityLogs.createdAt), desc(activityLogs.id))
+    .limit(pageSize + 1);
+  const hasNextPage = rows.length > pageSize;
+  const items = hasNextPage ? rows.slice(0, pageSize) : rows;
+  const lastItem = items.at(-1);
+
+  return {
+    items,
+    nextCursor: hasNextPage && lastItem ? { id: lastItem.id, createdAt: lastItem.createdAt } : null,
+    totalCount,
+  };
 }
 
 // ========== PURCHASES ==========

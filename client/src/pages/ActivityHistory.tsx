@@ -101,9 +101,16 @@ export default function ActivityHistory() {
   const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null);
   const queryInput = useMemo(() => ({
     entityType: activeFilter === "all" || activeFilter === "auto_sync" ? undefined : activeFilter,
+    syncScope: activeFilter === "auto_sync" ? "only" as const : activeFilter === "all" ? "exclude" as const : undefined,
     search: search.trim() || undefined,
+    limit: 25,
   }), [activeFilter, search]);
-  const { data: activities = [], isLoading, isError, refetch } = trpc.activities.list.useQuery(queryInput);
+  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = trpc.activities.list.useInfiniteQuery(queryInput, {
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+  const activities = data?.pages.flatMap((page) => page.items) ?? [];
+  const totalCount = data?.pages[0]?.totalCount ?? activities.length;
+  const hasTotalBeyondLoaded = totalCount > activities.length;
   const visibleActivities = useMemo(() => activities.filter((item) => {
     if (activeFilter === "auto_sync") return isAutoSyncActivity(item.action);
     if (activeFilter === "all") return !isAutoSyncActivity(item.action);
@@ -125,7 +132,7 @@ export default function ActivityHistory() {
           <p className="mt-1 text-sm text-muted-foreground">Theo dõi các thao tác thêm, sửa, xóa và cập nhật dữ liệu trong tài khoản của bạn.</p>
         </div>
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/10 px-3 py-1.5 text-primary">
-          {visibleActivities.length} hoạt động gần đây
+          {visibleActivities.length > 0 ? `Đã tải ${visibleActivities.length}${hasTotalBeyondLoaded ? `/${totalCount}` : ""} hoạt động` : "Chưa có hoạt động"}
         </Badge>
       </div>
 
@@ -159,7 +166,8 @@ export default function ActivityHistory() {
           ) : visibleActivities.length === 0 ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-center"><div className="rounded-full bg-secondary/60 p-3"><CheckCircle2 className="h-5 w-5 text-muted-foreground" /></div><div><p className="text-sm font-medium">Chưa có hoạt động phù hợp</p><p className="mt-1 text-xs text-muted-foreground">Các thao tác thêm, sửa, xóa và cập nhật sẽ được lưu tại đây.</p></div></div>
           ) : (
-            <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-secondary/10">
+            <>
+              <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-secondary/10">
               {visibleActivities.map((item) => {
                 const tone = getActivityTone(item.action, item.entityType);
                 const ActionIcon = tone.icon;
@@ -187,7 +195,16 @@ export default function ActivityHistory() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+              {hasNextPage && (
+                <div className="flex flex-col items-center gap-2 pt-1">
+                  <p className="text-xs text-muted-foreground">Đã tải {visibleActivities.length}{hasTotalBeyondLoaded ? `/${totalCount}` : ""} hoạt động</p>
+                  <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="min-w-48 gap-2">
+                    {isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tải thêm...</> : "Tải thêm lịch sử"}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
