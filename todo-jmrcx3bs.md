@@ -51,3 +51,6 @@
 - [x] Tự động chèn dấu / khi nhập ngày tháng dd/mm trong biểu mẫu Chyusen.
 - [x] Hiển thị cảnh báo rõ ràng khi hạn đăng ký Chyusen đã qua theo thời điểm hiện tại.
 - [x] Kiểm thử định dạng ngày, cảnh báo quá hạn và lưu phiên bản hoàn chỉnh.
+- [x] Tính số ngày còn lại đến hạn đăng ký theo múi giờ Nhật Bản.
+- [x] Hiển thị số ngày còn lại cạnh cảnh báo trạng thái Chyusen phù hợp.
+- [x] Kiểm thử số ngày, xác minh giao diện và lưu phiên bản hoàn chỉnh.

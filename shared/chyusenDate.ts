@@ -24,6 +24,25 @@ export function isChyusenRegistrationExpired(value: Date | string | null | undef
   return `${nowParts.year}${nowParts.month}${nowParts.day}` > `${deadlineParts.year}${deadlineParts.month}${deadlineParts.day}`;
 }
 
+export function getChyusenDaysRemaining(value: Date | string | null | undefined, now = new Date()) {
+  if (!value) return null;
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime())) return null;
+  const deadlineParts = japanDateParts(deadline);
+  const nowParts = japanDateParts(now);
+  const deadlineDay = Date.UTC(Number(deadlineParts.year), Number(deadlineParts.month) - 1, Number(deadlineParts.day));
+  const nowDay = Date.UTC(Number(nowParts.year), Number(nowParts.month) - 1, Number(nowParts.day));
+  return Math.round((deadlineDay - nowDay) / 86_400_000);
+}
+
+export function formatChyusenDaysRemaining(value: Date | string | null | undefined, now = new Date()) {
+  const days = getChyusenDaysRemaining(value, now);
+  if (days === null) return null;
+  if (days < 0) return `Đã quá hạn ${Math.abs(days)} ngày`;
+  if (days === 0) return "Hôm nay là hạn cuối";
+  return `Còn ${days} ngày`;
+}
+
 export function parseChyusenDayMonth(value: string, savedAt = new Date()) {
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})$/);
   if (!match) return null;
