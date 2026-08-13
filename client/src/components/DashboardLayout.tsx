@@ -32,6 +32,7 @@ import { Button } from "./ui/button";
 import { SidebarAIAssistant } from "./SidebarAIAssistant";
 import { trpc } from "@/lib/trpc";
 import { getUnreadChyusenCount } from "@shared/chyusenNotifications";
+import { NotificationCenter } from "./NotificationCenter";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -226,16 +227,17 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
-        {isMobile && (
-          <div className="flex border-b border-primary/30 h-14 items-center justify-between bg-background/95 px-3 backdrop-blur sticky top-0 z-40">
+        <div className="flex border-b border-primary/30 h-14 items-center justify-between bg-background/95 px-3 backdrop-blur sticky top-0 z-40">
+          {isMobile ? (
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg" />
               <span className="text-sm font-medium text-foreground">
                 {activeMenuItem?.label ?? "Menu"}
               </span>
             </div>
-          </div>
-        )}
+          ) : <span className="text-sm font-medium text-muted-foreground">{activeMenuItem?.label ?? "TCG Manager"}</span>}
+          <NotificationCenter />
+        </div>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </>

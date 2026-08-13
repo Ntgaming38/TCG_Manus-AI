@@ -221,3 +221,13 @@
 - [x] Thiết lập theo dõi tự động 6 giờ/lần, trạng thái kết quả, nhắc hạn/nhắc công bố và luồng chuyển Chyusen trúng sang Mua Hàng có xác nhận
 - [x] Bổ sung kiểm thử, kiểm tra responsive và lưu checkpoint sau khi hoàn tất phạm vi đã xác nhận
 - [x] Thêm kiểm thử hồi quy monitor, notification và luồng chuyển Chyusen trúng sang Mua Hàng
+
+## Notification Center và theo dõi Chyusen nâng cao
+- [x] Hoàn tất rà soát PRD Phần 8 và mô hình notification đa nguồn
+- [x] Thêm Notification Center ở Header, trang tất cả thông báo, bộ lọc, đọc/xóa và đánh dấu tất cả đã đọc
+- [x] Bổ sung nguồn theo dõi Chyusen có bật/tắt, kiểm tra URL và tần suất riêng 1/3/6/12/24 giờ
+- [x] Hoàn thiện chống trùng Chyusen theo URL, product ID (nếu có), tên/shop và lịch đăng ký cho cả tạo/cập nhật/import
+- [x] Hoàn thiện audit log nguồn theo từng source/entry và kiểm thử ghi history khi nội dung thay đổi
+- [x] Mở rộng nhắc 7d/3d/24h/12h/3h/1h theo cấu hình người dùng
+- [x] Thêm kiểm thử hồi quy và xác minh responsive cho Notification Center/Chyusen
+- [ ] Cập nhật lịch monitor nền sang mỗi giờ để hỗ trợ tần suất riêng từng nguồn, rồi lưu checkpoint bàn giao

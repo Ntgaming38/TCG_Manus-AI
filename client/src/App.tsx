@@ -13,6 +13,7 @@ import Inventory from "./pages/Inventory";
 import Marketplace from "./pages/Marketplace";
 import Reports from "./pages/Reports";
 import Chyusen from "./pages/Chyusen";
+import Notifications from "./pages/Notifications";
 import DashboardLayout from "./components/DashboardLayout";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -54,6 +55,9 @@ function Router() {
       </Route>
       <Route path={"/chyusen"}>
         <ProtectedRoute component={Chyusen} />
+      </Route>
+      <Route path={"/thong-bao"}>
+        <ProtectedRoute component={Notifications} />
       </Route>
       <Route path={"/bao-cao"}>
         <ProtectedRoute component={Reports} />

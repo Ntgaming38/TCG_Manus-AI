@@ -25,6 +25,7 @@ export type ChyusenPreview = {
   shop: string;
   customShopName?: string;
   sourceUrl: string;
+  externalProductId?: string;
   imageUrl?: string;
   price?: number | null;
   quantityLimit?: string;
@@ -51,6 +52,22 @@ export type FetchedChyusenSource = {
 };
 
 const MAX_SOURCE_LENGTH = 24_000;
+
+export function extractExternalProductIdFromUrl(rawUrl: string): string | undefined {
+  try {
+    const url = new URL(rawUrl);
+    for (const key of ["product_id", "productId", "item_id", "itemId", "id"]) {
+      const value = url.searchParams.get(key)?.trim();
+      if (value && /^[A-Za-z0-9_-]{4,255}$/.test(value)) return value;
+    }
+    const bandaiMatch = url.pathname.match(/\/item\/item-([A-Za-z0-9_-]{4,255})/i);
+    if (bandaiMatch?.[1]) return bandaiMatch[1];
+    const match = url.pathname.match(/(?:item|product|products)[\/_-]([A-Za-z0-9_-]{4,255})/i);
+    return match?.[1];
+  } catch {
+    return undefined;
+  }
+}
 
 export async function fetchPublicChyusenSource(rawUrl: string): Promise<FetchedChyusenSource> {
   const validation = validatePublicChyusenUrl(rawUrl);
@@ -133,6 +150,7 @@ function buildDeterministicPreview(source: FetchedChyusenSource): ChyusenPreview
     shop: detectedShop.shop,
     customShopName: detectedShop.customShopName,
     sourceUrl: url,
+    externalProductId: extractExternalProductIdFromUrl(url),
     imageUrl: imageUrl || undefined,
     price: detectPrice(text),
     quantityLimit: detectQuantityLimit(text) || undefined,
@@ -246,6 +264,7 @@ export async function parseChyusenUrl(rawUrl: string, useAI = true): Promise<Chy
       productType: "other",
       shop: "Khác",
       sourceUrl: validation.normalizedUrl || rawUrl,
+      externalProductId: extractExternalProductIdFromUrl(validation.normalizedUrl || rawUrl),
       parserStatus: "unavailable",
       parserNote: error instanceof Error ? error.message : "Không thể tự động đọc đầy đủ thông tin từ website này.",
       fieldConfidence: {},

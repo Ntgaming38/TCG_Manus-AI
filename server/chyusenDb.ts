@@ -1,10 +1,12 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import {
   chyusenEntries,
   chyusenHistory,
   chyusenMonitorConfig,
   chyusenNotifications,
+  chyusenNotificationSettings,
   chyusenSources,
+  chyusenSourceHistory,
 } from "../drizzle/schema";
 import { getDb } from "./db";
 import { getChyusenTimeState, getChyusenUrgency } from "./chyusenUtils";
@@ -17,6 +19,7 @@ export type ChyusenEntryInput = {
   shop?: string;
   customShopName?: string;
   sourceUrl: string;
+  externalProductId?: string;
   imageUrl?: string;
   price?: number | null;
   quantityLimit?: string;
@@ -35,8 +38,18 @@ export type ChyusenEntryInput = {
   sourceContentHash?: string;
 };
 
+export const CHYUSEN_INTERVAL_MINUTES = [60, 180, 360, 720, 1440] as const;
+export const DEFAULT_CHYUSEN_DEADLINE_HOURS = [168, 72, 24, 12, 3, 1];
+
+export type ChyusenSourceInput = {
+  sourceUrl: string;
+  label?: string | null;
+  checkIntervalMinutes?: number;
+  isActive?: boolean;
+};
+
 const editableFields = [
-  "title", "productName", "series", "productType", "shop", "customShopName", "sourceUrl", "imageUrl", "price",
+  "title", "productName", "series", "productType", "shop", "customShopName", "sourceUrl", "externalProductId", "imageUrl", "price",
   "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupEnd", "requirements",
   "applicationStatus", "resultStatus", "sourceTimezone", "parserStatus", "parserNote", "fieldConfidence", "sourceContentHash",
 ] as const;
@@ -46,6 +59,32 @@ const serialize = (value: unknown): string | null => {
   if (value instanceof Date) return value.toISOString();
   return typeof value === "string" ? value : JSON.stringify(value);
 };
+
+const normalizeDuplicateText = (value: string | null | undefined) => (value || "").trim().toLocaleLowerCase();
+const toDateKey = (value: Date | null | undefined) => value ? value.toISOString() : "";
+
+export async function findDuplicateChyusenEntry(userId: number, input: Pick<ChyusenEntryInput, "sourceUrl" | "externalProductId" | "productName" | "shop" | "customShopName" | "applicationStart" | "applicationEnd">, excludeEntryId?: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const entries = await db.select().from(chyusenEntries).where(eq(chyusenEntries.userId, userId));
+  const candidates = entries.filter((entry) => entry.id !== excludeEntryId);
+  const sourceMatch = candidates.find((entry) => entry.sourceUrl === input.sourceUrl);
+  if (sourceMatch) return sourceMatch;
+  const productId = normalizeDuplicateText(input.externalProductId);
+  if (productId) {
+    const productIdMatch = candidates.find((entry) => normalizeDuplicateText(entry.externalProductId) === productId);
+    if (productIdMatch) return productIdMatch;
+  }
+  const productName = normalizeDuplicateText(input.productName);
+  const shop = normalizeDuplicateText(input.customShopName || input.shop);
+  const start = toDateKey(input.applicationStart);
+  const end = toDateKey(input.applicationEnd);
+  if (!productName || !shop || (!start && !end)) return undefined;
+  return candidates.find((entry) => normalizeDuplicateText(entry.productName) === productName
+    && normalizeDuplicateText(entry.customShopName || entry.shop) === shop
+    && toDateKey(entry.applicationStart) === start
+    && toDateKey(entry.applicationEnd) === end);
+}
 
 export async function listChyusenEntries(userId: number) {
   const db = await getDb();
@@ -87,6 +126,7 @@ export async function upsertChyusenSource(userId: number, sourceUrl: string, val
   latestError?: string | null;
   contentHash?: string | null;
   lastDetectedAt?: Date | null;
+  checkIntervalMinutes?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -101,7 +141,9 @@ export async function upsertChyusenSource(userId: number, sourceUrl: string, val
       latestStatus: values.latestStatus ?? existing.latestStatus,
       latestError: values.latestError === undefined ? existing.latestError : values.latestError,
       contentHash: values.contentHash === undefined ? existing.contentHash : values.contentHash,
+      checkIntervalMinutes: values.checkIntervalMinutes ?? existing.checkIntervalMinutes,
       lastCheckedAt: now,
+      nextCheckAt: new Date(now.getTime() + (values.checkIntervalMinutes ?? existing.checkIntervalMinutes) * 60_000),
       lastDetectedAt: values.lastDetectedAt === undefined ? existing.lastDetectedAt : values.lastDetectedAt,
     }).where(eq(chyusenSources.id, existing.id));
     return { id: existing.id, created: false };
@@ -115,7 +157,9 @@ export async function upsertChyusenSource(userId: number, sourceUrl: string, val
     latestStatus: values.latestStatus ?? "monitoring",
     latestError: values.latestError ?? null,
     contentHash: values.contentHash ?? null,
+    checkIntervalMinutes: values.checkIntervalMinutes ?? 360,
     lastCheckedAt: now,
+    nextCheckAt: new Date(now.getTime() + (values.checkIntervalMinutes ?? 360) * 60_000),
     lastDetectedAt: values.lastDetectedAt ?? null,
   });
   return { id: result[0].insertId, created: true };
@@ -124,6 +168,8 @@ export async function upsertChyusenSource(userId: number, sourceUrl: string, val
 export async function createChyusenEntry(userId: number, input: ChyusenEntryInput) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const duplicate = await findDuplicateChyusenEntry(userId, input);
+  if (duplicate) throw new Error(`Chyusen này có vẻ đã tồn tại (${duplicate.title}). Hãy mở bản ghi cũ để cập nhật thay vì tạo trùng.`);
   const result = await db.insert(chyusenEntries).values({
     userId,
     title: input.title,
@@ -133,6 +179,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     shop: input.shop || "Khác",
     customShopName: input.customShopName || null,
     sourceUrl: input.sourceUrl,
+    externalProductId: input.externalProductId || null,
     imageUrl: input.imageUrl || null,
     price: input.price === undefined || input.price === null ? null : String(input.price),
     quantityLimit: input.quantityLimit || null,
@@ -175,6 +222,17 @@ export async function updateChyusenEntry(userId: number, entryId: number, input:
   const [existing] = await db.select().from(chyusenEntries)
     .where(and(eq(chyusenEntries.id, entryId), eq(chyusenEntries.userId, userId))).limit(1);
   if (!existing) throw new Error("Chương trình Chyusen không tồn tại hoặc không thuộc tài khoản này.");
+
+  const duplicate = await findDuplicateChyusenEntry(userId, {
+    sourceUrl: input.sourceUrl ?? existing.sourceUrl ?? "",
+    externalProductId: input.externalProductId ?? existing.externalProductId ?? undefined,
+    productName: input.productName ?? existing.productName,
+    shop: input.shop ?? existing.shop ?? undefined,
+    customShopName: input.customShopName ?? existing.customShopName ?? undefined,
+    applicationStart: input.applicationStart ?? existing.applicationStart,
+    applicationEnd: input.applicationEnd ?? existing.applicationEnd,
+  }, entryId);
+  if (duplicate) throw new Error(`Cập nhật này sẽ tạo Chyusen trùng với ${duplicate.title}. Hãy kiểm tra lại URL, Product ID hoặc lịch đăng ký.`);
 
   const update: Record<string, unknown> = {};
   const historyRows: Array<typeof chyusenHistory.$inferInsert> = [];
@@ -238,14 +296,28 @@ export async function listChyusenNotifications(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(chyusenNotifications)
-    .where(eq(chyusenNotifications.userId, userId))
+    .where(and(eq(chyusenNotifications.userId, userId), isNull(chyusenNotifications.deletedAt)))
     .orderBy(desc(chyusenNotifications.createdAt));
 }
 
 export async function markChyusenNotificationRead(userId: number, notificationId: number, isRead: boolean) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(chyusenNotifications).set({ isRead: isRead ? 1 : 0 })
+  await db.update(chyusenNotifications).set({ isRead: isRead ? 1 : 0, readAt: isRead ? new Date() : null })
+    .where(and(eq(chyusenNotifications.id, notificationId), eq(chyusenNotifications.userId, userId)));
+}
+
+export async function markAllChyusenNotificationsRead(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(chyusenNotifications).set({ isRead: 1, readAt: new Date() })
+    .where(and(eq(chyusenNotifications.userId, userId), eq(chyusenNotifications.isRead, 0), isNull(chyusenNotifications.deletedAt)));
+}
+
+export async function deleteChyusenNotification(userId: number, notificationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(chyusenNotifications).set({ deletedAt: new Date() })
     .where(and(eq(chyusenNotifications.id, notificationId), eq(chyusenNotifications.userId, userId)));
 }
 
@@ -255,10 +327,80 @@ export async function createChyusenNotification(values: typeof chyusenNotificati
   await db.insert(chyusenNotifications).values(values).onDuplicateKeyUpdate({ set: { notificationKey: values.notificationKey } });
 }
 
-export async function listActiveChyusenSources() {
+export async function getChyusenNotificationSettings(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [existing] = await db.select().from(chyusenNotificationSettings).where(eq(chyusenNotificationSettings.userId, userId)).limit(1);
+  if (existing) return { ...existing, deadlineHours: JSON.parse(existing.deadlineHoursJson || "[]") as number[] };
+  await db.insert(chyusenNotificationSettings).values({ userId, deadlineHoursJson: JSON.stringify(DEFAULT_CHYUSEN_DEADLINE_HOURS) });
+  const [created] = await db.select().from(chyusenNotificationSettings).where(eq(chyusenNotificationSettings.userId, userId)).limit(1);
+  return created ? { ...created, deadlineHours: DEFAULT_CHYUSEN_DEADLINE_HOURS } : undefined;
+}
+
+export async function updateChyusenNotificationSettings(userId: number, input: Partial<{ lotteryNew: boolean; lotteryExpiring: boolean; lotteryResult: boolean; lotteryChanged: boolean; lotteryWon: boolean; lotteryLost: boolean; deadlineHours: number[]; quietHoursEnabled: boolean; quietStart: string; quietEnd: string }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await getChyusenNotificationSettings(userId);
+  const update: Record<string, unknown> = {};
+  for (const key of ["lotteryNew", "lotteryExpiring", "lotteryResult", "lotteryChanged", "lotteryWon", "lotteryLost", "quietHoursEnabled"] as const) if (input[key] !== undefined) update[key] = input[key] ? 1 : 0;
+  if (input.deadlineHours) update.deadlineHoursJson = JSON.stringify(Array.from(new Set(input.deadlineHours.filter((hour) => hour > 0 && hour <= 24 * 14))).sort((a, b) => b - a));
+  if (input.quietStart !== undefined) update.quietStart = input.quietStart;
+  if (input.quietEnd !== undefined) update.quietEnd = input.quietEnd;
+  if (Object.keys(update).length) await db.update(chyusenNotificationSettings).set(update).where(eq(chyusenNotificationSettings.userId, userId));
+  return getChyusenNotificationSettings(userId);
+}
+
+export async function listChyusenSources(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(chyusenSources).where(eq(chyusenSources.isActive, 1));
+  return db.select().from(chyusenSources).where(eq(chyusenSources.userId, userId)).orderBy(desc(chyusenSources.updatedAt));
+}
+
+export async function listDueChyusenSources(now = new Date()) {
+  const db = await getDb();
+  if (!db) return [];
+  const active = await db.select().from(chyusenSources).where(eq(chyusenSources.isActive, 1));
+  return active.filter((source) => !source.nextCheckAt || source.nextCheckAt.getTime() <= now.getTime());
+}
+
+export async function createChyusenSource(userId: number, input: ChyusenSourceInput) {
+  const interval = CHYUSEN_INTERVAL_MINUTES.includes(input.checkIntervalMinutes as typeof CHYUSEN_INTERVAL_MINUTES[number]) ? input.checkIntervalMinutes! : 360;
+  return upsertChyusenSource(userId, input.sourceUrl, { label: input.label ?? undefined, checkIntervalMinutes: interval });
+}
+
+export async function updateChyusenSource(userId: number, sourceId: number, input: Partial<ChyusenSourceInput>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [source] = await db.select().from(chyusenSources).where(and(eq(chyusenSources.id, sourceId), eq(chyusenSources.userId, userId))).limit(1);
+  if (!source) throw new Error("Nguồn Chyusen không tồn tại hoặc không thuộc tài khoản này.");
+  const interval = input.checkIntervalMinutes && CHYUSEN_INTERVAL_MINUTES.includes(input.checkIntervalMinutes as typeof CHYUSEN_INTERVAL_MINUTES[number]) ? input.checkIntervalMinutes : source.checkIntervalMinutes;
+  await db.update(chyusenSources).set({
+    sourceUrl: input.sourceUrl ?? source.sourceUrl,
+    label: input.label === undefined ? source.label : input.label,
+    isActive: input.isActive === undefined ? source.isActive : input.isActive ? 1 : 0,
+    checkIntervalMinutes: interval,
+    nextCheckAt: input.isActive === true ? new Date() : source.nextCheckAt,
+  }).where(eq(chyusenSources.id, sourceId));
+}
+
+export async function deleteChyusenSource(userId: number, sourceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(chyusenSources).where(and(eq(chyusenSources.id, sourceId), eq(chyusenSources.userId, userId)));
+}
+
+export async function recordChyusenSourceHistory(input: typeof chyusenSourceHistory.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(chyusenSourceHistory).values(input).onDuplicateKeyUpdate({ set: { currentHash: input.currentHash } });
+}
+
+export async function listChyusenSourceHistory(userId: number, sourceId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(chyusenSourceHistory)
+    .where(sourceId ? and(eq(chyusenSourceHistory.userId, userId), eq(chyusenSourceHistory.sourceId, sourceId)) : eq(chyusenSourceHistory.userId, userId))
+    .orderBy(desc(chyusenSourceHistory.createdAt));
 }
 
 export async function getChyusenMonitorConfig() {
@@ -277,13 +419,13 @@ export async function setChyusenMonitorTask(taskUid: string) {
   } else {
     await db.insert(chyusenMonitorConfig).values({
       scheduleCronTaskUid: taskUid,
-      cronExpression: "0 0 */6 * * *",
+      cronExpression: "0 0 * * * *",
       isEnabled: 1,
     });
   }
 }
 
-export async function updateChyusenSourceStatus(sourceId: number, update: { latestStatus?: "monitoring" | "detected" | "unavailable"; latestError?: string | null; contentHash?: string | null; lastDetectedAt?: Date | null }) {
+export async function updateChyusenSourceStatus(sourceId: number, update: { latestStatus?: "monitoring" | "detected" | "unavailable"; latestError?: string | null; contentHash?: string | null; lastDetectedAt?: Date | null; nextCheckAt?: Date | null; failureCount?: number; detectedCount?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(chyusenSources).set({ ...update, lastCheckedAt: new Date() }).where(eq(chyusenSources.id, sourceId));

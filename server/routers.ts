@@ -19,6 +19,7 @@ const chyusenEntryInput = z.object({
   shop: z.string().trim().max(100).optional(),
   customShopName: z.string().trim().max(255).optional(),
   sourceUrl: z.string().trim().url().max(2048),
+  externalProductId: z.string().trim().max(255).optional(),
   imageUrl: z.string().trim().url().optional().or(z.literal("")),
   price: z.number().min(0).nullable().optional(),
   quantityLimit: z.string().trim().max(100).optional(),
@@ -409,6 +410,52 @@ export const appRouter = router({
     markNotificationRead: protectedProcedure
       .input(z.object({ id: z.number(), isRead: z.boolean().default(true) }))
       .mutation(({ ctx, input }) => chyusenDb.markChyusenNotificationRead(ctx.user.id, input.id, input.isRead)),
+
+    markAllNotificationsRead: protectedProcedure
+      .mutation(({ ctx }) => chyusenDb.markAllChyusenNotificationsRead(ctx.user.id)),
+
+    deleteNotification: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => chyusenDb.deleteChyusenNotification(ctx.user.id, input.id)),
+
+    notificationSettings: protectedProcedure
+      .query(({ ctx }) => chyusenDb.getChyusenNotificationSettings(ctx.user.id)),
+
+    updateNotificationSettings: protectedProcedure
+      .input(z.object({
+        lotteryNew: z.boolean().optional(),
+        lotteryExpiring: z.boolean().optional(),
+        lotteryResult: z.boolean().optional(),
+        lotteryChanged: z.boolean().optional(),
+        lotteryWon: z.boolean().optional(),
+        lotteryLost: z.boolean().optional(),
+        deadlineHours: z.array(z.number().int().min(1).max(336)).max(12).optional(),
+        quietHoursEnabled: z.boolean().optional(),
+        quietStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+        quietEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+      }))
+      .mutation(({ ctx, input }) => chyusenDb.updateChyusenNotificationSettings(ctx.user.id, input)),
+
+    sources: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenSources(ctx.user.id)),
+
+    sourceHistory: protectedProcedure
+      .input(z.object({ sourceId: z.number().optional() }).optional())
+      .query(({ ctx, input }) => chyusenDb.listChyusenSourceHistory(ctx.user.id, input?.sourceId)),
+
+    createSource: protectedProcedure
+      .input(z.object({ sourceUrl: z.string().trim().url().max(2048), label: z.string().trim().max(255).optional(), checkIntervalMinutes: z.union([z.literal(60), z.literal(180), z.literal(360), z.literal(720), z.literal(1440)]).default(360) }))
+      .mutation(({ ctx, input }) => chyusenDb.createChyusenSource(ctx.user.id, { ...input, sourceUrl: validateChyusenSourceUrl(input.sourceUrl) })),
+
+    updateSource: protectedProcedure
+      .input(z.object({ id: z.number(), sourceUrl: z.string().trim().url().max(2048).optional(), label: z.string().trim().max(255).nullable().optional(), isActive: z.boolean().optional(), checkIntervalMinutes: z.union([z.literal(60), z.literal(180), z.literal(360), z.literal(720), z.literal(1440)]).optional() }))
+      .mutation(({ ctx, input }) => {
+        const { id, sourceUrl, ...data } = input;
+        return chyusenDb.updateChyusenSource(ctx.user.id, id, { ...data, sourceUrl: sourceUrl ? validateChyusenSourceUrl(sourceUrl) : undefined });
+      }),
+
+    deleteSource: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => chyusenDb.deleteChyusenSource(ctx.user.id, input.id)),
   }),
 
   dashboard: router({
