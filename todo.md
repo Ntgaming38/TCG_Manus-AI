@@ -196,3 +196,9 @@
 
 ## Badge rarity Card
 - [x] Thêm badge rarity màu riêng, dễ đọc và dùng chung cho các vị trí hiển thị Card
+
+## Thống kê và sắp xếp rarity Card
+- [x] Bổ sung RR và R vào taxonomy rarity cùng thứ tự MUR → SAR → AR → RR → R
+- [x] Thêm sắp xếp Card theo rarity, ROI và giá thị trường
+- [x] Hiển thị tổng số lượng Card theo từng rarity trên Dashboard
+- [x] Thêm kiểm thử số liệu/thứ tự và xác minh build trước khi lưu checkpoint

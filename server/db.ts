@@ -4,6 +4,7 @@ import { InsertUser, users, products, purchases, sales, priceHistory, shops, act
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
+import { summarizeCardRarityQuantities } from '../shared/cardRarity';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -801,7 +802,7 @@ export async function getDashboardStats(userId: number) {
     totalCapital: 0, currentValue: 0, totalProfit: 0,
     totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
     totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
-    chartData: [], recentActivities: [],
+    cardRarityStats: [], chartData: [], recentActivities: [],
   };
 
   // Get all user products
@@ -813,6 +814,7 @@ export async function getDashboardStats(userId: number) {
   const inStockCards = inStockProducts.filter(p => p.type === "card").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const inStockBoxes = inStockProducts.filter(p => p.type === "box").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const inStockPacks = inStockProducts.filter(p => p.type === "pack").reduce((sum, p) => sum + (p.quantity || 0), 0);
+  const cardRarityStats = summarizeCardRarityQuantities(inStockProducts.filter(p => p.type === "card"));
 
   // Sold products
   // Sold quantity: count from actual sales records (sum of quantities sold)
@@ -866,7 +868,7 @@ export async function getDashboardStats(userId: number) {
     totalCapital, currentValue, totalProfit,
     totalInStock, inStockCards, inStockBoxes, inStockPacks,
     totalSold, soldCards, soldBoxes, soldPacks,
-    chartData, recentActivities,
+    cardRarityStats, chartData, recentActivities,
   };
 }
 

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { RarityBadge } from "@/components/RarityBadge";
 
 // Sample chart data - will be replaced with real data from API
 const monthlyData = [
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const soldPacks = stats?.soldPacks ?? 0;
   const recentActivities = stats?.recentActivities ?? [];
   const chartData = stats?.chartData ?? monthlyData;
+  const cardRarityStats = stats?.cardRarityStats ?? [];
 
   return (
     <div className="space-y-6">
@@ -119,6 +121,27 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="bg-card neon-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">Card trong kho theo độ hiếm</CardTitle>
+          <p className="text-sm text-muted-foreground">Tổng số lượng Card đang còn trong kho, theo thứ tự độ hiếm.</p>
+        </CardHeader>
+        <CardContent>
+          {cardRarityStats.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border px-4 py-5 text-center text-sm text-muted-foreground">Chưa có Card trong kho để thống kê độ hiếm.</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {cardRarityStats.map((item: { rarity: string; quantity: number }) => (
+                <div key={item.rarity} className="flex min-w-[108px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 shadow-sm">
+                  <RarityBadge rarity={item.rarity} />
+                  <span className="text-sm font-bold text-foreground">{item.quantity}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

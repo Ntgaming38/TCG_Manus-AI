@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
-import { CARD_RARITY_OPTIONS } from "@shared/cardRarity";
+import { CARD_RARITY_OPTIONS, getCardRarityPriority } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
-import { useState, useRef } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -19,6 +19,7 @@ export default function Products() {
   const [location] = useLocation();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [cardSort, setCardSort] = useState<"rarity" | "roi" | "marketPrice">("rarity");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -134,6 +135,30 @@ export default function Products() {
     if (activeType === "pack") return "Pack";
     return "Sản phẩm";
   };
+
+  const sortedProducts = useMemo(() => {
+    if (!products) return [];
+    if (activeType !== "card") return products;
+
+    return [...products].sort((a: any, b: any) => {
+      if (cardSort === "rarity") {
+        const rarityDiff = getCardRarityPriority(a.rarity) - getCardRarityPriority(b.rarity);
+        if (rarityDiff !== 0) return rarityDiff;
+        return Number(b.marketPrice || 0) - Number(a.marketPrice || 0);
+      }
+
+      if (cardSort === "roi") {
+        const calculateRoi = (product: any) => {
+          const buyPrice = Number(product.buyPrice || 0);
+          const marketPrice = Number(product.marketPrice || 0);
+          return buyPrice > 0 ? (marketPrice - buyPrice) / buyPrice : Number.NEGATIVE_INFINITY;
+        };
+        return calculateRoi(b) - calculateRoi(a);
+      }
+
+      return Number(b.marketPrice || 0) - Number(a.marketPrice || 0);
+    });
+  }, [activeType, cardSort, products]);
 
   return (
     <div className="space-y-6">
@@ -357,10 +382,22 @@ export default function Products() {
             </SelectContent>
           </Select>
         )}
+        {activeType === "card" && (
+          <Select value={cardSort} onValueChange={(value) => setCardSort(value as "rarity" | "roi" | "marketPrice")}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Sắp xếp Card" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="rarity">Độ hiếm: MUR → R</SelectItem>
+              <SelectItem value="roi">ROI: cao đến thấp</SelectItem>
+              <SelectItem value="marketPrice">Giá thị trường: cao đến thấp</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Products Grid */}
-      {!products || products.length === 0 ? (
+      {!sortedProducts || sortedProducts.length === 0 ? (
         <div className="text-center py-16">
           <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-medium text-muted-foreground">Chưa có sản phẩm nào</h3>
@@ -368,7 +405,7 @@ export default function Products() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {products.map((product: any) => (
+          {sortedProducts.map((product: any) => (
             <Card key={product.id} className="bg-card neon-card hover:border-primary/30 transition-colors group">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">

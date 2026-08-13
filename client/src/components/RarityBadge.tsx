@@ -10,6 +10,8 @@ const RARITY_BADGE_STYLES: Record<string, string> = {
   Uncommon: "border-emerald-300 bg-emerald-100 text-emerald-800",
   Rare: "border-sky-300 bg-sky-100 text-sky-800",
   AR: "border-violet-300 bg-violet-100 text-violet-800",
+  RR: "border-blue-300 bg-blue-100 text-blue-800",
+  R: "border-teal-300 bg-teal-100 text-teal-800",
   SR: "border-amber-300 bg-amber-100 text-amber-900",
   SAR: "border-fuchsia-300 bg-fuchsia-100 text-fuchsia-800",
   MUR: "border-violet-700 bg-gradient-to-r from-slate-950 via-violet-800 to-fuchsia-700 text-white shadow-[0_0_10px_rgba(168,85,247,0.45)]",
