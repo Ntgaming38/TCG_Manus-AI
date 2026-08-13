@@ -59,3 +59,6 @@
 - [x] Kiểm thử tương tác, xác minh giao diện điện thoại và lưu phiên bản hoàn chỉnh.
 - [x] Kiểm thử riêng các lớp phản hồi hover/chạm dùng chung của Button cho thao tác trên điện thoại.
 - [x] Lưu checkpoint sau khi hoàn tất kiểm thử phản hồi nút và cảnh báo hạn gần.
+- [x] Hiển thị biểu tượng dấu chấm than cạnh nhãn hạn của Chyusen có hạn chót trong hôm nay.
+- [x] Bổ sung nhãn trợ năng cho biểu tượng cảnh báo và kiểm thử điều kiện hạn hôm nay.
+- [x] Xác minh giao diện, kiểm thử và lưu phiên bản hoàn chỉnh.

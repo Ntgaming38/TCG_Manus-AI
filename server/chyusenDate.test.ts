@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenRegistrationExpired, parseChyusenDayMonth } from "../shared/chyusenDate";
+import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenDeadlineToday, isChyusenRegistrationExpired, parseChyusenDayMonth } from "../shared/chyusenDate";
 
 describe("Chyusen day/month dates", () => {
   it("hiển thị ngày theo dd/mm và bỏ năm, giờ", () => {
@@ -32,6 +32,8 @@ describe("Chyusen day/month dates", () => {
     expect(formatChyusenDaysRemaining("2026-08-13T00:00:00+09:00", now)).toBe("Còn 3 ngày");
     expect(formatChyusenDaysRemaining("2026-08-10T00:00:00+09:00", now)).toBe("Hôm nay là hạn cuối");
     expect(formatChyusenDaysRemaining("2026-08-08T00:00:00+09:00", now)).toBe("Đã quá hạn 2 ngày");
+    expect(isChyusenDeadlineToday("2026-08-10T00:00:00+09:00", now)).toBe(true);
+    expect(isChyusenDeadlineToday("2026-08-11T00:00:00+09:00", now)).toBe(false);
   });
 
   it("tăng màu cảnh báo khi chỉ còn tối đa ba ngày", () => {

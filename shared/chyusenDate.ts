@@ -53,6 +53,10 @@ export function getChyusenDeadlineTone(value: Date | string | null | undefined, 
   return "warning";
 }
 
+export function isChyusenDeadlineToday(value: Date | string | null | undefined, now = new Date()) {
+  return getChyusenDaysRemaining(value, now) === 0;
+}
+
 export function parseChyusenDayMonth(value: string, savedAt = new Date()) {
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})$/);
   if (!match) return null;

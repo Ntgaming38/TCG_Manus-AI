@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { BellRing, CalendarClock, CheckCircle2, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, Radio, Search, Settings2, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
+import { BellRing, CalendarClock, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, Radio, Search, Settings2, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { EMPTY_CHYUSEN_DRAFT, toChyusenDraft, type ChyusenDraft } from "@/lib/chyusenDraft";
 import { buildChyusenSubmission } from "../lib/chyusenSubmission";
-import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenRegistrationExpired } from "@shared/chyusenDate";
+import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenDeadlineToday, isChyusenRegistrationExpired } from "@shared/chyusenDate";
 import { isDashboardChyusenFilter, matchesDashboardChyusenFilter } from "@shared/chyusenDashboardFilter";
 import { getChyusenAiFilledFields } from "@shared/chyusenAiFields";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
@@ -280,8 +280,10 @@ export default function Chyusen() {
         <Card className="border-dashed"><CardContent className="py-14 text-center"><Ticket className="mx-auto mb-3 h-12 w-12 text-muted-foreground/30" /><h2 className="font-semibold">Chưa có chương trình Chyusen</h2><p className="mt-1 text-sm text-muted-foreground">Dán link công khai của shop hoặc bài công bố chính thức để bắt đầu.</p><Button variant="outline" className="mt-4" onClick={openNew}>Thêm Chyusen</Button></CardContent></Card>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
-          {filteredEntries.map((entry: any) => (
-            <Card key={entry.id} className="overflow-hidden"><CardHeader className="space-y-3 pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><CardTitle className="truncate text-lg">{entry.title}</CardTitle><CardDescription className="mt-1 truncate">{entry.shop || "Khác"} · {entry.productType} · {entry.series || "Pokemon"}</CardDescription></div><div className="flex shrink-0 flex-col items-end gap-1">{timeBadge(entry.timeState)}{participationBadge(entry.applicationStatus)}</div></div></CardHeader>
+          {filteredEntries.map((entry: any) => {
+            const deadlineToday = isChyusenDeadlineToday(entry.applicationEnd);
+            return (
+            <Card key={entry.id} className="overflow-hidden"><CardHeader className="space-y-3 pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex items-center gap-2"><CardTitle className="truncate text-lg">{entry.title}</CardTitle>{deadlineToday && <span role="img" aria-label="Hạn đăng ký là hôm nay" className="shrink-0 text-red-400"><CircleAlert className="h-5 w-5 animate-pulse" aria-hidden="true" /></span>}</div><CardDescription className="mt-1 truncate">{entry.shop || "Khác"} · {entry.productType} · {entry.series || "Pokemon"}</CardDescription></div><div className="flex shrink-0 flex-col items-end gap-1">{timeBadge(entry.timeState)}{participationBadge(entry.applicationStatus)}</div></div></CardHeader>
               <CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3 text-sm"><div className="rounded-lg bg-secondary/55 p-3"><p className="text-xs text-muted-foreground">Hết hạn đăng ký</p><p className="mt-1 font-medium">{displayDate(entry.applicationEnd)}</p></div><div className="rounded-lg bg-secondary/55 p-3"><p className="text-xs text-muted-foreground">Công bố kết quả</p><p className="mt-1 font-medium">{displayDate(entry.resultDate)}</p></div></div>
                 {isChyusenRegistrationExpired(entry.applicationEnd) && <div className="flex items-center justify-between gap-2 rounded-lg border border-red-300 bg-red-500/15 px-3 py-2 text-sm font-medium text-red-300"><span className="flex items-center gap-2"><Clock3 className="h-4 w-4" />Hạn đăng ký đã qua. Không thể đăng ký mới.</span><Badge className="shrink-0 border border-red-300 bg-red-500/20 text-red-200 hover:bg-red-500/20">{formatChyusenDaysRemaining(entry.applicationEnd)}</Badge></div>}
                 {!isChyusenRegistrationExpired(entry.applicationEnd) && formatChyusenDaysRemaining(entry.applicationEnd) && <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${getChyusenDeadlineTone(entry.applicationEnd) === "urgent" ? "border-red-400/80 bg-red-500/20 text-red-100 shadow-[0_0_18px_rgba(248,113,113,0.26)]" : getChyusenDeadlineTone(entry.applicationEnd) === "warning" ? "border-amber-300/80 bg-amber-500/15 text-amber-100" : "border-sky-300/50 bg-sky-500/10 text-sky-200"}`}><CalendarClock className="h-4 w-4" />{formatChyusenDaysRemaining(entry.applicationEnd)}</div>}
@@ -295,7 +297,8 @@ export default function Chyusen() {
                   <Button variant="ghost" size="sm" onClick={() => openEdit(entry)}><Pencil className="mr-1.5 h-3.5 w-3.5" />Sửa</Button><Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(entry.id)}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Xóa</Button>
                 </div></CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
