@@ -6,6 +6,7 @@ vi.mock("./chyusenDb", async (importOriginal) => {
   return {
     ...actual,
     getChyusenEntry: vi.fn(),
+    createChyusenEntry: vi.fn(),
     markChyusenNotificationRead: vi.fn(),
     markChyusenPurchaseCreated: vi.fn(),
     updateChyusenSource: vi.fn(),
@@ -156,6 +157,28 @@ describe("appRouter", () => {
   });
 
   describe("chyusen router", () => {
+    it("cho phép lưu Chyusen nhập thủ công khi không có URL nguồn", async () => {
+      vi.mocked(chyusenDb.createChyusenEntry).mockResolvedValue({ id: 88, sourceId: null });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.chyusen.create({ title: "抽選 thủ công", productName: "Pikachu Box" });
+
+      expect(chyusenDb.createChyusenEntry).toHaveBeenCalledWith(1, expect.objectContaining({
+        title: "抽選 thủ công", productName: "Pikachu Box", sourceUrl: undefined,
+      }));
+    });
+
+    it("giữ luồng lưu Chyusen với URL nguồn hợp lệ", async () => {
+      vi.mocked(chyusenDb.createChyusenEntry).mockResolvedValue({ id: 89, sourceId: 5 });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.chyusen.create({ title: "抽選 từ link", productName: "Eevee Box", sourceUrl: "https://joshinweb.jp/game/lottery" });
+
+      expect(chyusenDb.createChyusenEntry).toHaveBeenCalledWith(1, expect.objectContaining({
+        sourceUrl: "https://joshinweb.jp/game/lottery",
+      }));
+    });
+
     it("đánh dấu thông báo đã đọc theo đúng user đang đăng nhập", async () => {
       vi.mocked(chyusenDb.markChyusenNotificationRead).mockResolvedValue(undefined);
       const caller = appRouter.createCaller(createAuthContext());

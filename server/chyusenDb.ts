@@ -18,7 +18,7 @@ export type ChyusenEntryInput = {
   productType?: "card" | "box" | "pack" | "set" | "other";
   shop?: string;
   customShopName?: string;
-  sourceUrl: string;
+  sourceUrl?: string;
   externalProductId?: string;
   imageUrl?: string;
   price?: number | null;
@@ -68,7 +68,8 @@ export async function findDuplicateChyusenEntry(userId: number, input: Pick<Chyu
   if (!db) return undefined;
   const entries = await db.select().from(chyusenEntries).where(eq(chyusenEntries.userId, userId));
   const candidates = entries.filter((entry) => entry.id !== excludeEntryId);
-  const sourceMatch = candidates.find((entry) => entry.sourceUrl === input.sourceUrl);
+  const sourceUrl = normalizeDuplicateText(input.sourceUrl);
+  const sourceMatch = sourceUrl ? candidates.find((entry) => normalizeDuplicateText(entry.sourceUrl) === sourceUrl) : undefined;
   if (sourceMatch) return sourceMatch;
   const productId = normalizeDuplicateText(input.externalProductId);
   if (productId) {
@@ -178,7 +179,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     productType: input.productType || "other",
     shop: input.shop || "Khác",
     customShopName: input.customShopName || null,
-    sourceUrl: input.sourceUrl,
+    sourceUrl: input.sourceUrl || null,
     externalProductId: input.externalProductId || null,
     imageUrl: input.imageUrl || null,
     price: input.price === undefined || input.price === null ? null : String(input.price),
@@ -199,12 +200,12 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     lastCheckedAt: input.sourceContentHash ? new Date() : null,
   });
   const entryId = result[0].insertId;
-  const source = await upsertChyusenSource(userId, input.sourceUrl, {
+  const source = input.sourceUrl ? await upsertChyusenSource(userId, input.sourceUrl, {
     entryId,
     label: input.shop || "Nguồn Chyusen",
     latestStatus: input.parserStatus === "unavailable" ? "unavailable" : "monitoring",
     contentHash: input.sourceContentHash || null,
-  });
+  }) : undefined;
   await db.insert(chyusenHistory).values({
     userId,
     entryId,
@@ -213,7 +214,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     newValue: "Chyusen đã được lưu sau khi người dùng xác nhận.",
     changeSource: input.parserStatus === "manual" ? "manual" : "source_import",
   });
-  return { id: entryId, sourceId: source.id };
+  return { id: entryId, sourceId: source?.id ?? null };
 }
 
 export async function updateChyusenEntry(userId: number, entryId: number, input: Partial<ChyusenEntryInput>, changeSource: "manual" | "source_refresh" = "manual") {

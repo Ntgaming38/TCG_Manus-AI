@@ -19,7 +19,7 @@ const chyusenEntryInput = z.object({
   productType: z.enum(["card", "box", "pack", "set", "other"]).optional(),
   shop: z.string().trim().max(100).optional(),
   customShopName: z.string().trim().max(255).optional(),
-  sourceUrl: z.string().trim().url().max(2048),
+  sourceUrl: z.string().trim().url().max(2048).optional().or(z.literal("")),
   externalProductId: z.string().trim().max(255).optional(),
   imageUrl: z.string().trim().url().optional().or(z.literal("")),
   price: z.number().min(0).nullable().optional(),
@@ -383,7 +383,7 @@ export const appRouter = router({
       .input(chyusenEntryInput)
       .mutation(({ ctx, input }) => chyusenDb.createChyusenEntry(ctx.user.id, {
         ...input,
-        sourceUrl: validateChyusenSourceUrl(input.sourceUrl),
+        sourceUrl: input.sourceUrl ? validateChyusenSourceUrl(input.sourceUrl) : undefined,
         imageUrl: input.imageUrl || undefined,
       })),
 

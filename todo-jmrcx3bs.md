@@ -26,3 +26,11 @@
 - [x] Trả về tổng số hoạt động phù hợp với bộ lọc cùng dữ liệu phân trang cursor.
 - [x] Hiển thị tiến độ số hoạt động đã tải trên tổng số, đồng thời làm rõ cơ chế tải thêm.
 - [x] Kiểm thử lại và lưu phiên bản sau khi hoàn thiện thông tin phân trang.
+- [x] Cho phép lưu 抽選 bằng dữ liệu thủ công khi link nguồn không đọc được hoặc không có dữ liệu tự động.
+- [x] Hiển thị lỗi đọc link theo hướng dẫn tiếp tục nhập tay, không vô hiệu hóa nút Lưu.
+- [x] Kiểm thử luồng link lỗi, link hợp lệ và lưu thủ công, sau đó lưu phiên bản.
+- [x] Kiểm thử độc lập việc lỗi đọc link chuyển sang bản nháp thủ công với URL trống.
+- [x] Kiểm thử độc lập việc link hợp lệ vẫn tạo bản nháp tự điền.
+- [x] Lưu phiên bản sau khi hoàn tất kiểm thử luồng đọc link.
+- [x] Tách quy đổi phản hồi đọc link hợp lệ thành bản nháp Chyusen có thể kiểm thử độc lập.
+- [x] Xác minh dữ liệu từ link hợp lệ tự điền đúng bản nháp, đồng thời lưu phiên bản mới.

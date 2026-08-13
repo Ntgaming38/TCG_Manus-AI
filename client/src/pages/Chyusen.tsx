@@ -13,6 +13,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
+import { toChyusenDraft } from "@/lib/chyusenDraft";
+import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 
 type Draft = {
   title: string;
@@ -132,10 +134,13 @@ export default function Chyusen() {
   };
   const previewUrl = trpc.chyusen.previewUrl.useMutation({
     onSuccess: (data) => {
-      setDraft(toDraft(data));
+      setDraft(toChyusenDraft(data));
       toast.success(data.parserStatus === "detected" ? "Đã đọc thông tin. Hãy kiểm tra trước khi lưu." : "Đã đọc được một phần thông tin. Hãy bổ sung các trường còn thiếu.");
     },
-    onError: (error) => toast.error(error.message),
+    onError: () => {
+      setDraft((current) => createChyusenPreviewFallback(current));
+      toast.error("Không thể đọc link. Hãy nhập thủ công rồi lưu.");
+    },
   });
   const create = trpc.chyusen.create.useMutation({
     onSuccess: () => { toast.success("Đã lưu Chyusen."); setShowDialog(false); setDraft(EMPTY_DRAFT); invalidate(); },
@@ -193,12 +198,14 @@ export default function Chyusen() {
     }
   };
   const submit = () => {
-    if (!draft.title.trim() || !draft.productName.trim() || !draft.sourceUrl.trim()) {
-      toast.error("Hãy nhập tên Chyusen, tên sản phẩm và URL gốc.");
+    if (!draft.title.trim() || !draft.productName.trim()) {
+      toast.error("Hãy nhập tên Chyusen và tên sản phẩm.");
       return;
     }
+    const { sourceUrl, ...draftWithoutSourceUrl } = draft;
     const payload = {
-      ...draft,
+      ...draftWithoutSourceUrl,
+      sourceUrl: sourceUrl.trim() || undefined,
       imageUrl: draft.imageUrl || undefined,
       customShopName: draft.customShopName || undefined,
       price: draft.price ? Number(draft.price) : null,
@@ -263,8 +270,8 @@ export default function Chyusen() {
       )}
 
       <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setDraft(EMPTY_DRAFT); } }}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>Dán link và bấm Đọc thông tin để tạo bản nháp; bạn có thể sửa mọi trường trước khi lưu.</DialogDescription></DialogHeader>
-          <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選</Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Chỉ hỗ trợ nguồn công khai chính thức; AI không tự chạy nếu bạn không bấm Đọc thông tin.</p></div>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>URL là tùy chọn: dán link để tự động điền khi đọc được, hoặc nhập thủ công và lưu trực tiếp.</DialogDescription></DialogHeader>
+          <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選 <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Nếu link không đọc được, hệ thống sẽ để trống URL để bạn tiếp tục nhập tay và lưu bình thường.</p></div>
             {draft.parserNote && <div className={`rounded-lg border px-3 py-2 text-sm ${draft.parserStatus === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{draft.parserNote}</div>}
             <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình"><Input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm"><Input value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series"><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pokemon">Pokémon</SelectItem><SelectItem value="One Piece">One Piece</SelectItem><SelectItem value="Other">Khác</SelectItem></SelectContent></Select></Field><Field label="Loại sản phẩm"><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as Draft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng"><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)"><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng"><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><Field label="Bắt đầu đăng ký"><Input type="datetime-local" value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", event.target.value)} /></Field><Field label="Hết hạn đăng ký"><Input type="datetime-local" value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", event.target.value)} /></Field><Field label="Công bố kết quả"><Input type="datetime-local" value={draft.resultDate} onChange={(event) => updateDraft("resultDate", event.target.value)} /></Field><Field label="Nhận hàng bắt đầu"><Input type="datetime-local" value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", event.target.value)} /></Field><Field label="Nhận hàng kết thúc"><Input type="datetime-local" value={draft.pickupEnd} onChange={(event) => updateDraft("pickupEnd", event.target.value)} /></Field><Field label="Ảnh sản phẩm (URL)"><Input value={draft.imageUrl} onChange={(event) => updateDraft("imageUrl", event.target.value)} /></Field></div>
             <Field label="Điều kiện tham gia"><Textarea value={draft.requirements} onChange={(event) => updateDraft("requirements", event.target.value)} placeholder="VD: Thành viên Joshin, yêu cầu đăng nhập..." /></Field>
