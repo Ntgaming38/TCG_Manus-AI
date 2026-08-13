@@ -38,6 +38,7 @@ export default function Marketplace() {
   const [syncErrors, setSyncErrors] = useState<Record<number, string>>({});
   const utils = trpc.useUtils();
   const { data: products } = trpc.products.list.useQuery({ status: "in_stock", search: search || undefined });
+  const { data: autoSyncStatus } = trpc.products.autoSyncStatus.useQuery();
   const productList = products ?? [];
   const linkedProducts = productList.filter((product: any) => Boolean(product.snkrdunkUrl));
   const syncedProducts = linkedProducts.filter((product: any) => Boolean(product.snkrdunkLastSyncedAt));
@@ -90,6 +91,7 @@ export default function Marketplace() {
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600"><BarChart3 className="h-4 w-4" />Market intelligence</div>
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">Marketplace</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Theo dõi chênh lệch giá, trạng thái link và đồng bộ giá lựa chọn đầu tiên từ SNKRDUNK.</p>
+          <p className="mt-2 text-xs font-medium text-emerald-700">{autoSyncStatus?.isEnabled ? `Tự động mỗi 6 giờ · tối đa ${autoSyncStatus.batchSize} sản phẩm/lần${autoSyncStatus.lastRunAt ? ` · lần gần nhất ${new Date(autoSyncStatus.lastRunAt).toLocaleString("vi-VN")}` : ""}` : "Đang chuẩn bị đồng bộ tự động mỗi 6 giờ"}</p>
         </div>
         <Button className="bg-primary text-primary-foreground shadow-md shadow-red-500/20 hover:bg-primary/90" onClick={startBulkSync} disabled={syncAll.isPending || linkedProducts.length === 0}>
           {syncAll.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Đồng bộ tất cả giá

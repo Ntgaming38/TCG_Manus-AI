@@ -258,6 +258,9 @@ export const appRouter = router({
     syncAllSnkrdunk: protectedProcedure
       .mutation(({ ctx }) => db.syncAllSnkrdunkPrices(ctx.user.id)),
 
+    autoSyncStatus: protectedProcedure
+      .query(() => db.getMarketplaceAutoSyncStatus()),
+
     markDamaged: protectedProcedure
       .input(z.object({
         productId: z.number(),

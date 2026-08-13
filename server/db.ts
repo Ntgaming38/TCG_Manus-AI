@@ -1,6 +1,6 @@
-import { eq, and, like, sql, desc, inArray } from "drizzle-orm";
+import { eq, and, like, sql, desc, inArray, asc, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, marketplaceSyncConfig } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
@@ -276,6 +276,84 @@ export async function syncAllSnkrdunkPrices(userId: number) {
     skippedCount: userProducts.length - updatedCount,
     errors,
   };
+}
+
+export type MarketplaceAutoSyncSummary = {
+  checkedCount: number;
+  updatedCount: number;
+  failedCount: number;
+  skipped: boolean;
+};
+
+const MARKETPLACE_AUTO_SYNC_CRON = "0 0 */6 * * *";
+const AUTO_SYNC_DELAY_MS = 350;
+
+export async function getMarketplaceAutoSyncConfig() {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [config] = await db.select().from(marketplaceSyncConfig).limit(1);
+  return config;
+}
+
+export async function setMarketplaceAutoSyncTask(taskUid: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const config = await getMarketplaceAutoSyncConfig();
+  if (config) {
+    await db.update(marketplaceSyncConfig).set({ scheduleCronTaskUid: taskUid, cronExpression: MARKETPLACE_AUTO_SYNC_CRON, isEnabled: 1 }).where(eq(marketplaceSyncConfig.id, config.id));
+  } else {
+    await db.insert(marketplaceSyncConfig).values({ scheduleCronTaskUid: taskUid, cronExpression: MARKETPLACE_AUTO_SYNC_CRON, isEnabled: 1, batchSize: 12 });
+  }
+}
+
+export async function getMarketplaceAutoSyncStatus() {
+  const config = await getMarketplaceAutoSyncConfig();
+  return {
+    isEnabled: Boolean(config?.isEnabled && config?.scheduleCronTaskUid),
+    cronExpression: config?.cronExpression || MARKETPLACE_AUTO_SYNC_CRON,
+    batchSize: config?.batchSize || 12,
+    lastRunAt: config?.lastRunAt || null,
+    lastRunStatus: config?.lastRunStatus || null,
+    lastRunSummary: config?.lastRunSummary || null,
+  };
+}
+
+/** Scheduled batch sync. Existing prices stay unchanged if SNKRDUNK returns no valid JPY price. */
+export async function runMarketplaceAutoSync(taskUid: string): Promise<MarketplaceAutoSyncSummary> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const config = await getMarketplaceAutoSyncConfig();
+  if (!config?.isEnabled || !config.scheduleCronTaskUid || config.scheduleCronTaskUid !== taskUid) {
+    return { checkedCount: 0, updatedCount: 0, failedCount: 0, skipped: true };
+  }
+
+  const batchSize = Math.min(Math.max(config.batchSize || 12, 1), 20);
+  const linkedProducts = await db.select().from(products)
+    .where(and(eq(products.status, "in_stock"), isNotNull(products.snkrdunkUrl)))
+    .orderBy(asc(products.snkrdunkLastSyncedAt))
+    .limit(batchSize);
+  let updatedCount = 0;
+  let failedCount = 0;
+
+  for (const product of linkedProducts) {
+    try {
+      await syncSnkrdunkPriceForProduct(product.id, product.userId);
+      updatedCount += 1;
+    } catch (error) {
+      failedCount += 1;
+      console.warn("[Marketplace auto sync]", product.id, error instanceof Error ? error.message : error);
+    }
+    await new Promise((resolve) => setTimeout(resolve, AUTO_SYNC_DELAY_MS));
+  }
+
+  const checkedCount = linkedProducts.length;
+  const status = failedCount === 0 ? "success" : updatedCount > 0 ? "partial" : "failed";
+  await db.update(marketplaceSyncConfig).set({
+    lastRunAt: new Date(),
+    lastRunStatus: status,
+    lastRunSummary: `Đã kiểm tra ${checkedCount}; cập nhật ${updatedCount}; lỗi ${failedCount}.`,
+  }).where(eq(marketplaceSyncConfig.id, config.id));
+  return { checkedCount, updatedCount, failedCount, skipped: false };
 }
 
 // ========== DAMAGED PRODUCTS ==========

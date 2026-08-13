@@ -57,6 +57,20 @@ export const products = mysqlTable("products", {
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
 
+/** Project-level automatic SNKRDUNK price synchronization configuration. */
+export const marketplaceSyncConfig = mysqlTable("marketplace_sync_config", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }).unique(),
+  cronExpression: varchar("cronExpression", { length: 100 }).notNull().default("0 0 */6 * * *"),
+  isEnabled: int("isEnabled").notNull().default(1),
+  batchSize: int("batchSize").notNull().default(12),
+  lastRunAt: timestamp("lastRunAt"),
+  lastRunStatus: varchar("lastRunStatus", { length: 30 }),
+  lastRunSummary: varchar("lastRunSummary", { length: 1000 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 /**
  * Purchases - buy transaction history
  */

@@ -239,3 +239,7 @@
 ## Xóa nguồn theo dõi Chyusen
 - [x] Thêm nút xóa và hộp xác nhận cho từng nguồn theo dõi
 - [x] Kiểm thử quyền xóa, build và lưu checkpoint
+
+## Đồng bộ giá Marketplace tự động
+- [ ] Hoàn tất callback đồng bộ tự động 6 giờ theo lô nhỏ, trạng thái lần chạy và giữ nguyên nút đồng bộ thủ công
+- [ ] Kiểm thử nguồn giá lỗi, không ghi đè giá cũ, giao diện và lưu checkpoint

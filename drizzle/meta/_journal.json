@@ -64,6 +64,13 @@
       "when": 1786593579533,
       "tag": "0008_closed_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1786596096437,
+      "tag": "0009_slimy_nocturne",
+      "breakpoints": true
     }
   ]
 }
