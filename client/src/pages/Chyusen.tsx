@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { BellRing, CalendarClock, CheckCircle2, Clock3, ExternalLink, FileSearch, Gift, Link2, Pencil, Plus, Radio, Search, Settings2, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
@@ -13,70 +13,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
-import { toChyusenDraft } from "@/lib/chyusenDraft";
+import { EMPTY_CHYUSEN_DRAFT, toChyusenDraft, type ChyusenDraft } from "@/lib/chyusenDraft";
+import { buildChyusenSubmission } from "../lib/chyusenSubmission";
+import { formatChyusenDayMonth } from "@shared/chyusenDate";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
-
-type Draft = {
-  title: string;
-  productName: string;
-  series: string;
-  productType: "card" | "box" | "pack" | "set" | "other";
-  shop: string;
-  customShopName: string;
-  sourceUrl: string;
-  externalProductId: string;
-  imageUrl: string;
-  price: string;
-  quantityLimit: string;
-  applicationStart: string;
-  applicationEnd: string;
-  resultDate: string;
-  pickupStart: string;
-  pickupEnd: string;
-  requirements: string;
-  parserStatus: "manual" | "partial" | "detected" | "unavailable";
-  parserNote: string;
-  fieldConfidence: Record<string, "detected" | "needs_review" | "missing">;
-  sourceContentHash?: string;
-};
-
-const EMPTY_DRAFT: Draft = {
-  title: "", productName: "", series: "Pokemon", productType: "other", shop: "Khác", customShopName: "", sourceUrl: "", externalProductId: "", imageUrl: "", price: "", quantityLimit: "",
-  applicationStart: "", applicationEnd: "", resultDate: "", pickupStart: "", pickupEnd: "", requirements: "", parserStatus: "manual", parserNote: "", fieldConfidence: {},
-};
 
 const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
 
-function japanInputValue(value: Date | string | null | undefined) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const parts = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-  }).formatToParts(date).reduce<Record<string, string>>((acc, part) => ({ ...acc, [part.type]: part.value }), {});
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
-}
-
-function fromInputValue(value: string) {
-  return value ? new Date(`${value}:00+09:00`) : null;
-}
-
 function displayDate(value: Date | string | null | undefined) {
-  if (!value) return "Chưa có thông tin";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Chưa có thông tin";
-  return new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Tokyo", dateStyle: "short", timeStyle: "short" }).format(date);
-}
-
-function toDraft(data: any): Draft {
-  return {
-    title: data.title || "", productName: data.productName || "", series: data.series || "Pokemon", productType: data.productType || "other",
-    shop: data.shop || "Khác", customShopName: data.customShopName || "", sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
-    price: data.price === undefined || data.price === null ? "" : String(data.price), quantityLimit: data.quantityLimit || "",
-    applicationStart: japanInputValue(data.applicationStart), applicationEnd: japanInputValue(data.applicationEnd), resultDate: japanInputValue(data.resultDate),
-    pickupStart: japanInputValue(data.pickupStart), pickupEnd: japanInputValue(data.pickupEnd), requirements: data.requirements || "",
-    parserStatus: data.parserStatus || "manual", parserNote: data.parserNote || "", fieldConfidence: data.fieldConfidence || {}, sourceContentHash: data.sourceContentHash,
-  };
+  return formatChyusenDayMonth(value) || "Chưa có thông tin";
 }
 
 function timeBadge(timeState: string) {
@@ -116,13 +61,26 @@ export default function Chyusen() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [showDialog, setShowDialog] = useState(false);
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<ChyusenDraft>(EMPTY_CHYUSEN_DRAFT);
+  const dateFieldsRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showSourceDialog, setShowSourceDialog] = useState(false);
   const [editingSourceId, setEditingSourceId] = useState<number | null>(null);
   const [deleteSourceId, setDeleteSourceId] = useState<number | null>(null);
   const [sourceDraft, setSourceDraft] = useState<{ label: string; sourceUrl: string; checkIntervalMinutes: 60 | 180 | 360 | 720 | 1440; isActive: boolean }>({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true });
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("new") === "1") {
+      setEditingId(null);
+      setDraft(EMPTY_CHYUSEN_DRAFT);
+      setShowDialog(true);
+      if (query.get("focus") === "dates") {
+        window.setTimeout(() => dateFieldsRef.current?.scrollIntoView({ block: "start" }), 100);
+      }
+    }
+  }, []);
 
   const invalidate = () => {
     utils.chyusen.list.invalidate();
@@ -143,11 +101,11 @@ export default function Chyusen() {
     },
   });
   const create = trpc.chyusen.create.useMutation({
-    onSuccess: () => { toast.success("Đã lưu Chyusen."); setShowDialog(false); setDraft(EMPTY_DRAFT); invalidate(); },
+    onSuccess: () => { toast.success("Đã lưu Chyusen."); setShowDialog(false); setDraft(EMPTY_CHYUSEN_DRAFT); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const update = trpc.chyusen.update.useMutation({
-    onSuccess: () => { toast.success("Đã cập nhật Chyusen."); setShowDialog(false); setEditingId(null); setDraft(EMPTY_DRAFT); invalidate(); },
+    onSuccess: () => { toast.success("Đã cập nhật Chyusen."); setShowDialog(false); setEditingId(null); setDraft(EMPTY_CHYUSEN_DRAFT); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const remove = trpc.chyusen.delete.useMutation({
@@ -187,7 +145,7 @@ export default function Chyusen() {
     return entryLabel ? `${sourceLabel} · ${entryLabel}` : sourceLabel;
   };
 
-  const updateDraft = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }));
+  const updateDraft = <K extends keyof ChyusenDraft>(key: K, value: ChyusenDraft[K]) => setDraft((current) => ({ ...current, [key]: value }));
   const openNewSource = () => { setEditingSourceId(null); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); setShowSourceDialog(true); };
   const openEditSource = (source: any) => { setEditingSourceId(source.id); setSourceDraft({ label: source.label || "", sourceUrl: source.sourceUrl || "", checkIntervalMinutes: source.checkIntervalMinutes || 360, isActive: Boolean(source.isActive) }); setShowSourceDialog(true); };
   const saveSource = () => {
@@ -202,21 +160,18 @@ export default function Chyusen() {
       toast.error("Hãy nhập tên Chyusen và tên sản phẩm.");
       return;
     }
-    const { sourceUrl, ...draftWithoutSourceUrl } = draft;
-    const payload = {
-      ...draftWithoutSourceUrl,
-      sourceUrl: sourceUrl.trim() || undefined,
-      imageUrl: draft.imageUrl || undefined,
-      customShopName: draft.customShopName || undefined,
-      price: draft.price ? Number(draft.price) : null,
-      applicationStart: fromInputValue(draft.applicationStart), applicationEnd: fromInputValue(draft.applicationEnd), resultDate: fromInputValue(draft.resultDate),
-      pickupStart: fromInputValue(draft.pickupStart), pickupEnd: fromInputValue(draft.pickupEnd),
-    };
+    let payload;
+    try {
+      payload = buildChyusenSubmission(draft);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ngày tháng không hợp lệ.");
+      return;
+    }
     if (editingId) update.mutate({ id: editingId, data: payload });
     else create.mutate(payload);
   };
-  const openNew = () => { setEditingId(null); setDraft(EMPTY_DRAFT); setShowDialog(true); };
-  const openEdit = (entry: any) => { setEditingId(entry.id); setDraft(toDraft(entry)); setShowDialog(true); };
+  const openNew = () => { setEditingId(null); setDraft(EMPTY_CHYUSEN_DRAFT); setShowDialog(true); };
+  const openEdit = (entry: any) => { setEditingId(entry.id); setDraft(toChyusenDraft(entry)); setShowDialog(true); };
 
   return (
     <div className="space-y-6">
@@ -269,11 +224,29 @@ export default function Chyusen() {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setDraft(EMPTY_DRAFT); } }}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setDraft(EMPTY_CHYUSEN_DRAFT); } }}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>URL là tùy chọn: dán link để tự động điền khi đọc được, hoặc nhập thủ công và lưu trực tiếp.</DialogDescription></DialogHeader>
           <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選 <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Nếu link không đọc được, hệ thống sẽ để trống URL để bạn tiếp tục nhập tay và lưu bình thường.</p></div>
             {draft.parserNote && <div className={`rounded-lg border px-3 py-2 text-sm ${draft.parserStatus === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{draft.parserNote}</div>}
-            <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình"><Input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm"><Input value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series"><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pokemon">Pokémon</SelectItem><SelectItem value="One Piece">One Piece</SelectItem><SelectItem value="Other">Khác</SelectItem></SelectContent></Select></Field><Field label="Loại sản phẩm"><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as Draft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng"><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)"><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng"><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><Field label="Bắt đầu đăng ký"><Input type="datetime-local" value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", event.target.value)} /></Field><Field label="Hết hạn đăng ký"><Input type="datetime-local" value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", event.target.value)} /></Field><Field label="Công bố kết quả"><Input type="datetime-local" value={draft.resultDate} onChange={(event) => updateDraft("resultDate", event.target.value)} /></Field><Field label="Nhận hàng bắt đầu"><Input type="datetime-local" value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", event.target.value)} /></Field><Field label="Nhận hàng kết thúc"><Input type="datetime-local" value={draft.pickupEnd} onChange={(event) => updateDraft("pickupEnd", event.target.value)} /></Field><Field label="Ảnh sản phẩm (URL)"><Input value={draft.imageUrl} onChange={(event) => updateDraft("imageUrl", event.target.value)} /></Field></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Tên chương trình"><Input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field>
+              <Field label="Tên sản phẩm"><Input value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field>
+              <Field label="Series"><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pokemon">Pokémon</SelectItem><SelectItem value="One Piece">One Piece</SelectItem><SelectItem value="Other">Khác</SelectItem></SelectContent></Select></Field>
+              <Field label="Loại sản phẩm"><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as ChyusenDraft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field>
+              <Field label="Cửa hàng"><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>
+              {draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}
+              <Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field>
+              <Field label="Giá (¥)"><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field>
+              <Field label="Giới hạn số lượng"><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field>
+              <div ref={dateFieldsRef} className="sm:col-span-2 h-0" aria-hidden="true" />
+              <Field label="Bắt đầu đăng ký"><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", event.target.value)} /></Field>
+              <Field label="Hết hạn đăng ký"><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", event.target.value)} /></Field>
+              <Field label="Công bố kết quả"><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.resultDate} onChange={(event) => updateDraft("resultDate", event.target.value)} /></Field>
+              <Field label="Nhận hàng bắt đầu"><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", event.target.value)} /></Field>
+              <Field label="Nhận hàng kết thúc"><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.pickupEnd} onChange={(event) => updateDraft("pickupEnd", event.target.value)} /></Field>
+              <Field label="Ảnh sản phẩm (URL)"><Input value={draft.imageUrl} onChange={(event) => updateDraft("imageUrl", event.target.value)} /></Field>
+              <p className="sm:col-span-2 text-xs text-muted-foreground">Nhập ngày theo dạng <strong>dd/mm</strong>. Năm hiện tại theo giờ Nhật Bản sẽ được tự gán khi bạn bấm Lưu.</p>
+            </div>
             <Field label="Điều kiện tham gia"><Textarea value={draft.requirements} onChange={(event) => updateDraft("requirements", event.target.value)} placeholder="VD: Thành viên Joshin, yêu cầu đăng nhập..." /></Field>
             {Object.keys(draft.fieldConfidence).length > 0 && <div className="rounded-lg border border-border p-3"><p className="mb-2 text-sm font-medium">Độ tin cậy dữ liệu</p><div className="flex flex-wrap gap-2">{Object.entries(draft.fieldConfidence).map(([field, value]) => <Badge key={field} variant="outline" className={value === "detected" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : value === "needs_review" ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-300 bg-slate-50 text-slate-700"}>{field}: {value === "detected" ? "đã nhận diện" : value === "needs_review" ? "cần kiểm tra" : "thiếu"}</Badge>)}</div></div>}
             <Button className="w-full bg-red-600 text-white hover:bg-red-700" onClick={submit} disabled={create.isPending || update.isPending}>{create.isPending || update.isPending ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Lưu 抽選"}</Button>

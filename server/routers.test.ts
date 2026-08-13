@@ -7,6 +7,7 @@ vi.mock("./chyusenDb", async (importOriginal) => {
     ...actual,
     getChyusenEntry: vi.fn(),
     createChyusenEntry: vi.fn(),
+    updateChyusenEntry: vi.fn(),
     markChyusenNotificationRead: vi.fn(),
     markChyusenPurchaseCreated: vi.fn(),
     updateChyusenSource: vi.fn(),
@@ -177,6 +178,16 @@ describe("appRouter", () => {
       expect(chyusenDb.createChyusenEntry).toHaveBeenCalledWith(1, expect.objectContaining({
         sourceUrl: "https://joshinweb.jp/game/lottery",
       }));
+    });
+
+    it("nhận payload cập nhật có ngày đã được chuyển từ ngày/tháng", async () => {
+      vi.mocked(chyusenDb.updateChyusenEntry).mockResolvedValue({ updated: true });
+      const caller = appRouter.createCaller(createAuthContext());
+      const applicationEnd = new Date("2027-01-04T15:00:00.000Z");
+
+      await caller.chyusen.update({ id: 88, data: { applicationEnd } });
+
+      expect(chyusenDb.updateChyusenEntry).toHaveBeenCalledWith(1, 88, expect.objectContaining({ applicationEnd }));
     });
 
     it("đánh dấu thông báo đã đọc theo đúng user đang đăng nhập", async () => {

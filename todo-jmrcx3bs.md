@@ -34,3 +34,17 @@
 - [x] Lưu phiên bản sau khi hoàn tất kiểm thử luồng đọc link.
 - [x] Tách quy đổi phản hồi đọc link hợp lệ thành bản nháp Chyusen có thể kiểm thử độc lập.
 - [x] Xác minh dữ liệu từ link hợp lệ tự điền đúng bản nháp, đồng thời lưu phiên bản mới.
+- [x] Đổi các trường ngày Chyusen sang định dạng chỉ ngày/tháng, không có giờ.
+- [x] Tự gán năm hiện tại theo thời điểm lưu và lưu nhất quán theo múi giờ Nhật Bản.
+- [x] Kiểm thử chuyển đổi ngày/tháng và xác minh giao diện điện thoại trước khi lưu phiên bản.
+- [x] Dùng cùng bản nháp ngày/tháng cho preview, tạo mới và chỉnh sửa Chyusen.
+- [x] Kiểm thử mở sửa bản ghi hiện có để bảo đảm ngày hiển thị dd/mm và lưu lại được.
+- [x] Xác minh biểu mẫu ngày/tháng ở giao diện điện thoại và lưu phiên bản mới.
+- [x] Kiểm thử payload cập nhật Chyusen từ ngày dd/mm để xác nhận năm tự gán và mutation update nhận đúng dữ liệu.
+- [x] Xác minh trực quan hộp thoại Thêm/Sửa Chyusen trên điện thoại với các ô ngày dd/mm.
+- [x] Lưu checkpoint sau khi hoàn tất kiểm thử và xác minh ngày/tháng.
+- [x] Tách payload submit Chyusen từ bản nháp dd/mm và kiểm thử năm tự gán trong mutation cập nhật.
+- [x] Mở trực tiếp hộp thoại Thêm Chyusen trên mobile để xác minh ô ngày dd/mm và hướng dẫn năm tự gán.
+- [x] Lưu checkpoint sau khi hoàn tất kiểm thử submit và xác minh hộp thoại.
+- [x] Tạo liên kết trực tiếp đến phần trường ngày trong hộp thoại Chyusen để hỗ trợ kiểm tra giao diện.
+- [x] Xác minh các ô dd/mm và chú thích tự gán năm trên mobile, sau đó lưu checkpoint mới.

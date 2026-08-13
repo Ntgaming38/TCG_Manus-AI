@@ -13,4 +13,14 @@ describe("toChyusenDraft", () => {
       price: "5400", parserStatus: "detected", parserNote: "Đã nhận diện",
     });
   });
+
+  it("chuyển ngày của bản ghi đang sửa thành dd/mm, không kèm năm hoặc giờ", () => {
+    const draft = toChyusenDraft({
+      title: "Bản ghi cũ", productName: "Eevee Box",
+      applicationStart: "2026-12-07T03:00:00.000Z", applicationEnd: "2026-12-12T03:00:00.000Z",
+    });
+
+    expect(draft.applicationStart).toBe("07/12");
+    expect(draft.applicationEnd).toBe("12/12");
+  });
 });
