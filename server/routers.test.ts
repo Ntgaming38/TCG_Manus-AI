@@ -8,6 +8,7 @@ vi.mock("./chyusenDb", async (importOriginal) => {
     getChyusenEntry: vi.fn(),
     markChyusenNotificationRead: vi.fn(),
     markChyusenPurchaseCreated: vi.fn(),
+    updateChyusenSource: vi.fn(),
   };
 });
 
@@ -150,6 +151,26 @@ describe("appRouter", () => {
       expect(chyusenDb.markChyusenPurchaseCreated).not.toHaveBeenCalled();
       await caller.chyusen.markPurchaseCreated({ id: 31 });
       expect(chyusenDb.markChyusenPurchaseCreated).toHaveBeenCalledWith(1, 31);
+    });
+
+    it("cho phép chủ sở hữu sửa URL, nhãn, trạng thái và tần suất của nguồn theo dõi", async () => {
+      vi.mocked(chyusenDb.updateChyusenSource).mockResolvedValue(undefined);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.chyusen.updateSource({
+        id: 14,
+        label: "Joshin mới",
+        sourceUrl: "https://joshinweb.jp/game/lottery",
+        isActive: false,
+        checkIntervalMinutes: 180,
+      });
+
+      expect(chyusenDb.updateChyusenSource).toHaveBeenCalledWith(1, 14, {
+        label: "Joshin mới",
+        sourceUrl: "https://joshinweb.jp/game/lottery",
+        isActive: false,
+        checkIntervalMinutes: 180,
+      });
     });
   });
 });

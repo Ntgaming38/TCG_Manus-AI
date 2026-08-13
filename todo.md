@@ -231,3 +231,7 @@
 - [x] Mở rộng nhắc 7d/3d/24h/12h/3h/1h theo cấu hình người dùng
 - [x] Thêm kiểm thử hồi quy và xác minh responsive cho Notification Center/Chyusen
 - [x] Cập nhật lịch monitor nền sang mỗi giờ để hỗ trợ tần suất riêng từng nguồn, rồi lưu checkpoint bàn giao
+
+## Sửa nguồn theo dõi Chyusen
+- [x] Thêm nút Sửa và form cập nhật URL, nhãn, trạng thái/tần suất cho từng nguồn theo dõi
+- [x] Kiểm thử cập nhật nguồn, xác minh build và lưu checkpoint
