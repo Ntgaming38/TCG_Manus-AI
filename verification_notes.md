@@ -188,3 +188,10 @@ Ngày xác minh: 13/08/2026
 - Dashboard chỉ còn bốn ô theo thứ tự **Chờ kết quả → Sắp hết hạn → Đã trúng → Đã trượt**; ô Đang đăng ký đã được bỏ.
 - Một Chyusen có trạng thái Đã đăng ký được đếm vào Chờ kết quả ngay lập tức, kể cả khi đang ở mốc Sắp hết hạn; các trạng thái đã trúng/trượt được loại khỏi hai nhóm chưa có kết quả.
 - Đã thêm hồi quy cho quy tắc đếm. Typecheck và 99 Vitest tests đều đạt.
+
+## Nhắc hạn Chyusen một ngày
+
+Ngày xác minh: 13/08/2026
+
+- Ô **Sắp hết hạn** chỉ đếm Chyusen chưa đăng ký có thời hạn còn 24 giờ hoặc ít hơn, bao gồm mốc 3 giờ; các chương trình còn 24–72 giờ không xuất hiện trong ô này.
+- Chyusen đã đăng ký vẫn được ưu tiên trong Chờ kết quả, không bị đếm trùng vào Sắp hết hạn. Typecheck và 99 Vitest tests đều đạt.

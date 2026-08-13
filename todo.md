@@ -370,3 +370,7 @@
 - [x] Bỏ ô Đang đăng ký khỏi Dashboard Chyusen
 - [x] Gộp đã đăng ký vào Chờ kết quả và sắp xếp Chờ kết quả → Sắp hết hạn → Đã trúng → Đã trượt
 - [x] Kiểm thử Dashboard desktop/mobile và lưu checkpoint
+
+## Nhắc hạn Chyusen một ngày
+- [x] Đếm Chyusen còn một ngày hoặc ít hơn trong ô Sắp hết hạn
+- [x] Kiểm thử mốc thời gian và lưu checkpoint
