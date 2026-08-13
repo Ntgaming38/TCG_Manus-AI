@@ -305,3 +305,10 @@
 - [x] Làm nổi bật các trường được AI tự điền và hiển thị trạng thái cần kiểm tra
 - [x] Thêm thao tác chỉnh sửa nhanh cho trường AI điền
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Kiểm soát AI và tín hiệu Chyusen
+- [x] Thêm chấp nhận tất cả và hoàn tác dữ liệu AI điền trong form
+- [x] Hiển thị mức độ tin cậy theo từng trường AI
+- [x] Đổi khối lưu ý nguồn/captcha sang cảnh báo đỏ nổi bật
+- [x] Đổi Đã trúng từ tím sang vàng, sau thao tác chuyển sang đỏ
+- [x] Kiểm thử desktop/mobile và lưu checkpoint

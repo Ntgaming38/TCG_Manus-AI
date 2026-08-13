@@ -88,3 +88,11 @@ Ngày xác minh: 13/08/2026
 - Khi AI đọc ảnh, từng trường có dữ liệu được điền sẽ nhận nền/viền xanh cùng nhãn **AI điền**; người dùng sửa một trường thì nhãn của chính trường đó tự mất.
 - Khối tóm tắt cho biết số trường AI đã điền và nút **Chỉnh sửa nhanh** đưa focus tới trường AI đầu tiên.
 - Đã thêm hồi quy cho logic nhận diện trường AI, đồng thời xác minh Chyusen trên desktop 1280×720 và mobile 375×812. Typecheck và 97 Vitest tests đều đạt.
+
+## Kiểm soát dữ liệu AI và tín hiệu Chyusen
+
+Ngày xác minh: 13/08/2026
+
+- Sau khi AI đọc ảnh, người dùng có thể **Chấp nhận tất cả** hoặc **Hoàn tác AI** về trạng thái trước lúc trích xuất; từng trường hiển thị confidence **Cao/Trung bình/Thấp** với màu riêng.
+- Khối lưu ý nguồn công khai/CAPTCHA đã đổi sang nền đỏ đậm, được xác minh trên desktop 1280×720 và mobile 375×812.
+- Nút **Đã trúng** có màu vàng trước thao tác; sau cập nhật trạng thái, badge **Đã trúng** hiển thị đỏ. Typecheck, 97 Vitest tests và production build đều đạt.
