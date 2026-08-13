@@ -13,3 +13,7 @@
 - [x] Xác minh giao diện và luồng nghiệp vụ, sau đó lưu phiên bản đã kiểm chứng.
 - [x] Kiểm thử snapshot nhật ký của các luồng sửa và xóa giao dịch mua, bán.
 - [x] Lưu phiên bản đã kiểm chứng sau khi hoàn thiện phạm vi kiểm thử.
+- [x] Bổ sung COMG! vào danh sách shop có sẵn trong biểu mẫu Mua Hàng.
+- [x] Phân màu hoạt động lịch sử: xóa đỏ, sửa cam, mua xanh lá và bán vàng.
+- [x] Làm nổi bật các trường dữ liệu đã thay đổi trong phần xem chi tiết lịch sử.
+- [x] Kiểm thử, xác minh trực quan và lưu phiên bản cho các điều chỉnh mới.

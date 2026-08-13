@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
 
-const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
+const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
 
 type SortField = "date" | "price" | "name";
 type SortDirection = "asc" | "desc";

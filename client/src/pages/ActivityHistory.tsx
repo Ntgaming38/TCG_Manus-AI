@@ -40,13 +40,15 @@ const filters: Array<{ value: HistoryFilter; label: string }> = [
   { value: "shop", label: "Cửa hàng" },
 ];
 
-function getActionPresentation(action: string) {
-  if (action.endsWith("_created")) return { label: "Đã thêm", icon: Plus, className: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" };
-  if (action.endsWith("_updated") || action === "market_price_updated" || action === "snkrdunk_url_updated") return { label: "Đã cập nhật", icon: Pencil, className: "border-sky-400/30 bg-sky-400/10 text-sky-300" };
-  if (action.endsWith("_deleted")) return { label: "Đã xóa", icon: Trash2, className: "border-rose-400/30 bg-rose-400/10 text-rose-300" };
-  if (action === "product_damaged") return { label: "Hàng hỏng", icon: ArchiveRestore, className: "border-amber-400/30 bg-amber-400/10 text-amber-300" };
-  if (action.includes("synced")) return { label: "Đã đồng bộ", icon: TrendingUp, className: "border-violet-400/30 bg-violet-400/10 text-violet-300" };
-  return { label: "Hoạt động", icon: Activity, className: "border-primary/30 bg-primary/10 text-primary" };
+export function getActivityTone(action: string, entityType: string | null) {
+  if (action.endsWith("_deleted")) return { label: "Đã xóa", icon: Trash2, badgeClass: "border-rose-400/40 bg-rose-500/15 text-rose-300", accentClass: "border-rose-400/60", fieldClass: "bg-rose-500/10 text-rose-200", valueClass: "bg-rose-500/5 text-rose-100" };
+  if (action.endsWith("_updated") || action === "market_price_updated" || action === "snkrdunk_url_updated") return { label: "Đã sửa", icon: Pencil, badgeClass: "border-orange-400/40 bg-orange-500/15 text-orange-300", accentClass: "border-orange-400/60", fieldClass: "bg-orange-500/10 text-orange-200", valueClass: "bg-orange-500/5 text-orange-100" };
+  if (entityType === "purchase") return { label: "Đã mua", icon: ShoppingBag, badgeClass: "border-emerald-400/40 bg-emerald-500/15 text-emerald-300", accentClass: "border-emerald-400/60", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
+  if (entityType === "sale") return { label: "Đã bán", icon: TrendingUp, badgeClass: "border-yellow-400/40 bg-yellow-500/15 text-yellow-300", accentClass: "border-yellow-400/60", fieldClass: "bg-yellow-500/10 text-yellow-200", valueClass: "bg-yellow-500/5 text-yellow-100" };
+  if (action.endsWith("_created")) return { label: "Đã thêm", icon: Plus, badgeClass: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300", accentClass: "border-emerald-400/50", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
+  if (action === "product_damaged") return { label: "Hàng hỏng", icon: ArchiveRestore, badgeClass: "border-amber-400/30 bg-amber-400/10 text-amber-300", accentClass: "border-amber-400/50", fieldClass: "bg-amber-500/10 text-amber-200", valueClass: "bg-amber-500/5 text-amber-100" };
+  if (action.includes("synced")) return { label: "Đã đồng bộ", icon: TrendingUp, badgeClass: "border-violet-400/30 bg-violet-400/10 text-violet-300", accentClass: "border-violet-400/50", fieldClass: "bg-violet-500/10 text-violet-200", valueClass: "bg-violet-500/5 text-violet-100" };
+  return { label: "Hoạt động", icon: Activity, badgeClass: "border-primary/30 bg-primary/10 text-primary", accentClass: "border-primary/50", fieldClass: "bg-primary/10 text-primary", valueClass: "bg-primary/5 text-foreground" };
 }
 
 function getEntityIcon(entityType: string | null) {
@@ -132,6 +134,13 @@ export default function ActivityHistory() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2 text-xs">
+            <span className="mr-1 text-muted-foreground">Màu chi tiết:</span>
+            <Badge variant="outline" className="border-rose-400/40 bg-rose-500/15 text-rose-300">Xóa</Badge>
+            <Badge variant="outline" className="border-orange-400/40 bg-orange-500/15 text-orange-300">Sửa</Badge>
+            <Badge variant="outline" className="border-emerald-400/40 bg-emerald-500/15 text-emerald-300">Mua</Badge>
+            <Badge variant="outline" className="border-yellow-400/40 bg-yellow-500/15 text-yellow-300">Bán</Badge>
+          </div>
           <div className="flex flex-wrap gap-2" aria-label="Lọc lịch sử theo nhóm dữ liệu">
             {filters.map((filter) => (
               <Button key={filter.value} size="sm" variant={activeFilter === filter.value ? "default" : "outline"} onClick={() => setActiveFilter(filter.value)}>
@@ -149,8 +158,8 @@ export default function ActivityHistory() {
           ) : (
             <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-secondary/10">
               {activities.map((item) => {
-                const presentation = getActionPresentation(item.action);
-                const ActionIcon = presentation.icon;
+                const tone = getActivityTone(item.action, item.entityType);
+                const ActionIcon = tone.icon;
                 const EntityIcon = getEntityIcon(item.entityType);
                 const changes = getChangedFields(item.oldValue, item.newValue);
                 const isExpanded = expandedActivityId === item.id;
@@ -161,14 +170,15 @@ export default function ActivityHistory() {
                       <div className="min-w-0 flex-1"><p className="text-sm font-medium leading-5 text-foreground">{item.description || "Hoạt động trong hệ thống"}</p><p className="mt-1 text-xs text-muted-foreground">{formatActivityTime(item.createdAt)}</p></div>
                       <div className="flex shrink-0 items-center gap-2">
                         {changes.length > 0 && <Button variant="ghost" size="sm" onClick={() => setExpandedActivityId(isExpanded ? null : item.id)} className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"><span className="hidden md:inline">Chi tiết</span>{isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</Button>}
-                        <Badge variant="outline" className={`hidden shrink-0 items-center gap-1 sm:inline-flex ${presentation.className}`}><ActionIcon className="h-3 w-3" />{presentation.label}</Badge>
+                        <Badge variant="outline" className={`hidden shrink-0 items-center gap-1 sm:inline-flex ${tone.badgeClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge>
                       </div>
                     </div>
                     {isExpanded && changes.length > 0 && (
-                      <div className="mx-4 mb-4 overflow-hidden rounded-lg border border-border/60 bg-background/60">
+                      <div className={`mx-4 mb-4 overflow-hidden rounded-lg border-l-4 border border-border/60 bg-background/60 ${tone.accentClass}`}>
+                        <div className="flex items-center justify-between border-b border-border/60 bg-secondary/30 px-3 py-2"><span className="text-xs font-medium text-muted-foreground">Các trường đã thay đổi</span><Badge variant="outline" className={`h-6 gap-1 text-[11px] ${tone.badgeClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge></div>
                         <div className="grid grid-cols-[minmax(90px,0.8fr)_1fr_1fr] gap-px bg-border/60 text-xs">
                           <div className="bg-secondary/40 px-3 py-2 font-medium text-muted-foreground">Trường</div><div className="bg-secondary/40 px-3 py-2 font-medium text-muted-foreground">Trước</div><div className="bg-secondary/40 px-3 py-2 font-medium text-muted-foreground">Sau</div>
-                          {changes.map((change) => <><div key={`${change.key}-label`} className="bg-background px-3 py-2 font-medium text-foreground">{fieldLabels[change.key] || change.key}</div><div key={`${change.key}-before`} className="break-words bg-background px-3 py-2 text-muted-foreground">{formatChangeValue(change.before)}</div><div key={`${change.key}-after`} className="break-words bg-background px-3 py-2 text-foreground">{formatChangeValue(change.after)}</div></>)}
+                          {changes.map((change) => <><div key={`${change.key}-label`} className={`border-l-2 bg-background px-3 py-2 font-semibold ${tone.accentClass} ${tone.fieldClass}`}>{fieldLabels[change.key] || change.key}</div><div key={`${change.key}-before`} className={`break-words bg-background px-3 py-2 text-muted-foreground ${tone.valueClass}`}>{formatChangeValue(change.before)}</div><div key={`${change.key}-after`} className={`break-words bg-background px-3 py-2 font-medium ${tone.valueClass}`}>{formatChangeValue(change.after)}</div></>)}
                         </div>
                       </div>
                     )}
