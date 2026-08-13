@@ -261,3 +261,9 @@
 
 ## Ưu tiên cấu hình Marketplace trong Cài đặt
 - [x] Chuyển thẻ Đồng bộ giá Marketplace lên trước danh sách nguồn theo dõi và xác minh responsive
+
+## Tối ưu quản lý nguồn và đồng bộ Marketplace
+- [x] Thêm thu gọn/mở rộng danh sách nguồn theo dõi để giảm chiều dài trang Cài đặt
+- [x] Thêm bộ lọc nhanh chỉ hiển thị nguồn Chyusen đang lỗi
+- [x] Thêm nút Đồng bộ ngay Marketplace, tái sử dụng luồng đồng bộ thủ công hiện có và hiển thị kết quả
+- [x] Kiểm thử API, giao diện desktop/mobile và lưu checkpoint
