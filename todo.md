@@ -425,3 +425,16 @@
 - [x] Thêm phím Esc để xóa nhanh bộ lọc Marketplace
 - [x] Lưu và khôi phục từ khóa tìm kiếm Marketplace gần nhất
 - [x] Kiểm thử thao tác và lưu checkpoint
+
+## Kỹ năng Marketplace tương tác
+- [x] Đóng gói quy trình giao diện Marketplace tối, tương tác và bộ lọc được ghi nhớ thành kỹ năng tái sử dụng
+- [x] Xác thực kỹ năng và bàn giao tệp SKILL.md
+
+## Rà soát kỹ năng Marketplace
+- [x] Kiểm tra phạm vi kích hoạt, hướng dẫn và tính tái sử dụng của Interactive Marketplace Filters
+- [x] Tối ưu kỹ năng nếu cần, xác thực và bàn giao lại
+
+## Lịch sử biến động giá Marketplace
+- [ ] Rà soát dữ liệu price history hiện có và thiết kế API theo sản phẩm
+- [ ] Thêm biểu đồ lịch sử giá vào Marketplace
+- [ ] Kiểm thử dữ liệu, API, biểu đồ và lưu checkpoint
