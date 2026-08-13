@@ -205,3 +205,8 @@
 
 ## Rarity One Piece
 - [x] Thêm One Piece vào taxonomy rarity với badge phát sáng tương tự MUR, sắp xếp và thống kê
+
+## Rarity theo series
+- [x] Tách danh sách rarity riêng theo series Pokémon và One Piece trong form Card
+- [x] Cập nhật màu AR xanh lá, giữ RR/R và One Piece theo bảng màu đã thống nhất
+- [x] Thêm kiểm thử form, dữ liệu cũ, sắp xếp/Dashboard và xác minh build trước khi lưu checkpoint

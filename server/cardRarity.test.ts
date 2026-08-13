@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CARD_RARITY_OPTIONS,
+  getCardRarityOptionsForSeries,
   getCardRarityPriority,
   normalizeCardRarity,
   summarizeCardRarityQuantities,
@@ -15,6 +16,18 @@ describe("CARD_RARITY_OPTIONS", () => {
     expect(values).toContain("RR");
     expect(values).toContain("R");
     expect(values).not.toContain("UR");
+  });
+
+  it("trả danh sách rarity riêng cho Pokémon và One Piece", () => {
+    const pokemonValues = getCardRarityOptionsForSeries("Pokemon").map((option) => option.value);
+    const onePieceValues = getCardRarityOptionsForSeries("One Piece").map((option) => option.value);
+
+    expect(pokemonValues).toEqual(expect.arrayContaining(["MUR", "SAR", "AR", "RR", "R"]));
+    expect(pokemonValues).not.toContain("SEC");
+    expect(onePieceValues).toEqual(expect.arrayContaining(["One Piece", "Manga", "SEC", "SP", "L", "SR", "R", "UC", "C"]));
+    expect(onePieceValues).not.toContain("MUR");
+    expect(onePieceValues).not.toContain("AR");
+    expect(onePieceValues).not.toContain("RR");
   });
 
   it("hiển thị Card UR cũ bằng nhãn MUR mới", () => {

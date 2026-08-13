@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trpc } from "@/lib/trpc";
-import { CARD_RARITY_OPTIONS, getCardRarityPriority } from "@shared/cardRarity";
+import { getCardRarityOptionsForSeries, getCardRarityPriority } from "@shared/cardRarity";
 import { RarityBadge } from "@/components/RarityBadge";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useMemo, useState, useRef } from "react";
@@ -193,7 +193,7 @@ export default function Products() {
                 </div>
                 <div className="space-y-2">
                   <Label>Series</Label>
-                  <Select value={newProduct.series} onValueChange={(v) => setNewProduct(p => ({ ...p, series: v }))}>
+                  <Select value={newProduct.series} onValueChange={(v) => setNewProduct(p => ({ ...p, series: v, rarity: p.series === v ? p.rarity : "" }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Pokemon">Pokémon</SelectItem>
@@ -223,7 +223,7 @@ export default function Products() {
                       <Select value={newProduct.rarity} onValueChange={(v) => setNewProduct(p => ({ ...p, rarity: v }))}>
                         <SelectTrigger><SelectValue placeholder="Chọn" /></SelectTrigger>
                         <SelectContent>
-                          {CARD_RARITY_OPTIONS.map((rarity) => (
+                          {getCardRarityOptionsForSeries(newProduct.series).map((rarity) => (
                             <SelectItem key={rarity.value} value={rarity.value}>{rarity.label}</SelectItem>
                           ))}
                         </SelectContent>
