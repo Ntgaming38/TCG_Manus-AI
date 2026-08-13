@@ -6,6 +6,9 @@ import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
 import { summarizeCardRarityQuantities } from '../shared/cardRarity';
 import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './chyusenUtils';
+import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
+import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
+import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -217,12 +220,15 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
   }
 
   const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack");
-  const newPrice = String(result.price);
+  const priceDecision = resolveMarketplacePriceUpdate(product.marketPrice, result.price);
+  const persisted = await persistMarketplacePriceIfValid(product.marketPrice, result.price, async (nextPrice) => {
+    await db.update(products)
+      .set({ marketPrice: nextPrice, snkrdunkLastSyncedAt: new Date() })
+      .where(and(eq(products.id, id), eq(products.userId, userId)));
+  });
+  if (!persisted.updated) throw new Error("SNKRDUNK không trả về giá JPY hợp lệ. Giá cũ được giữ nguyên.");
+  const newPrice = persisted.marketPrice;
   const syncedAt = new Date();
-
-  await db.update(products)
-    .set({ marketPrice: newPrice, snkrdunkLastSyncedAt: syncedAt })
-    .where(and(eq(products.id, id), eq(products.userId, userId)));
 
   if (Number(product.marketPrice || 0) !== result.price) {
     await db.insert(priceHistory).values({
@@ -332,21 +338,15 @@ export async function runMarketplaceAutoSync(taskUid: string): Promise<Marketpla
     .where(and(eq(products.status, "in_stock"), isNotNull(products.snkrdunkUrl)))
     .orderBy(asc(products.snkrdunkLastSyncedAt))
     .limit(batchSize);
-  let updatedCount = 0;
-  let failedCount = 0;
-
-  for (const product of linkedProducts) {
+  const batch = await processMarketplaceAutoSyncBatch(linkedProducts, async (product) => {
     try {
       await syncSnkrdunkPriceForProduct(product.id, product.userId);
-      updatedCount += 1;
     } catch (error) {
-      failedCount += 1;
       console.warn("[Marketplace auto sync]", product.id, error instanceof Error ? error.message : error);
+      throw error;
     }
-    await new Promise((resolve) => setTimeout(resolve, AUTO_SYNC_DELAY_MS));
-  }
-
-  const checkedCount = linkedProducts.length;
+  }, AUTO_SYNC_DELAY_MS);
+  const { checkedCount, updatedCount, failedCount } = batch;
   const status = failedCount === 0 ? "success" : updatedCount > 0 ? "partial" : "failed";
   await db.update(marketplaceSyncConfig).set({
     lastRunAt: new Date(),

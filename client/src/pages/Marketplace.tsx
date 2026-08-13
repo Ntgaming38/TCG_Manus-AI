@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
+import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -91,7 +92,12 @@ export default function Marketplace() {
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600"><BarChart3 className="h-4 w-4" />Market intelligence</div>
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">Marketplace</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Theo dõi chênh lệch giá, trạng thái link và đồng bộ giá lựa chọn đầu tiên từ SNKRDUNK.</p>
-          <p className="mt-2 text-xs font-medium text-emerald-700">{autoSyncStatus?.isEnabled ? `Tự động mỗi 6 giờ · tối đa ${autoSyncStatus.batchSize} sản phẩm/lần${autoSyncStatus.lastRunAt ? ` · lần gần nhất ${new Date(autoSyncStatus.lastRunAt).toLocaleString("vi-VN")}` : ""}` : "Đang chuẩn bị đồng bộ tự động mỗi 6 giờ"}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className={autoSyncStatus?.isEnabled ? "font-medium text-emerald-700" : "font-medium text-amber-700"}>{autoSyncStatus?.isEnabled ? `Tự động mỗi 6 giờ · tối đa ${autoSyncStatus.batchSize} sản phẩm/lần` : "Đang chuẩn bị đồng bộ tự động mỗi 6 giờ"}</span>
+            {autoSyncStatus?.lastRunStatus && <span className={`rounded-full px-2 py-0.5 font-semibold ${autoSyncStatus.lastRunStatus === "success" ? "bg-emerald-100 text-emerald-800" : autoSyncStatus.lastRunStatus === "partial" ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800"}`}>{marketplaceAutoSyncStatusLabel(autoSyncStatus.lastRunStatus)}</span>}
+            {autoSyncStatus?.lastRunAt && <span className="text-muted-foreground">Lần gần nhất: {new Date(autoSyncStatus.lastRunAt).toLocaleString("vi-VN")}</span>}
+          </div>
+          {autoSyncStatus?.lastRunSummary && <p className="mt-1 text-xs text-muted-foreground">{autoSyncStatus.lastRunSummary}</p>}
         </div>
         <Button className="bg-primary text-primary-foreground shadow-md shadow-red-500/20 hover:bg-primary/90" onClick={startBulkSync} disabled={syncAll.isPending || linkedProducts.length === 0}>
           {syncAll.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Đồng bộ tất cả giá

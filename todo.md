@@ -241,5 +241,5 @@
 - [x] Kiểm thử quyền xóa, build và lưu checkpoint
 
 ## Đồng bộ giá Marketplace tự động
-- [ ] Hoàn tất callback đồng bộ tự động 6 giờ theo lô nhỏ, trạng thái lần chạy và giữ nguyên nút đồng bộ thủ công
-- [ ] Kiểm thử nguồn giá lỗi, không ghi đè giá cũ, giao diện và lưu checkpoint
+- [x] Hiển thị rõ trạng thái và tóm tắt lần chạy đồng bộ tự động trên Marketplace
+- [x] Bổ sung kiểm thử ghi giá trực tiếp không ghi đè giá cũ khi nguồn lỗi, xác minh lịch 6 giờ và lưu checkpoint cuối
