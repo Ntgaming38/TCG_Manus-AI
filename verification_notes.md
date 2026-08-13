@@ -71,3 +71,12 @@ Ngày xác minh: 13/08/2026
 
 - Nhãn hiển thị của bộ lọc đồng bộ được rút gọn từ **Đồng Bộ Auto** thành **Đồng Bộ**; giá trị lọc nội bộ và điều kiện tách lịch sử SNKRDUNK không thay đổi.
 - Typecheck và 78 Vitest tests đều đạt.
+
+## Hoàn thiện form Chyusen thủ công
+
+Ngày xác minh: 13/08/2026
+
+- Form đã có thông báo thành công khi lưu thủ công, validation rõ ràng cho tên chương trình, tên sản phẩm, ngày hết hạn và ngày công bố kết quả.
+- Chỉ còn **Ngày nhận hàng** theo dạng `dd/mm`, kèm ghi chú linh hoạt như “Khoảng đầu tháng 9”; ngày nhận hàng kết thúc và dòng URL ảnh sản phẩm đã được bỏ.
+- Người dùng có thể tải PNG/JPEG/WEBP tối đa 4 MB để AI đọc nội dung ảnh và gợi ý điền các trường, luôn yêu cầu kiểm tra trước khi lưu.
+- Đã hợp nhất định dạng ngày dd/mm từ dự án chia sẻ, xác minh schema `pickupNote` trong DB, typecheck và 93 Vitest tests đều đạt; production build thành công.

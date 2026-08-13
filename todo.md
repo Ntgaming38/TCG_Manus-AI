@@ -299,4 +299,4 @@
 - [x] Bỏ ngày nhận hàng kết thúc; đổi ngày nhận hàng bắt đầu thành Ngày nhận hàng với lựa chọn ghi chú thời điểm linh hoạt
 - [x] Bỏ dòng ảnh sản phẩm khỏi form thủ công
 - [x] Thêm tải ảnh và AI trích xuất nội dung để gợi ý điền form Chyusen
-- [ ] Kiểm thử dữ liệu, UI desktop/mobile và lưu checkpoint
+- [x] Kiểm thử dữ liệu, UI desktop/mobile và lưu checkpoint
