@@ -135,3 +135,10 @@ Ngày xác minh: 13/08/2026
 - Đã bỏ cơ chế tạo chiều cao tối thiểu cho câu trả lời cuối, nguyên nhân làm phản hồi dài chiếm và che vùng nhập trên mobile. Chỉ `ScrollArea` của nội dung được cuộn, trong khi header và ô nhập luôn là phần cố định.
 - Mỗi câu trả lời AI có nút sao chép; sau khi sao chép biểu tượng chuyển thành dấu xác nhận trong 1,8 giây. Có fallback cho trình duyệt không hỗ trợ Clipboard API.
 - Typecheck, 98 Vitest tests và production build đều đạt.
+
+## Nơi bán mặc định Người Dùng
+
+Ngày xác minh: 13/08/2026
+
+- Lựa chọn **Người Dùng** đã được thêm vào danh sách Nơi bán và được chọn mặc định khi tạo giao dịch bán mới, cũng như sau khi lưu xong một giao dịch.
+- Đã xác minh trang Bán Hàng trên mobile 375×812; typecheck và 98 Vitest tests đều đạt.

@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 
 const PLATFORMS = [
+  { value: "user", label: "Người Dùng" },
   { value: "snkrdunk", label: "SNKRDUNK" },
   { value: "mercari", label: "Mercari" },
   { value: "yahoo", label: "Yahoo Auction" },
@@ -37,7 +38,7 @@ export default function Sales() {
   const [editForm, setEditForm] = useState({ quantity: 1, salePrice: 0, note: "" });
   const [newSale, setNewSale] = useState({
     productId: 0, quantity: 1, salePrice: 0,
-    platform: "snkrdunk" as any, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
+    platform: "user" as any, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
   });
 
   const utils = trpc.useUtils();
@@ -57,7 +58,7 @@ export default function Sales() {
     onSuccess: () => {
       toast.success("Đã tạo giao dịch bán thành công!");
       setShowAddDialog(false);
-      setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "snkrdunk", fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false });
+      setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "user", fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false });
       invalidateAll();
     },
     onError: (err) => toast.error(err.message),

@@ -337,3 +337,7 @@
 - [x] Bảo đảm khung Trợ lý AI mobile không bị che khi phản hồi dài, chỉ vùng nội dung được cuộn
 - [x] Thêm nút sao chép cho từng câu trả lời của trợ lý AI
 - [x] Kiểm thử mobile với nội dung dài và lưu checkpoint
+
+## Nơi bán mặc định
+- [x] Thêm Người Dùng vào lựa chọn Nơi bán và đặt mặc định cho giao dịch bán mới
+- [x] Kiểm thử form bán hàng và lưu checkpoint
