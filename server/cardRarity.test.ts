@@ -11,6 +11,7 @@ describe("CARD_RARITY_OPTIONS", () => {
     const values = CARD_RARITY_OPTIONS.map((option) => option.value);
 
     expect(values).toContain("MUR");
+    expect(values).toContain("One Piece");
     expect(values).toContain("RR");
     expect(values).toContain("R");
     expect(values).not.toContain("UR");
@@ -18,12 +19,15 @@ describe("CARD_RARITY_OPTIONS", () => {
 
   it("hiển thị Card UR cũ bằng nhãn MUR mới", () => {
     expect(normalizeCardRarity("UR")).toBe("MUR");
+    expect(normalizeCardRarity("Onepice")).toBe("One Piece");
     expect(normalizeCardRarity("SAR")).toBe("SAR");
     expect(normalizeCardRarity(null)).toBe("");
   });
 
   it("xếp MUR, SAR, AR, RR rồi R theo đúng độ hiếm", () => {
     expect(getCardRarityPriority("MUR")).toBeLessThan(getCardRarityPriority("SAR"));
+    expect(getCardRarityPriority("MUR")).toBeLessThan(getCardRarityPriority("One Piece"));
+    expect(getCardRarityPriority("One Piece")).toBeLessThan(getCardRarityPriority("SAR"));
     expect(getCardRarityPriority("SAR")).toBeLessThan(getCardRarityPriority("AR"));
     expect(getCardRarityPriority("AR")).toBeLessThan(getCardRarityPriority("RR"));
     expect(getCardRarityPriority("RR")).toBeLessThan(getCardRarityPriority("R"));
@@ -33,6 +37,7 @@ describe("CARD_RARITY_OPTIONS", () => {
     const result = summarizeCardRarityQuantities([
       { rarity: "R", quantity: 2 },
       { rarity: "UR", quantity: 1 },
+      { rarity: "One Piece", quantity: 2 },
       { rarity: "RR", quantity: 3 },
       { rarity: "SAR", quantity: 4 },
       { rarity: "", quantity: 1 },
@@ -40,6 +45,7 @@ describe("CARD_RARITY_OPTIONS", () => {
 
     expect(result).toEqual([
       { rarity: "MUR", quantity: 1 },
+      { rarity: "One Piece", quantity: 2 },
       { rarity: "SAR", quantity: 4 },
       { rarity: "RR", quantity: 3 },
       { rarity: "R", quantity: 2 },

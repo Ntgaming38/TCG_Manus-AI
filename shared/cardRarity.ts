@@ -1,6 +1,7 @@
 /** Thứ tự ưu tiên khi xem Card: độ hiếm cao nhất đứng trước. */
 export const CARD_RARITY_ORDER = [
   "MUR",
+  "One Piece",
   "SAR",
   "AR",
   "RR",
@@ -16,7 +17,9 @@ export const CARD_RARITY_OPTIONS = CARD_RARITY_ORDER.map((value) => ({ value, la
 
 /** Giữ các Card UR cũ hiển thị theo nhãn MUR mới mà không buộc thay đổi dữ liệu lịch sử. */
 export function normalizeCardRarity(rarity?: string | null): string {
-  return rarity === "UR" ? "MUR" : (rarity || "");
+  if (rarity === "UR") return "MUR";
+  if (rarity === "Onepice") return "One Piece";
+  return rarity || "";
 }
 
 export function getCardRarityPriority(rarity?: string | null): number {

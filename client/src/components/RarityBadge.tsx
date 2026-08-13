@@ -16,6 +16,7 @@ const RARITY_BADGE_STYLES: Record<string, string> = {
   SAR: "border-fuchsia-300 bg-fuchsia-100 text-fuchsia-800",
   MUR: "border-violet-700 bg-gradient-to-r from-slate-950 via-violet-800 to-fuchsia-700 text-white shadow-[0_0_10px_rgba(168,85,247,0.45)]",
   Promo: "border-rose-300 bg-rose-100 text-rose-800",
+  "One Piece": "border-red-700 bg-gradient-to-r from-slate-950 via-red-700 to-orange-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.45)]",
 };
 
 export function RarityBadge({ rarity }: RarityBadgeProps) {

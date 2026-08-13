@@ -202,3 +202,6 @@
 - [x] Thêm sắp xếp Card theo rarity, ROI và giá thị trường
 - [x] Hiển thị tổng số lượng Card theo từng rarity trên Dashboard
 - [x] Thêm kiểm thử số liệu/thứ tự và xác minh build trước khi lưu checkpoint
+
+## Rarity One Piece
+- [x] Thêm One Piece vào taxonomy rarity với badge phát sáng tương tự MUR, sắp xếp và thống kê
