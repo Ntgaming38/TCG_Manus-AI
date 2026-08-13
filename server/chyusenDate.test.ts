@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatChyusenDayMonth, formatChyusenDayMonthInput, isChyusenRegistrationExpired, parseChyusenDayMonth } from "../shared/chyusenDate";
+import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDaysRemaining, isChyusenRegistrationExpired, parseChyusenDayMonth } from "../shared/chyusenDate";
 
 describe("Chyusen day/month dates", () => {
   it("hiển thị ngày theo dd/mm và bỏ năm, giờ", () => {
@@ -24,5 +24,13 @@ describe("Chyusen day/month dates", () => {
   it("chỉ cảnh báo quá hạn sau khi đã qua hết ngày đăng ký theo giờ Nhật Bản", () => {
     expect(isChyusenRegistrationExpired("2026-08-13T00:00:00+09:00", new Date("2026-08-13T12:00:00+09:00"))).toBe(false);
     expect(isChyusenRegistrationExpired("2026-08-13T00:00:00+09:00", new Date("2026-08-14T00:01:00+09:00"))).toBe(true);
+  });
+
+  it("hiển thị số ngày còn lại theo ngày Nhật Bản", () => {
+    const now = new Date("2026-08-10T12:00:00+09:00");
+    expect(getChyusenDaysRemaining("2026-08-13T00:00:00+09:00", now)).toBe(3);
+    expect(formatChyusenDaysRemaining("2026-08-13T00:00:00+09:00", now)).toBe("Còn 3 ngày");
+    expect(formatChyusenDaysRemaining("2026-08-10T00:00:00+09:00", now)).toBe("Hôm nay là hạn cuối");
+    expect(formatChyusenDaysRemaining("2026-08-08T00:00:00+09:00", now)).toBe("Đã quá hạn 2 ngày");
   });
 });
