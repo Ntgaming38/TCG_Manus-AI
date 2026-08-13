@@ -6,6 +6,7 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { extractAssistantText } from "./aiResponse";
+import { buildTcgAssistantSystemPrompt } from "./tcgAssistantPrompt";
 
 export const appRouter = router({
   system: systemRouter,
@@ -58,7 +59,7 @@ export const appRouter = router({
             messages: [
               {
                 role: "system",
-                content: `Bạn là Trợ lý AI chuyên gia phân tích thị trường TCG của TCG Manager. Hãy cung cấp phân tích sâu sắc về xu hướng giá cả, tỷ suất sinh lời (ROI), lợi nhuận chưa thực hiện (unrealized profit), và đánh giá danh mục thẻ bài (Card) trong kho của người dùng dựa trên dữ liệu SNKRDUNK và giá mua.\n\nTrả lời bằng tiếng Việt, chuyên nghiệp, rõ ràng, có cấu trúc (dùng bullet points hoặc bảng tóm tắt khi phù hợp). Chỉ dùng dữ liệu ngữ cảnh bên dưới. Không khẳng định đã thực hiện giao dịch hay thay đổi dữ liệu trong hệ thống; hướng dẫn người dùng thao tác trực tiếp trên ứng dụng. Không đưa lời khuyên đầu tư chắc chắn, tuyệt đối không bịa đặt số liệu.\n\nNGỮ CẢNH KHO HÀNG & TÀI CHÍNH:\n${JSON.stringify(context)}`,
+                content: buildTcgAssistantSystemPrompt(context),
               },
               ...input.messages.map((m) => ({ role: m.role, content: m.content })),
             ],

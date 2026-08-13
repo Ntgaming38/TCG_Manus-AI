@@ -186,3 +186,7 @@
 ## Khắc phục phản hồi mặc định của Trợ lý AI
 - [x] Sửa luồng trích xuất nội dung invokeLLM để AI suy luận theo câu hỏi thay vì trả về câu mặc định
 - [x] Bổ sung kiểm thử hồi quy cho phản hồi AI và xác minh build trước khi lưu checkpoint
+
+## System prompt phân tích sâu cho Trợ lý AI
+- [x] Tách system prompt thành hằng số dễ bảo trì với quy trình phân tích Card 5 bước
+- [x] Bổ sung kiểm thử prompt và xác minh build trước khi lưu checkpoint
