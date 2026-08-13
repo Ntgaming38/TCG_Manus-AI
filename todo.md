@@ -419,3 +419,9 @@
 - [x] Thêm nút Xóa bộ lọc để trở về toàn bộ danh sách
 - [x] Lưu và khôi phục bộ lọc Marketplace gần nhất theo thiết bị
 - [x] Kiểm thử khôi phục bộ lọc và lưu checkpoint
+
+## Trạng thái và phím tắt Marketplace
+- [x] Hiển thị nhãn bộ lọc và từ khóa đang áp dụng
+- [x] Thêm phím Esc để xóa nhanh bộ lọc Marketplace
+- [x] Lưu và khôi phục từ khóa tìm kiếm Marketplace gần nhất
+- [x] Kiểm thử thao tác và lưu checkpoint

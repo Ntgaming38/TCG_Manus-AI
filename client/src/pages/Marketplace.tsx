@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
-import { marketplaceMetricFilter, MARKETPLACE_FILTER_STORAGE_KEY, parseMarketplaceFilter, type MarketplaceFilter } from "@shared/marketplaceMetricFilter";
+import { marketplaceFilterLabel, marketplaceMetricFilter, MARKETPLACE_FILTER_STORAGE_KEY, MARKETPLACE_SEARCH_STORAGE_KEY, parseMarketplaceFilter, parseMarketplaceSearch, shouldClearMarketplaceFiltersOnKey, type MarketplaceFilter } from "@shared/marketplaceMetricFilter";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -30,7 +30,7 @@ type PriceUpdatePayload = { id: number; marketPrice: number };
 type BulkResult = { updatedCount: number; skippedCount: number; errors: Array<{ productName: string; message: string }> };
 
 export default function Marketplace() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => typeof window === "undefined" ? "" : parseMarketplaceSearch(window.localStorage.getItem(MARKETPLACE_SEARCH_STORAGE_KEY)));
   const [filter, setFilter] = useState<MarketplaceFilter>(() => typeof window === "undefined" ? "all" : parseMarketplaceFilter(window.localStorage.getItem(MARKETPLACE_FILTER_STORAGE_KEY)));
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
@@ -85,11 +85,25 @@ export default function Marketplace() {
     window.localStorage.setItem(MARKETPLACE_FILTER_STORAGE_KEY, filter);
   }, [filter]);
 
+  useEffect(() => {
+    window.localStorage.setItem(MARKETPLACE_SEARCH_STORAGE_KEY, search);
+  }, [search]);
+
   const startBulkSync = () => {
     setBulkProgress(0); setBulkResult(null); setBulkError(null); setBulkOpen(true); syncAll.mutate();
   };
   const clearFilters = () => { setSearch(""); setFilter("all"); };
   const hasActiveFilters = filter !== "all" || Boolean(search.trim());
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (!shouldClearMarketplaceFiltersOnKey(event.key, hasActiveFilters)) return;
+      event.preventDefault();
+      clearFilters();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [hasActiveFilters]);
 
   return (
     <div className="space-y-6 pb-8">
@@ -118,7 +132,7 @@ export default function Marketplace() {
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card/70 p-3 shadow-sm lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 gap-2 lg:max-w-xl"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Tìm sản phẩm, series..." value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 border-border bg-background pl-10" aria-label="Tìm sản phẩm Marketplace" /></div><Button type="button" variant="outline" size="sm" onClick={clearFilters} disabled={!hasActiveFilters} className="h-10 shrink-0 border-border bg-background text-xs"><XCircle className="mr-1.5 h-3.5 w-3.5" />Xóa bộ lọc</Button></div>
+        <div className="min-w-0 flex-1 lg:max-w-xl"><div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs"><span className="inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2 py-1 font-medium text-red-300"><SlidersHorizontal className="h-3 w-3" />Đang xem: {marketplaceFilterLabel(filter)}</span>{search.trim() && <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-1 font-medium text-sky-200"><Search className="h-3 w-3 shrink-0" /><span className="truncate">Từ khóa: “{search.trim()}”</span></span>}{hasActiveFilters && <span className="text-muted-foreground">Nhấn <kbd className="rounded border border-border bg-background px-1 py-0.5 font-mono text-[10px] text-foreground">Esc</kbd> để xóa</span>}</div><div className="flex min-w-0 gap-2"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Tìm sản phẩm, series..." value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 border-border bg-background pl-10" aria-label="Tìm sản phẩm Marketplace" /></div><Button type="button" variant="outline" size="sm" onClick={clearFilters} disabled={!hasActiveFilters} className="h-10 shrink-0 border-border bg-background text-xs"><XCircle className="mr-1.5 h-3.5 w-3.5" />Xóa bộ lọc</Button></div></div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0"><SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" /><FilterButton active={filter === "all"} onClick={() => setFilter("all")}>Tất cả ({productList.length})</FilterButton><FilterButton active={filter === "synced"} onClick={() => setFilter("synced")}>Đã đồng bộ ({syncedProducts.length})</FilterButton><FilterButton active={filter === "pending"} onClick={() => setFilter("pending")}>Chờ đồng bộ ({pendingProducts.length})</FilterButton><FilterButton active={filter === "unlinked"} onClick={() => setFilter("unlinked")}>Chưa gắn link ({productList.length - linkedProducts.length})</FilterButton></div>
       </section>
 
