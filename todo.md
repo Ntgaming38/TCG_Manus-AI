@@ -404,3 +404,8 @@
 ## Màu tổng quan Marketplace
 - [x] Đổi bốn ô tổng quan Marketplace sang bảng màu tối phù hợp nền đen xám
 - [x] Kiểm thử giao diện Marketplace và lưu checkpoint
+
+## Tinh chỉnh màu tổng quan Marketplace
+- [x] Đổi màu ô Tổng sản phẩm để phân biệt rõ hơn
+- [x] Đổi ô Đã đồng bộ sang xanh lá rõ ràng
+- [x] Kiểm thử giao diện Marketplace và lưu checkpoint

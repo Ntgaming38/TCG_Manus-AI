@@ -131,8 +131,8 @@ export default function Marketplace() {
 
 function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number; tone: "neutral" | "success" | "warning" | "danger" }) {
   const toneClasses = {
-    neutral: { card: "border-slate-700/90 bg-slate-950/80 text-slate-100 shadow-[0_10px_24px_rgba(0,0,0,0.18)]", icon: "bg-slate-800/90 text-slate-200" },
-    success: { card: "border-emerald-500/35 bg-emerald-950/35 text-emerald-100 shadow-[0_10px_24px_rgba(6,78,59,0.16)]", icon: "bg-emerald-500/15 text-emerald-300" },
+    neutral: { card: "border-violet-500/40 bg-violet-950/40 text-violet-100 shadow-[0_10px_24px_rgba(76,29,149,0.18)]", icon: "bg-violet-500/15 text-violet-300" },
+    success: { card: "border-green-500/50 bg-green-950/45 text-green-100 shadow-[0_10px_24px_rgba(20,83,45,0.2)]", icon: "bg-green-500/20 text-green-300" },
     warning: { card: "border-amber-500/40 bg-amber-950/35 text-amber-100 shadow-[0_10px_24px_rgba(120,53,15,0.16)]", icon: "bg-amber-500/15 text-amber-300" },
     danger: { card: "border-red-500/40 bg-red-950/35 text-red-100 shadow-[0_10px_24px_rgba(127,29,29,0.16)]", icon: "bg-red-500/15 text-red-300" },
   };
