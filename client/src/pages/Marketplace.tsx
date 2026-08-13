@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
-import { marketplaceMetricFilter, type MarketplaceFilter } from "@shared/marketplaceMetricFilter";
+import { marketplaceMetricFilter, MARKETPLACE_FILTER_STORAGE_KEY, parseMarketplaceFilter, type MarketplaceFilter } from "@shared/marketplaceMetricFilter";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -31,7 +31,7 @@ type BulkResult = { updatedCount: number; skippedCount: number; errors: Array<{ 
 
 export default function Marketplace() {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<MarketplaceFilter>("all");
+  const [filter, setFilter] = useState<MarketplaceFilter>(() => typeof window === "undefined" ? "all" : parseMarketplaceFilter(window.localStorage.getItem(MARKETPLACE_FILTER_STORAGE_KEY)));
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
@@ -81,9 +81,15 @@ export default function Marketplace() {
     return () => window.clearInterval(timer);
   }, [syncAll.isPending]);
 
+  useEffect(() => {
+    window.localStorage.setItem(MARKETPLACE_FILTER_STORAGE_KEY, filter);
+  }, [filter]);
+
   const startBulkSync = () => {
     setBulkProgress(0); setBulkResult(null); setBulkError(null); setBulkOpen(true); syncAll.mutate();
   };
+  const clearFilters = () => { setSearch(""); setFilter("all"); };
+  const hasActiveFilters = filter !== "all" || Boolean(search.trim());
 
   return (
     <div className="space-y-6 pb-8">
@@ -112,7 +118,7 @@ export default function Marketplace() {
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card/70 p-3 shadow-sm lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative min-w-0 flex-1 lg:max-w-md"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Tìm sản phẩm, series..." value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 border-border bg-background pl-10" aria-label="Tìm sản phẩm Marketplace" /></div>
+        <div className="flex min-w-0 flex-1 gap-2 lg:max-w-xl"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Tìm sản phẩm, series..." value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 border-border bg-background pl-10" aria-label="Tìm sản phẩm Marketplace" /></div><Button type="button" variant="outline" size="sm" onClick={clearFilters} disabled={!hasActiveFilters} className="h-10 shrink-0 border-border bg-background text-xs"><XCircle className="mr-1.5 h-3.5 w-3.5" />Xóa bộ lọc</Button></div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0"><SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" /><FilterButton active={filter === "all"} onClick={() => setFilter("all")}>Tất cả ({productList.length})</FilterButton><FilterButton active={filter === "synced"} onClick={() => setFilter("synced")}>Đã đồng bộ ({syncedProducts.length})</FilterButton><FilterButton active={filter === "pending"} onClick={() => setFilter("pending")}>Chờ đồng bộ ({pendingProducts.length})</FilterButton><FilterButton active={filter === "unlinked"} onClick={() => setFilter("unlinked")}>Chưa gắn link ({productList.length - linkedProducts.length})</FilterButton></div>
       </section>
 

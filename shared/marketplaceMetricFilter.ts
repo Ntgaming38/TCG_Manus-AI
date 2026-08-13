@@ -9,3 +9,9 @@ export const marketplaceMetricFilter: Record<MarketplaceMetric, MarketplaceFilte
   pending: "pending",
   unlinked: "unlinked",
 };
+
+export const MARKETPLACE_FILTER_STORAGE_KEY = "tcg-marketplace-filter";
+
+export function parseMarketplaceFilter(value: string | null | undefined): MarketplaceFilter {
+  return MARKETPLACE_FILTERS.some((filter) => filter === value) ? value as MarketplaceFilter : "all";
+}

@@ -414,3 +414,8 @@
 - [x] Thêm hover và focus rõ ràng cho bốn ô thống kê Marketplace
 - [x] Cho phép bấm ô để lọc danh sách Tổng sản phẩm, Đã đồng bộ, Chờ đồng bộ, Chưa gắn link
 - [x] Kiểm thử bộ lọc và lưu checkpoint
+
+## Lưu bộ lọc Marketplace
+- [x] Thêm nút Xóa bộ lọc để trở về toàn bộ danh sách
+- [x] Lưu và khôi phục bộ lọc Marketplace gần nhất theo thiết bị
+- [x] Kiểm thử khôi phục bộ lọc và lưu checkpoint
