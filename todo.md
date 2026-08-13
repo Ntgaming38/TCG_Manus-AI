@@ -435,6 +435,6 @@
 - [x] Tối ưu kỹ năng nếu cần, xác thực và bàn giao lại
 
 ## Lịch sử biến động giá Marketplace
-- [ ] Rà soát dữ liệu price history hiện có và thiết kế API theo sản phẩm
-- [ ] Thêm biểu đồ lịch sử giá vào Marketplace
-- [ ] Kiểm thử dữ liệu, API, biểu đồ và lưu checkpoint
+- [x] Rà soát dữ liệu price history hiện có và thiết kế API theo sản phẩm
+- [x] Thêm biểu đồ lịch sử giá vào Marketplace
+- [x] Kiểm thử dữ liệu, API, biểu đồ và lưu checkpoint

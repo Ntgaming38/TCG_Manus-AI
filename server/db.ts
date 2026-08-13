@@ -209,6 +209,28 @@ export async function updateMarketPrice(id: number, userId: number, marketPrice:
   }
 }
 
+export async function getProductPriceHistory(productId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const [product] = await db.select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.id, productId), eq(products.userId, userId)))
+    .limit(1);
+  if (!product) throw new Error("Sản phẩm không tồn tại hoặc không thuộc quyền truy cập của bạn.");
+
+  return db.select({
+    id: priceHistory.id,
+    oldPrice: priceHistory.oldPrice,
+    newPrice: priceHistory.newPrice,
+    source: priceHistory.source,
+    createdAt: priceHistory.createdAt,
+  }).from(priceHistory)
+    .where(eq(priceHistory.productId, productId))
+    .orderBy(asc(priceHistory.createdAt), asc(priceHistory.id))
+    .limit(180);
+}
+
 export async function updateSnkrdunkUrl(id: number, userId: number, snkrdunkUrl: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

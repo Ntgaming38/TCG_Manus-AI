@@ -127,7 +127,9 @@ export const priceHistory = mysqlTable("price_history", {
   newPrice: decimal("newPrice", { precision: 12, scale: 2 }).notNull(),
   source: varchar("source", { length: 100 }).default("manual"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  index("price_history_product_created_idx").on(table.productId, table.createdAt, table.id),
+]);
 
 export type PriceHistory = typeof priceHistory.$inferSelect;
 
