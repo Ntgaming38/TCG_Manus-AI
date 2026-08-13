@@ -36,7 +36,7 @@ export default function Dashboard() {
   const recentActivities = stats?.recentActivities ?? [];
   const chartData = stats?.chartData ?? monthlyData;
   const cardRarityStats = stats?.cardRarityStats ?? [];
-  const chyusen = stats?.chyusen ?? { open: 0, expiring: 0, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 };
+  const chyusen = stats?.chyusen ?? { open: 0, expiring: 0, deadlineToday: false, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 };
   const chyusenReminders = stats?.chyusenReminders ?? [];
 
   return (
@@ -134,7 +134,7 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[{ label: "Chờ kết quả", value: chyusen.waitingResult, color: "text-blue-700" }, { label: "Sắp hết hạn", value: chyusen.expiring, color: "text-amber-700", note: chyusen.deadlineTomorrow ? "Còn 1 ngày" : undefined }, { label: "Đã trúng", value: chyusen.won, color: "text-red-500" }, { label: "Đã trượt", value: chyusen.lost, color: "text-zinc-700" }].map((item) => <div key={item.label} className="rounded-lg border border-border bg-background px-3 py-3"><p className="text-xs text-muted-foreground">{item.label}</p><p className={`mt-1 text-xl font-bold ${item.color}`}>{item.value}</p>{item.note && <p className="mt-1 text-xs font-semibold text-amber-700">{item.note}</p>}</div>)}
+            {[{ label: "Chờ kết quả", value: chyusen.waitingResult, color: "text-blue-700" }, { label: "Sắp hết hạn", value: chyusen.expiring, color: "text-amber-700", isExpiring: true }, { label: "Đã trúng", value: chyusen.won, color: "text-red-500" }, { label: "Đã trượt", value: chyusen.lost, color: "text-zinc-700" }].map((item) => <div key={item.label} className="rounded-lg border border-border bg-background px-3 py-3"><p className="text-xs text-muted-foreground">{item.label}</p><p className={`mt-1 text-xl font-bold ${item.color}`}>{item.value}</p>{item.isExpiring && chyusen.deadlineToday && <p className="mt-1 text-xs font-semibold text-red-600">Hôm nay là hạn cuối</p>}{item.isExpiring && chyusen.deadlineTomorrow && <p className="mt-1 text-xs font-semibold text-amber-700">Còn 1 ngày</p>}</div>)}
           </div>
           {chyusenReminders.length > 0 && <div className="space-y-2"><p className="text-sm font-medium">Chyusen sắp hết hạn</p>{chyusenReminders.map((entry: any) => <div key={entry.id} className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-amber-950">{entry.title}</p><p className="mt-0.5 flex items-center gap-1 text-xs text-amber-800"><Clock3 className="h-3.5 w-3.5" />{entry.remainingTime || "Sắp hết hạn"} · {entry.shop || "Khác"}</p></div>{entry.sourceUrl && <Button asChild variant="outline" size="sm" className="border-amber-300 bg-white"><a href={entry.sourceUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Đăng ký</a></Button>}</div>)}</div>}
         </CardContent>

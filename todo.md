@@ -382,3 +382,7 @@
 ## Chỉ báo hạn ngày mai
 - [x] Hiển thị Còn 1 ngày trong ô Sắp hết hạn khi có Chyusen hạn ngày mai
 - [x] Kiểm thử Dashboard và lưu checkpoint
+
+## Chỉ báo hạn chót hôm nay
+- [x] Hiển thị Hôm nay là hạn cuối trong ô Sắp hết hạn khi có Chyusen hạn chót hôm nay
+- [x] Kiểm thử Dashboard và lưu checkpoint
