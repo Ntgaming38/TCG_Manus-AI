@@ -7,6 +7,41 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { extractAssistantText } from "./aiResponse";
 import { buildTcgAssistantSystemPrompt } from "./tcgAssistantPrompt";
+import * as chyusenDb from "./chyusenDb";
+import { parseChyusenUrl } from "./chyusenSource";
+import { validatePublicChyusenUrl } from "./chyusenUtils";
+
+const chyusenEntryInput = z.object({
+  title: z.string().trim().min(1).max(255),
+  productName: z.string().trim().min(1).max(255),
+  series: z.string().trim().max(100).optional(),
+  productType: z.enum(["card", "box", "pack", "set", "other"]).optional(),
+  shop: z.string().trim().max(100).optional(),
+  customShopName: z.string().trim().max(255).optional(),
+  sourceUrl: z.string().trim().url().max(2048),
+  imageUrl: z.string().trim().url().optional().or(z.literal("")),
+  price: z.number().min(0).nullable().optional(),
+  quantityLimit: z.string().trim().max(100).optional(),
+  applicationStart: z.date().nullable().optional(),
+  applicationEnd: z.date().nullable().optional(),
+  resultDate: z.date().nullable().optional(),
+  pickupStart: z.date().nullable().optional(),
+  pickupEnd: z.date().nullable().optional(),
+  requirements: z.string().trim().max(4000).optional(),
+  applicationStatus: z.enum(["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]).optional(),
+  resultStatus: z.enum(["pending", "won", "lost", "unknown"]).optional(),
+  sourceTimezone: z.string().trim().max(64).optional(),
+  parserStatus: z.enum(["manual", "partial", "detected", "unavailable"]).optional(),
+  parserNote: z.string().trim().max(1000).optional(),
+  fieldConfidence: z.record(z.string(), z.enum(["detected", "needs_review", "missing"])).optional(),
+  sourceContentHash: z.string().trim().max(64).optional(),
+});
+
+function validateChyusenSourceUrl(sourceUrl: string) {
+  const result = validatePublicChyusenUrl(sourceUrl);
+  if (!result.valid || !result.normalizedUrl) throw new Error(result.reason || "URL Chyusen không hợp lệ.");
+  return result.normalizedUrl;
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -298,6 +333,82 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ saleId: z.number() }))
       .mutation(({ ctx, input }) => db.deleteSale(ctx.user.id, input.saleId)),
+  }),
+
+  chyusen: router({
+    list: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenEntries(ctx.user.id)),
+
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(({ ctx, input }) => chyusenDb.getChyusenEntry(ctx.user.id, input.id)),
+
+    previewUrl: protectedProcedure
+      .input(z.object({ sourceUrl: z.string().trim().url().max(2048) }))
+      .mutation(({ input }) => parseChyusenUrl(validateChyusenSourceUrl(input.sourceUrl), true)),
+
+    refreshPreview: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const entry = await chyusenDb.getChyusenEntry(ctx.user.id, input.id);
+        if (!entry?.sourceUrl) throw new Error("Không tìm thấy URL gốc của Chyusen này.");
+        return parseChyusenUrl(validateChyusenSourceUrl(entry.sourceUrl), true);
+      }),
+
+    create: protectedProcedure
+      .input(chyusenEntryInput)
+      .mutation(({ ctx, input }) => chyusenDb.createChyusenEntry(ctx.user.id, {
+        ...input,
+        sourceUrl: validateChyusenSourceUrl(input.sourceUrl),
+        imageUrl: input.imageUrl || undefined,
+      })),
+
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), data: chyusenEntryInput.partial() }))
+      .mutation(({ ctx, input }) => chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
+        ...input.data,
+        sourceUrl: input.data.sourceUrl ? validateChyusenSourceUrl(input.data.sourceUrl) : undefined,
+        imageUrl: input.data.imageUrl || undefined,
+      })),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => chyusenDb.deleteChyusenEntry(ctx.user.id, input.id)),
+
+    setParticipation: protectedProcedure
+      .input(z.object({ id: z.number(), applicationStatus: z.enum(["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]) }))
+      .mutation(({ ctx, input }) => chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
+        applicationStatus: input.applicationStatus,
+        resultStatus: input.applicationStatus === "won" ? "won" : input.applicationStatus === "lost" ? "lost" : undefined,
+      })),
+
+    purchaseDraft: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const entry = await chyusenDb.getChyusenEntry(ctx.user.id, input.id);
+        if (!entry) throw new Error("Không tìm thấy Chyusen.");
+        if (entry.applicationStatus !== "won" && entry.resultStatus !== "won") throw new Error("Chỉ Chyusen đã trúng mới có thể chuyển sang Mua Hàng.");
+        if (entry.purchaseCreatedAt) throw new Error("Chyusen này đã được chuyển sang Mua Hàng trước đó.");
+        return {
+          chyusenEntryId: entry.id,
+          productName: entry.productName,
+          productType: entry.productType === "set" || entry.productType === "other" ? "box" : entry.productType,
+          series: entry.series || "Pokemon",
+          shop: entry.customShopName || entry.shop || "Khác",
+          quantity: 1,
+          price: Number(entry.price || 0),
+          note: `Nguồn Chyusen: ${entry.sourceUrl || ""}`,
+        };
+      }),
+
+    markPurchaseCreated: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => chyusenDb.markChyusenPurchaseCreated(ctx.user.id, input.id)),
+
+    notifications: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenNotifications(ctx.user.id)),
+
+    markNotificationRead: protectedProcedure
+      .input(z.object({ id: z.number(), isRead: z.boolean().default(true) }))
+      .mutation(({ ctx, input }) => chyusenDb.markChyusenNotificationRead(ctx.user.id, input.id, input.isRead)),
   }),
 
   dashboard: router({

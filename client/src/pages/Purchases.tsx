@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
@@ -30,6 +30,7 @@ export default function Purchases() {
     series: "Pokemon", shop: "Joshin", purchaseType: "mua_le" as any,
     quantity: 1, price: 0, note: "",
   });
+  const [pendingChyusenEntryId, setPendingChyusenEntryId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
   const { data: purchases, refetch } = trpc.purchases.list.useQuery({ search: search || undefined });
@@ -47,9 +48,41 @@ export default function Purchases() {
     utils.reports.overview.invalidate();
   };
 
+  const markChyusenPurchaseCreated = trpc.chyusen.markPurchaseCreated.useMutation({
+    onSuccess: () => {
+      setPendingChyusenEntryId(null);
+      utils.chyusen.list.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    const rawDraft = localStorage.getItem("tcg-manager-chyusen-purchase-draft");
+    if (!rawDraft) return;
+    try {
+      const draft = JSON.parse(rawDraft);
+      const productType = ["card", "box", "pack"].includes(draft.productType) ? draft.productType : "box";
+      setNewPurchase({
+        productName: draft.productName || "",
+        productType,
+        series: draft.series || "Pokemon",
+        shop: draft.shop || "Khác",
+        purchaseType: "mua_le",
+        quantity: Math.max(1, Number(draft.quantity || 1)),
+        price: Math.max(0, Number(draft.price || 0)),
+        note: draft.note || "",
+      });
+      setPendingChyusenEntryId(Number(draft.chyusenEntryId) || null);
+      setShowAddDialog(true);
+      localStorage.removeItem("tcg-manager-chyusen-purchase-draft");
+    } catch {
+      localStorage.removeItem("tcg-manager-chyusen-purchase-draft");
+    }
+  }, []);
+
   const createPurchase = trpc.purchases.create.useMutation({
     onSuccess: () => {
       toast.success("Đã thêm giao dịch mua thành công!");
+      if (pendingChyusenEntryId) markChyusenPurchaseCreated.mutate({ id: pendingChyusenEntryId });
       setShowAddDialog(false);
       setNewPurchase({ productName: "", productType: "box", series: "Pokemon", shop: "Joshin", purchaseType: "mua_le", quantity: 1, price: 0, note: "" });
       invalidateAll();

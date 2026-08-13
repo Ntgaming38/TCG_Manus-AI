@@ -9,6 +9,8 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { storagePut } from "../storage";
+import { sdk } from "./sdk";
+import { runChyusenMonitor } from "../chyusenMonitor";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -37,6 +39,19 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+
+  app.post("/api/scheduled/chyusen-monitor", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
+      const summary = await runChyusenMonitor(user.taskUid);
+      return res.json({ ok: true, ...summary, timestamp: new Date().toISOString() });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[Chyusen monitor]", message);
+      return res.status(500).json({ error: message, timestamp: new Date().toISOString() });
+    }
+  });
 
   // Image upload endpoint
   app.post("/api/upload-image", async (req, res) => {

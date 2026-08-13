@@ -1,10 +1,11 @@
 import { eq, and, like, sql, desc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
 import { summarizeCardRarityQuantities } from '../shared/cardRarity';
+import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './chyusenUtils';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -803,6 +804,7 @@ export async function getDashboardStats(userId: number) {
     totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
     totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
     cardRarityStats: [], chartData: [], recentActivities: [],
+    chyusen: { open: 0, expiring: 0, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [],
   };
 
   // Get all user products
@@ -815,6 +817,24 @@ export async function getDashboardStats(userId: number) {
   const inStockBoxes = inStockProducts.filter(p => p.type === "box").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const inStockPacks = inStockProducts.filter(p => p.type === "pack").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const cardRarityStats = summarizeCardRarityQuantities(inStockProducts.filter(p => p.type === "card"));
+  const userChyusenEntries = await db.select().from(chyusenEntries).where(eq(chyusenEntries.userId, userId));
+  const chyusenWithState = userChyusenEntries.map((entry) => ({
+    ...entry,
+    timeState: getChyusenTimeState(entry),
+    urgency: getChyusenUrgency(entry.applicationEnd),
+    remainingTime: formatRemainingTime(entry.applicationEnd),
+  }));
+  const chyusen = {
+    open: chyusenWithState.filter((entry) => entry.timeState === "open").length,
+    expiring: chyusenWithState.filter((entry) => entry.timeState === "expiring").length,
+    waitingResult: chyusenWithState.filter((entry) => entry.timeState === "waiting_result").length,
+    won: chyusenWithState.filter((entry) => entry.applicationStatus === "won" || entry.resultStatus === "won").length,
+    lost: chyusenWithState.filter((entry) => entry.applicationStatus === "lost" || entry.resultStatus === "lost").length,
+  };
+  const chyusenReminders = chyusenWithState
+    .filter((entry) => entry.urgency && entry.applicationStatus === "not_registered")
+    .sort((a, b) => (a.applicationEnd?.getTime() || 0) - (b.applicationEnd?.getTime() || 0))
+    .slice(0, 3);
 
   // Sold products
   // Sold quantity: count from actual sales records (sum of quantities sold)
@@ -868,7 +888,7 @@ export async function getDashboardStats(userId: number) {
     totalCapital, currentValue, totalProfit,
     totalInStock, inStockCards, inStockBoxes, inStockPacks,
     totalSold, soldCards, soldBoxes, soldPacks,
-    cardRarityStats, chartData, recentActivities,
+    cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders,
   };
 }
 

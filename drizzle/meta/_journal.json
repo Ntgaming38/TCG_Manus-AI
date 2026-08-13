@@ -29,6 +29,20 @@
       "when": 1786477411928,
       "tag": "0003_legal_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786589468885,
+      "tag": "0004_hard_aqueduct",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1786589660013,
+      "tag": "0005_tranquil_lightspeed",
+      "breakpoints": true
     }
   ]
 }

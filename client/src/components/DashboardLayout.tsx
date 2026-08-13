@@ -23,13 +23,14 @@ import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift,
-  Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard
+  Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard, Ticket
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { SidebarAIAssistant } from "./SidebarAIAssistant";
+import { trpc } from "@/lib/trpc";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -40,6 +41,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Mua Hàng", path: "/mua-hang" },
   { icon: DollarSign, label: "Bán Hàng", path: "/ban-hang" },
   { icon: TrendingUp, label: "Marketplace", path: "/marketplace" },
+  { icon: Ticket, label: "抽選", path: "/chyusen" },
   { icon: FileText, label: "Báo Cáo", path: "/bao-cao" },
 ];
 
@@ -115,6 +117,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
+  const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery(undefined, { staleTime: 60_000 });
+  const unreadChyusenCount = chyusenNotifications.filter((notification: any) => !notification.isRead).length;
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -176,6 +180,11 @@ function DashboardLayoutContent({
                     >
                       <item.icon className={`h-4 w-4 ${isActive ? "text-primary drop-shadow-[0_0_6px_rgba(74,222,128,0.8)]" : ""}`} />
                       <span>{item.label}</span>
+                      {item.path === "/chyusen" && unreadChyusenCount > 0 && (
+                        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                          {unreadChyusenCount > 99 ? "99+" : unreadChyusenCount}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

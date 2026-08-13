@@ -1,4 +1,4 @@
-import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { bigint, index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -146,3 +146,113 @@ export const activityLogs = mysqlTable("activity_logs", {
 });
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
+
+/**
+ * Chyusen entries are always private to one user. Source information is retained
+ * separately so a later public-page refresh never overwrites the saved entry
+ * without the user's confirmation.
+ */
+export const chyusenEntries = mysqlTable("chyusen_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  productName: varchar("productName", { length: 255 }).notNull(),
+  series: varchar("series", { length: 100 }).default("Pokemon"),
+  productType: mysqlEnum("productType", ["card", "box", "pack", "set", "other"]).default("other").notNull(),
+  shop: varchar("shop", { length: 100 }).default("Khác"),
+  customShopName: varchar("customShopName", { length: 255 }),
+  sourceUrl: text("sourceUrl"),
+  imageUrl: text("imageUrl"),
+  price: decimal("price", { precision: 12, scale: 2 }),
+  quantityLimit: varchar("quantityLimit", { length: 100 }),
+  applicationStart: timestamp("applicationStart"),
+  applicationEnd: timestamp("applicationEnd"),
+  resultDate: timestamp("resultDate"),
+  pickupStart: timestamp("pickupStart"),
+  pickupEnd: timestamp("pickupEnd"),
+  requirements: text("requirements"),
+  applicationStatus: mysqlEnum("applicationStatus", ["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]).default("not_registered").notNull(),
+  resultStatus: mysqlEnum("resultStatus", ["pending", "won", "lost", "unknown"]).default("pending").notNull(),
+  sourceTimezone: varchar("sourceTimezone", { length: 64 }).default("Asia/Tokyo").notNull(),
+  parserStatus: mysqlEnum("parserStatus", ["manual", "partial", "detected", "unavailable"]).default("manual").notNull(),
+  parserNote: text("parserNote"),
+  fieldConfidence: text("fieldConfidence"),
+  sourceContentHash: varchar("sourceContentHash", { length: 64 }),
+  lastCheckedAt: timestamp("lastCheckedAt"),
+  purchaseCreatedAt: timestamp("purchaseCreatedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("chyusen_entries_user_idx").on(table.userId),
+  index("chyusen_entries_deadline_idx").on(table.applicationEnd),
+]);
+
+export type ChyusenEntry = typeof chyusenEntries.$inferSelect;
+export type InsertChyusenEntry = typeof chyusenEntries.$inferInsert;
+
+/** Public sources can be refreshed automatically, but are private to their owner. */
+export const chyusenSources = mysqlTable("chyusen_sources", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  entryId: int("entryId"),
+  sourceUrl: varchar("sourceUrl", { length: 2048 }).notNull(),
+  label: varchar("label", { length: 255 }),
+  isActive: int("isActive").default(1).notNull(),
+  latestStatus: mysqlEnum("latestStatus", ["monitoring", "detected", "unavailable"]).default("monitoring").notNull(),
+  latestError: text("latestError"),
+  contentHash: varchar("contentHash", { length: 64 }),
+  lastCheckedAt: timestamp("lastCheckedAt"),
+  lastDetectedAt: timestamp("lastDetectedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("chyusen_sources_user_url_unique").on(table.userId, table.sourceUrl),
+  index("chyusen_sources_active_idx").on(table.isActive),
+]);
+
+export type ChyusenSource = typeof chyusenSources.$inferSelect;
+
+/** Keeps a user-visible audit record of fields approved after a source refresh. */
+export const chyusenHistory = mysqlTable("chyusen_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  entryId: int("entryId").notNull(),
+  fieldName: varchar("fieldName", { length: 100 }).notNull(),
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  changeSource: mysqlEnum("changeSource", ["manual", "source_refresh", "source_import"]).default("manual").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("chyusen_history_entry_idx").on(table.entryId),
+  index("chyusen_history_user_idx").on(table.userId),
+]);
+
+export type ChyusenHistoryRecord = typeof chyusenHistory.$inferSelect;
+
+/** In-app notices are idempotent through notificationKey and scoped to one user. */
+export const chyusenNotifications = mysqlTable("chyusen_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  entryId: int("entryId"),
+  sourceId: int("sourceId"),
+  type: varchar("type", { length: 64 }).notNull(),
+  notificationKey: varchar("notificationKey", { length: 255 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  isRead: int("isRead").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("chyusen_notifications_user_key_unique").on(table.userId, table.notificationKey),
+  index("chyusen_notifications_user_read_idx").on(table.userId, table.isRead),
+]);
+
+export type ChyusenNotification = typeof chyusenNotifications.$inferSelect;
+
+/** Stores the task UID for the single project-level six-hour source monitor. */
+export const chyusenMonitorConfig = mysqlTable("chyusen_monitor_config", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+  cronExpression: varchar("cronExpression", { length: 64 }).default("0 0 */6 * * *"),
+  isEnabled: int("isEnabled").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});

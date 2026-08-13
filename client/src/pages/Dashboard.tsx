@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck } from "lucide-react";
+import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, Ticket, Clock3, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { RarityBadge } from "@/components/RarityBadge";
 
@@ -18,6 +20,7 @@ const monthlyData = [
 
 export default function Dashboard() {
   const { data: stats } = trpc.dashboard.stats.useQuery();
+  const [, setLocation] = useLocation();
 
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
@@ -33,6 +36,8 @@ export default function Dashboard() {
   const recentActivities = stats?.recentActivities ?? [];
   const chartData = stats?.chartData ?? monthlyData;
   const cardRarityStats = stats?.cardRarityStats ?? [];
+  const chyusen = stats?.chyusen ?? { open: 0, expiring: 0, waitingResult: 0, won: 0, lost: 0 };
+  const chyusenReminders = stats?.chyusenReminders ?? [];
 
   return (
     <div className="space-y-6">
@@ -121,6 +126,19 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-red-100 bg-card neon-card">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+          <div><CardTitle className="flex items-center gap-2 text-base font-semibold"><Ticket className="h-4 w-4 text-red-600" />抽選</CardTitle><p className="mt-1 text-sm text-muted-foreground">Tóm tắt chương trình Lottery / Chūsen của bạn.</p></div>
+          <Button variant="outline" size="sm" onClick={() => setLocation("/chyusen")}>Quản lý Chyusen</Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[{ label: "Đang đăng ký", value: chyusen.open, color: "text-emerald-700" }, { label: "Sắp hết hạn", value: chyusen.expiring, color: "text-amber-700" }, { label: "Chờ kết quả", value: chyusen.waitingResult, color: "text-blue-700" }, { label: "Đã trúng", value: chyusen.won, color: "text-violet-700" }, { label: "Đã trượt", value: chyusen.lost, color: "text-zinc-700" }].map((item) => <div key={item.label} className="rounded-lg border border-border bg-background px-3 py-3"><p className="text-xs text-muted-foreground">{item.label}</p><p className={`mt-1 text-xl font-bold ${item.color}`}>{item.value}</p></div>)}
+          </div>
+          {chyusenReminders.length > 0 && <div className="space-y-2"><p className="text-sm font-medium">Chyusen sắp hết hạn</p>{chyusenReminders.map((entry: any) => <div key={entry.id} className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-amber-950">{entry.title}</p><p className="mt-0.5 flex items-center gap-1 text-xs text-amber-800"><Clock3 className="h-3.5 w-3.5" />{entry.remainingTime || "Sắp hết hạn"} · {entry.shop || "Khác"}</p></div>{entry.sourceUrl && <Button asChild variant="outline" size="sm" className="border-amber-300 bg-white"><a href={entry.sourceUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Đăng ký</a></Button>}</div>)}</div>}
+        </CardContent>
+      </Card>
 
       <Card className="bg-card neon-card">
         <CardHeader className="pb-3">
