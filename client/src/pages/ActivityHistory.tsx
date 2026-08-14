@@ -20,7 +20,7 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 
 type HistoryFilter = "all" | "auto_sync" | "product" | "purchase" | "sale" | "shop";
 
@@ -95,10 +95,16 @@ export function getChangedFields(oldValue: string | null, newValue: string | nul
     .map((key) => ({ key, before: before[key], after: after[key] }));
 }
 
+function getInitialExpandedActivityId() {
+  const value = new URLSearchParams(window.location.search).get("expand");
+  const id = value ? Number(value) : NaN;
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 export default function ActivityHistory() {
   const [activeFilter, setActiveFilter] = useState<HistoryFilter>("all");
   const [search, setSearch] = useState("");
-  const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null);
+  const [expandedActivityId, setExpandedActivityId] = useState<number | null>(getInitialExpandedActivityId);
   const queryInput = useMemo(() => ({
     entityType: activeFilter === "all" || activeFilter === "auto_sync" ? undefined : activeFilter,
     syncScope: activeFilter === "auto_sync" ? "only" as const : activeFilter === "all" ? "exclude" as const : undefined,
@@ -188,7 +194,7 @@ export default function ActivityHistory() {
                         <div className="flex items-center justify-between border-b border-border/60 bg-secondary/30 px-3 py-2"><span className="text-xs font-medium text-muted-foreground">Các trường đã thay đổi</span><Badge variant="outline" className={`h-6 gap-1 text-[11px] ${tone.badgeClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge></div>
                         <div className="grid grid-cols-[minmax(90px,0.8fr)_1fr_1fr] gap-px bg-border/60 text-xs">
                           <div className="bg-secondary/40 px-3 py-2 font-medium text-muted-foreground">Trường</div><div className="bg-secondary/40 px-3 py-2 font-medium text-muted-foreground">Trước</div><div className="bg-secondary/40 px-3 py-2 font-medium text-muted-foreground">Sau</div>
-                          {changes.map((change) => <><div key={`${change.key}-label`} className={`border-l-2 bg-background px-3 py-2 font-semibold ${tone.accentClass} ${tone.fieldClass}`}>{fieldLabels[change.key] || change.key}</div><div key={`${change.key}-before`} className={`break-words bg-background px-3 py-2 text-muted-foreground ${tone.valueClass}`}>{formatChangeValue(change.before)}</div><div key={`${change.key}-after`} className={`break-words bg-background px-3 py-2 font-medium ${tone.valueClass}`}>{formatChangeValue(change.after)}</div></>)}
+                          {changes.map((change) => <Fragment key={change.key}><div className={`border-l-2 bg-background px-3 py-2 font-semibold ${tone.accentClass} ${tone.fieldClass}`}>{fieldLabels[change.key] || change.key}</div><div className={`break-words bg-background px-3 py-2 text-muted-foreground ${tone.valueClass}`}>{formatChangeValue(change.before)}</div><div className={`break-words bg-background px-3 py-2 font-medium ${tone.valueClass}`}>{formatChangeValue(change.after)}</div></Fragment>)}
                         </div>
                       </div>
                     )}

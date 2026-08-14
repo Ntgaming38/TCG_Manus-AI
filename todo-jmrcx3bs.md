@@ -93,3 +93,10 @@
 - [x] Làm mới danh sách Thùng rác ngay sau khi hoàn tác Chyusen từ toast.
 - [x] Xác minh trực tiếp luồng xóa, mục xuất hiện trong Thùng rác và khôi phục thành công từ giao diện.
 - [x] Lưu checkpoint sau khi hoàn tất đồng bộ và xác minh Thùng rác.
+- [x] Xác định phần tử danh sách trong Lịch sử đang thiếu khóa React duy nhất.
+- [x] Bổ sung khóa ổn định cho các phần tử render từ danh sách trong Lịch sử.
+- [x] Kiểm thử, xác minh không còn cảnh báo khóa và lưu phiên bản sửa lỗi.
+- [x] Xác định bản ghi Lịch sử thực tế có dữ liệu trước/sau để mở phần chi tiết thay đổi.
+- [x] Xác minh trực tiếp phần chi tiết thay đổi không còn cảnh báo khóa React.
+- [x] Lưu checkpoint sau khi xác minh phần chi tiết Lịch sử.
+- [x] Hỗ trợ mở trực tiếp một hoạt động Lịch sử theo ID để kiểm tra phần chi tiết thay đổi.
