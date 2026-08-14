@@ -57,6 +57,11 @@ export function isChyusenDeadlineToday(value: Date | string | null | undefined, 
   return getChyusenDaysRemaining(value, now) === 0;
 }
 
+export function isChyusenResultReady(value: Date | string | null | undefined, now = new Date()) {
+  const days = getChyusenDaysRemaining(value, now);
+  return days === null || days <= 0;
+}
+
 export function parseChyusenDayMonth(value: string, savedAt = new Date()) {
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})$/);
   if (!match) return null;

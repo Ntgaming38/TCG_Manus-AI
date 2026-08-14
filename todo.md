@@ -516,3 +516,13 @@
 - [x] Tái hiện lỗi với ảnh thông báo Chyusen rõ nét người dùng cung cấp
 - [x] Sửa lỗi tải/đọc ảnh và thêm hồi quy cho ảnh rõ nét
 - [x] Kiểm thử lại biểu mẫu Chyusen và lưu checkpoint
+
+## Trạng thái AI và hoàn tác Đã trúng
+- [x] Hiển thị AI đang thử lại khi luồng đọc ảnh thực hiện lần xử lý dự phòng
+- [x] Thêm nút hoàn tác an toàn cho Chyusen đã trúng do bấm nhầm
+- [x] Kiểm thử trạng thái AI và hoàn tác, sau đó lưu checkpoint
+
+## Ràng buộc kết quả Chyusen và Tổng quan
+- [x] Chặn đánh dấu Đã trúng trước ngày công bố kết quả ở UI và API
+- [x] Làm mới chỉ số Tổng quan sau cập nhật, hoàn tác và xóa Chyusen
+- [x] Kiểm thử ràng buộc ngày công bố và lưu checkpoint

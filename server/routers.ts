@@ -11,6 +11,7 @@ import { buildTcgAssistantSystemPrompt } from "./tcgAssistantPrompt";
 import * as chyusenDb from "./chyusenDb";
 import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
+import { formatChyusenDayMonth, isChyusenResultReady } from "@shared/chyusenDate";
 import { checkChyusenSourceNow } from "./chyusenMonitor";
 import { analyzeChyusenImage, analyzeChyusenImages } from "./chyusenImageAnalysis";
 import { emptyTrashItems, getTrashAutoCleanupSettings, listTrashItems, saveTrashAutoCleanupSettings, setTrashAutoCleanupTask, TRASH_AUTO_CLEANUP_CRON } from "./trashDb";
@@ -486,10 +487,29 @@ export const appRouter = router({
 
     setParticipation: protectedProcedure
       .input(z.object({ id: z.number(), applicationStatus: z.enum(["not_registered", "registered", "cancelled", "won", "lost", "not_participating"]) }))
-      .mutation(({ ctx, input }) => chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
-        applicationStatus: input.applicationStatus,
-        resultStatus: input.applicationStatus === "won" ? "won" : input.applicationStatus === "lost" ? "lost" : undefined,
-      })),
+      .mutation(async ({ ctx, input }) => {
+        if (input.applicationStatus === "won") {
+          const entry = await chyusenDb.getChyusenEntry(ctx.user.id, input.id);
+          if (!entry) throw new Error("Không tìm thấy Chyusen.");
+          if (entry.resultDate && !isChyusenResultReady(entry.resultDate)) {
+            throw new Error(`Chỉ có thể đánh dấu Đã trúng từ ngày công bố kết quả (${formatChyusenDayMonth(entry.resultDate)}).`);
+          }
+        }
+        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
+          applicationStatus: input.applicationStatus,
+          resultStatus: input.applicationStatus === "won" ? "won" : input.applicationStatus === "lost" ? "lost" : "pending",
+        });
+      }),
+
+    undoWon: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const entry = await chyusenDb.getChyusenEntry(ctx.user.id, input.id);
+        if (!entry) throw new Error("Không tìm thấy Chyusen.");
+        if (entry.applicationStatus !== "won" && entry.resultStatus !== "won") throw new Error("Chyusen này không ở trạng thái Đã trúng.");
+        if (entry.purchaseCreatedAt) throw new Error("Không thể hoàn tác sau khi Chyusen đã được chuyển sang Mua Hàng.");
+        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, { applicationStatus: "registered", resultStatus: "pending" });
+      }),
 
     purchaseDraft: protectedProcedure
       .input(z.object({ id: z.number() }))

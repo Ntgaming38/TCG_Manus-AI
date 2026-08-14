@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenDeadlineToday, isChyusenRegistrationExpired, parseChyusenDayMonth } from "../shared/chyusenDate";
+import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenDeadlineToday, isChyusenRegistrationExpired, isChyusenResultReady, parseChyusenDayMonth } from "../shared/chyusenDate";
 
 describe("Chyusen day/month dates", () => {
   it("hiển thị ngày theo dd/mm và bỏ năm, giờ", () => {
@@ -42,5 +42,11 @@ describe("Chyusen day/month dates", () => {
     expect(getChyusenDeadlineTone("2026-08-13T00:00:00+09:00", now)).toBe("warning");
     expect(getChyusenDeadlineTone("2026-08-11T00:00:00+09:00", now)).toBe("urgent");
     expect(getChyusenDeadlineTone("2026-08-09T00:00:00+09:00", now)).toBe("expired");
+  });
+
+  it("chỉ cho phép đánh dấu kết quả từ ngày công bố theo lịch Nhật", () => {
+    const now = new Date("2026-08-13T10:00:00+09:00");
+    expect(isChyusenResultReady("2026-08-17T00:00:00+09:00", now)).toBe(false);
+    expect(isChyusenResultReady("2026-08-13T00:00:00+09:00", now)).toBe(true);
   });
 });

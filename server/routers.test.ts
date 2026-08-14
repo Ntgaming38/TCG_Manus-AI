@@ -278,6 +278,30 @@ describe("appRouter", () => {
       expect(chyusenDb.markChyusenPurchaseCreated).toHaveBeenCalledWith(1, 31);
     });
 
+    it("hoàn tác Đã trúng về Đã đăng ký khi chưa tạo Mua Hàng", async () => {
+      vi.mocked(chyusenDb.getChyusenEntry).mockResolvedValue({ id: 46, applicationStatus: "won", resultStatus: "won", purchaseCreatedAt: null } as any);
+      vi.mocked(chyusenDb.updateChyusenEntry).mockResolvedValue({ id: 46, applicationStatus: "registered", resultStatus: "pending" } as any);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.chyusen.undoWon({ id: 46 })).resolves.toMatchObject({ id: 46, applicationStatus: "registered" });
+      expect(chyusenDb.updateChyusenEntry).toHaveBeenCalledWith(1, 46, { applicationStatus: "registered", resultStatus: "pending" });
+    });
+
+    it("không hoàn tác Đã trúng sau khi đã tạo Mua Hàng", async () => {
+      vi.mocked(chyusenDb.getChyusenEntry).mockResolvedValue({ id: 47, applicationStatus: "won", resultStatus: "won", purchaseCreatedAt: new Date() } as any);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.chyusen.undoWon({ id: 47 })).rejects.toThrow("Không thể hoàn tác sau khi Chyusen đã được chuyển sang Mua Hàng.");
+    });
+
+    it("chặn đánh dấu Đã trúng trước ngày công bố kết quả", async () => {
+      vi.mocked(chyusenDb.getChyusenEntry).mockResolvedValue({ id: 48, resultDate: new Date("2027-08-17T00:00:00+09:00") } as any);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.chyusen.setParticipation({ id: 48, applicationStatus: "won" })).rejects.toThrow("Chỉ có thể đánh dấu Đã trúng từ ngày công bố kết quả");
+      expect(chyusenDb.updateChyusenEntry).not.toHaveBeenCalledWith(1, 48, expect.anything());
+    });
+
     it("cho phép chủ sở hữu sửa URL, nhãn, trạng thái và tần suất của nguồn theo dõi", async () => {
       vi.mocked(chyusenDb.updateChyusenSource).mockResolvedValue(undefined);
       const caller = appRouter.createCaller(createAuthContext());
