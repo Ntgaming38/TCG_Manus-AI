@@ -690,6 +690,13 @@
   animation: dashboard-sold-pulse 1.8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
 }
 
+.profit-negative-amount {
+  display: inline-block;
+  color: #f87171;
+  text-shadow: 0 0 3px rgba(248, 113, 113, 0.45);
+  animation: dashboard-sold-pulse 1.8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root[data-rgb-effects="enabled"] .rarity-rgb-text {
     animation: none;
@@ -708,5 +715,6 @@
     background-position: 50% 50%;
   }
 
-  .dashboard-sold-value { animation: none; }
+  .dashboard-sold-value,
+  .profit-negative-amount { animation: none; }
 }

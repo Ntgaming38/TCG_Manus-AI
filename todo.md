@@ -788,3 +788,8 @@
 - [x] Chuẩn hóa khoảng cách sau ký hiệu ¥ trước số tiền trên toàn ứng dụng
 - [x] Tăng vùng tài khoản thanh bên để tên người dùng không bị che
 - [x] Bổ sung kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Định dạng ký hiệu Yên phía sau số tiền
+- [x] Chuyển toàn bộ ký hiệu ¥ ra sau số tiền, có khoảng cách rõ ràng
+- [x] Giữ dấu âm đứng trước số tiền, màu đỏ và animation cho số âm
+- [x] Bổ sung kiểm thử giao diện desktop/mobile và lưu checkpoint

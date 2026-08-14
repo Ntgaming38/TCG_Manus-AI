@@ -39,7 +39,8 @@ export default function Dashboard() {
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
   const totalProfit = stats?.totalProfit ?? 0;
-  const profitPrefix = totalProfit > 0 ? "+¥ " : totalProfit < 0 ? "¥ -" : "¥ ";
+  const profitPrefix = totalProfit > 0 ? "+ " : totalProfit < 0 ? "- " : "";
+  const profitSuffix = " ¥";
   const profitPrefixTone = totalProfit > 0 ? "text-green-400" : totalProfit < 0 ? "text-red-400" : "text-muted-foreground";
   const profitAmount = Math.abs(totalProfit);
   const capitalByType = stats?.capitalByType ?? { card: 0, box: 0, pack: 0 };
@@ -109,7 +110,7 @@ export default function Dashboard() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Lợi nhuận</p><MetricInfo label="Lợi nhuận"><p>Tổng lợi nhuận của các giao dịch đã bán: doanh thu − giá vốn.</p><p>Card {formatYen(profitByType.card)} + Box {formatYen(profitByType.box)} + Pack {formatYen(profitByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalProfit)}</p></MetricInfo></div>
                 <p className="mt-1 text-2xl font-bold">
-                  <span className={profitPrefixTone}>{profitPrefix}</span><span className="rgb-profit-amount">{profitAmount.toLocaleString()}</span>
+                  <span className={profitPrefixTone}>{profitPrefix}</span><span className={totalProfit < 0 ? "profit-negative-amount" : "rgb-profit-amount"}>{profitAmount.toLocaleString()}</span><span className={profitPrefixTone}>{profitSuffix}</span>
                 </p>
                 <MonthlyTrend trend={monthlyTrends.profit} label="Lợi nhuận tháng này" />
               </div>
