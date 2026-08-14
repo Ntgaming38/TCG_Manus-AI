@@ -17,6 +17,7 @@ import { analyzeChyusenImage, analyzeChyusenImages } from "./chyusenImageAnalysi
 import { emptyTrashItems, getTrashAutoCleanupSettings, listTrashItems, saveTrashAutoCleanupSettings, setTrashAutoCleanupTask, TRASH_AUTO_CLEANUP_CRON } from "./trashDb";
 import { restoreTrashItem } from "./trashRestore";
 import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
+import { uploadLoginBackground } from "./loginBackground";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -154,6 +155,12 @@ export const appRouter = router({
           },
         };
       }),
+  }),
+
+  loginBackground: router({
+    upload: protectedProcedure
+      .input(z.object({ imageDataUrl: z.string().trim().min(64).max(6_000_000) }))
+      .mutation(({ ctx, input }) => uploadLoginBackground(ctx.user.id, input.imageDataUrl)),
   }),
 
   products: router({

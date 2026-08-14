@@ -4,11 +4,13 @@ import { startLogin } from "@/const";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { readLoginBackgroundUrl } from "@/lib/loginBackground";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [transitioning, setTransitioning] = useState(false);
+  const [backgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
 
   useEffect(() => {
     if (user && !loading) {
@@ -38,7 +40,7 @@ export default function Home() {
       {/* Full background image - artwork supplied by the user */}
       <div className="absolute inset-0">
         <img
-          src="/manus-storage/tcg-manager-login-background_ab4c32e6.png"
+          src={backgroundUrl}
           alt="Pikachu và Lucario trên nền đăng nhập TCG Manager"
           className="w-full h-full object-cover"
         />
@@ -62,7 +64,7 @@ export default function Home() {
         {/* Bottom area - Logo is intentionally close to the version information */}
         <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
           <div className="flex w-full flex-col items-center gap-1">
-            <h1 className="tcg-logo-text whitespace-nowrap -translate-y-3 sm:-translate-y-4 text-[clamp(1.75rem,8vw,3.75rem)] tracking-[0.08em] select-none text-center leading-none">
+            <h1 className="tcg-logo-text login-tcg-logo whitespace-nowrap -translate-y-3 sm:-translate-y-4 text-[clamp(1.75rem,8vw,3.75rem)] tracking-[0.08em] select-none text-center leading-none">
               TCG Manager
             </h1>
             {/* Server info bar */}
@@ -80,7 +82,7 @@ export default function Home() {
             className="w-full max-w-[220px] red-btn text-xl rounded-lg py-7 border-0 btn-red-pulse disabled:opacity-70"
           >
             {transitioning ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <><Loader2 className="h-5 w-5 animate-spin" /><span>Đang xử lý...</span></>
             ) : (
               "Bắt đầu"
             )}

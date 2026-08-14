@@ -488,8 +488,21 @@
     animation: login-rgb-transition 520ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
   }
 
+  .login-tcg-logo {
+    cursor: default;
+    transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), filter 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .login-tcg-logo:hover {
+      transform: translateY(-0.55rem) scale(1.035);
+      filter: brightness(1.16) drop-shadow(0 0 12px rgba(255, 255, 255, 0.65));
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .login-rgb-transition-overlay { animation: none; opacity: 1; background-position: center, 50% 50%; }
+    .login-tcg-logo { transition: none; }
   }
 
   /* Entrance animations */
@@ -539,4 +552,5 @@
   .settings-stack > :nth-child(2) { order: 2; }
   .settings-stack > :nth-child(3) { order: 3; }
   .settings-stack > :nth-child(4) { order: 1; }
-}
+  .settings-login-background-card { order: 2.5; }
+ }

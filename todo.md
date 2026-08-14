@@ -622,3 +622,10 @@
 - [x] Nâng logo TCG Manager lên nhẹ phía trên ô phiên bản
 - [x] Giữ logo TCG Manager một dòng trên điện thoại và máy tính
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Tương tác và nền đăng nhập tùy chỉnh
+- [x] Thêm hiệu ứng hover phóng to/phát sáng cho logo TCG Manager ở đăng nhập
+- [x] Cải thiện chỉ báo đang xử lý sau khi bấm nút Bắt đầu
+- [x] Thêm tải ảnh nền đăng nhập tùy chỉnh từ trang Cài đặt
+- [x] Lưu nền tùy chỉnh theo thiết bị và cho phép khôi phục nền mặc định
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

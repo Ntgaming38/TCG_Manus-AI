@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, PackageSearch, Radio, RefreshCw, Save, Sparkles, TimerReset, Trash2 } from "lucide-react";
+import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, ImageUp, PackageSearch, Radio, RefreshCw, Save, Sparkles, TimerReset, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { createChyusenSourceUpdatePayload } from "@shared/chyusenSourceUpdate";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsColors, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsColors, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectColors, type RgbEffectSpeed } from "@/lib/rgbEffects";
+import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundUrl, saveLoginBackgroundUrl } from "@/lib/loginBackground";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
@@ -39,6 +40,7 @@ export default function Settings() {
   const [rgbEffectsEnabled, setRgbEffectsEnabled] = useState(() => readRgbEffectsEnabled(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsSpeed, setRgbEffectsSpeed] = useState<RgbEffectSpeed>(() => readRgbEffectsSpeed(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsColors, setRgbEffectsColors] = useState<RgbEffectColors>(() => readRgbEffectsColors(typeof window === "undefined" ? undefined : window.localStorage));
+  const [loginBackgroundUrl, setLoginBackgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -65,6 +67,14 @@ export default function Settings() {
       toast.success(settings.isEnabled ? "Đã bật tự động dọn Thùng rác." : "Đã lưu cấu hình dọn Thùng rác.");
     },
     onError: (error) => toast.error(error.message || "Không thể lưu cấu hình tự động dọn Thùng rác."),
+  });
+  const uploadLoginBackground = trpc.loginBackground.upload.useMutation({
+    onSuccess: (result) => {
+      const url = saveLoginBackgroundUrl(result.url, window.localStorage);
+      setLoginBackgroundUrl(url);
+      toast.success("Đã cập nhật nền đăng nhập trên thiết bị này.");
+    },
+    onError: (error) => toast.error(error.message || "Không thể tải ảnh nền lên."),
   });
 
   const deadlineHours = notificationSettings?.deadlineHours || [168, 72, 24, 12, 3, 1];
@@ -103,6 +113,20 @@ export default function Settings() {
     setRgbEffectsColors(DEFAULT_RGB_EFFECT_COLORS);
     toast.success("Đã khôi phục hiệu ứng RGB mặc định.");
   };
+  const uploadLoginBackgroundFile = (file?: File) => {
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error("Hãy chọn ảnh PNG, JPEG hoặc WEBP."); return; }
+    if (file.size > 4_000_000) { toast.error("Ảnh nền phải có dung lượng tối đa 4 MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => uploadLoginBackground.mutate({ imageDataUrl: String(reader.result) });
+    reader.onerror = () => toast.error("Không thể đọc tệp ảnh nền.");
+    reader.readAsDataURL(file);
+  };
+  const resetLoginBackground = () => {
+    const url = saveLoginBackgroundUrl(DEFAULT_LOGIN_BACKGROUND_URL, window.localStorage);
+    setLoginBackgroundUrl(url);
+    toast.success("Đã khôi phục nền đăng nhập mặc định.");
+  };
 
   return <div className="settings-stack mx-auto max-w-5xl">
     <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">Workspace settings</p><h1 className="mt-1 text-3xl font-black tracking-tight">Cài đặt</h1><p className="mt-1 text-sm text-muted-foreground">Quản lý nhắc hạn, nguồn Chyusen và tự động đồng bộ giá ở một nơi.</p></div>
@@ -130,6 +154,11 @@ export default function Settings() {
     <Card>
       <CardHeader><CardTitle className="flex items-center gap-2"><TimerReset className="h-5 w-5 text-red-600" />Tự động dọn Thùng rác</CardTitle><CardDescription>Tự động xóa vĩnh viễn các mục đã nằm trong Thùng rác quá số ngày bạn chọn. Lịch này chỉ áp dụng cho dữ liệu của tài khoản bạn.</CardDescription></CardHeader>
       <CardContent className="space-y-4"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_auto]"><div><p className="text-sm font-semibold">Dọn dẹp tự động mỗi ngày</p><p className="text-xs text-muted-foreground">Mục đã khôi phục sẽ không bị dọn. Bạn vẫn có thể dọn thủ công trong Thùng rác bất cứ lúc nào.</p></div><div className="flex items-center gap-2"><Switch checked={Boolean(trashAutoCleanup?.isEnabled)} disabled={!trashAutoCleanup || updateTrashAutoCleanup.isPending} onCheckedChange={(isEnabled) => updateTrashAutoCleanup.mutate({ isEnabled })} /><span className="text-xs font-medium">{trashAutoCleanup?.isEnabled ? "Đang bật" : "Đang tắt"}</span></div></div><div className="grid gap-3 sm:grid-cols-2"><div><p className="mb-2 text-xs font-semibold text-muted-foreground">Giữ mục đã xóa trong</p><Select value={String(trashAutoCleanup?.retentionDays || 30)} disabled={!trashAutoCleanup || updateTrashAutoCleanup.isPending} onValueChange={(value) => updateTrashAutoCleanup.mutate({ retentionDays: Number(value) })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TRASH_RETENTION_DAYS.map((days) => <SelectItem key={days} value={String(days)}>{days} ngày</SelectItem>)}</SelectContent></Select></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Lần dọn tự động gần nhất</p><p className="mt-1 flex items-center gap-1 text-sm font-semibold"><CircleCheck className={`h-4 w-4 ${trashAutoCleanup?.lastRunStatus === "failed" ? "text-red-600" : "text-emerald-600"}`} />{trashAutoCleanup?.lastRunStatus === "success" ? "Hoàn tất" : trashAutoCleanup?.lastRunStatus === "failed" ? "Không thành công" : trashAutoCleanup?.lastRunStatus === "skipped" ? "Đã bỏ qua" : "Chưa chạy"}</p><p className="mt-1 text-xs text-muted-foreground">{trashAutoCleanup?.lastRunAt ? new Date(trashAutoCleanup.lastRunAt).toLocaleString("vi-VN") : "Chạy hằng ngày khi bạn bật cấu hình"}</p></div></div>{trashAutoCleanup?.lastRunSummary && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">{trashAutoCleanup.lastRunSummary}</p>}</CardContent>
+    </Card>
+
+    <Card className="settings-login-background-card">
+      <CardHeader><CardTitle className="flex items-center gap-2"><ImageUp className="h-5 w-5 text-sky-400" />Nền đăng nhập</CardTitle><CardDescription>Tải ảnh PNG, JPEG hoặc WEBP tối đa 4 MB để thay nền đăng nhập trên thiết bị này.</CardDescription></CardHeader>
+      <CardContent className="space-y-3"><div className="h-28 rounded-lg border bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(3, 7, 18, 0.15), rgba(3, 7, 18, 0.48)), url(${loginBackgroundUrl})` }}><div className="flex h-full items-end p-3"><span className="rounded bg-black/55 px-2 py-1 text-xs font-semibold text-white">Xem trước nền đăng nhập</span></div></div><div className="flex flex-col gap-2 sm:flex-row"><Input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadLoginBackground.isPending} onChange={(event) => { uploadLoginBackgroundFile(event.target.files?.[0]); event.currentTarget.value = ""; }} /><Button type="button" variant="outline" disabled={uploadLoginBackground.isPending} onClick={resetLoginBackground}><TimerReset className="mr-1.5 h-4 w-4" />Nền mặc định</Button></div><p className="text-xs text-muted-foreground">{uploadLoginBackground.isPending ? "Đang tải ảnh nền lên..." : "Ảnh chỉ được dùng làm nền đăng nhập cho trình duyệt này."}</p></CardContent>
     </Card>
 
     <AlertDialog open={deleteSourceId !== null} onOpenChange={(open) => !open && setDeleteSourceId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nguồn theo dõi?</AlertDialogTitle><AlertDialogDescription>Nguồn sẽ không còn được kiểm tra tự động. Các Chyusen và audit log hiện có vẫn được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteSourceId && deleteSource.mutate({ id: deleteSourceId })}>Xóa nguồn</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
