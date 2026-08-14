@@ -594,3 +594,8 @@
 - [x] Thêm khu vực xem trước RGB trong trang Cài đặt
 - [x] Phản chiếu trạng thái bật/tắt và tốc độ RGB đang chọn trong bản xem trước
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Đặt lại mặc định hiệu ứng RGB
+- [x] Thêm nút Đặt lại mặc định trong thẻ Hiệu ứng RGB
+- [x] Khôi phục trạng thái bật và tốc độ Bình thường ngay lập tức
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
