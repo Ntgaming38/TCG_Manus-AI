@@ -465,3 +465,12 @@
 - [x] Tạo kiểu nút đóng X đỏ dùng chung cho giao diện
 - [x] Áp dụng nút đóng chuẩn cho các hộp thoại và bảng nổi phù hợp
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Vùng chạm nút đóng mobile
+- [x] Tăng vùng chạm nút đóng X lên 44 px trên điện thoại
+- [x] Kiểm thử hiển thị và lưu checkpoint
+
+## Tinh chỉnh kích thước giao diện
+- [x] Thu gọn ô ngày tháng Thùng rác bằng ô Tất cả dữ liệu
+- [x] Đưa nút đóng X đỏ về kích thước mặc định
+- [x] Kiểm thử mobile và lưu checkpoint
