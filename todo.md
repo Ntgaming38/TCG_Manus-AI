@@ -564,3 +564,8 @@
 - [x] Tự hiển thị lại sản phẩm khi giao dịch Mua Hàng làm tồn kho lớn hơn 0
 - [x] Giữ sản phẩm đã ẩn trong gợi ý khi tạo giao dịch Mua Hàng
 - [x] Bổ sung kiểm thử hồi quy và xác minh giao diện desktop/mobile
+
+## Bộ lọc sản phẩm đã ẩn trong Kho Hàng
+- [x] Thêm lựa chọn Đã ẩn để xem sản phẩm hết hàng trong trang Kho Hàng
+- [x] Hiển thị trạng thái và thông điệp trống phù hợp cho bộ lọc Đã ẩn
+- [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và lưu checkpoint

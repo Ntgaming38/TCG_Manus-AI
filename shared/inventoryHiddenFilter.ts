@@ -1,0 +1,18 @@
+export const INVENTORY_HIDDEN_STATUS = "sold";
+
+export function isInventoryHiddenFilter(status: string) {
+  return status === INVENTORY_HIDDEN_STATUS;
+}
+
+export function getInventoryEmptyState(status: string) {
+  if (isInventoryHiddenFilter(status)) {
+    return {
+      title: "Chưa có sản phẩm đã ẩn",
+      description: "Sản phẩm hết hàng sẽ xuất hiện ở đây. Khi nhập mua lại, sản phẩm sẽ tự hiện lại trong Card, Box hoặc Pack.",
+    };
+  }
+  return {
+    title: "Kho trống",
+    description: "Thêm sản phẩm hoặc tạo giao dịch mua để cập nhật kho",
+  };
+}
