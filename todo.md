@@ -709,3 +709,9 @@
 - [x] Hiển thị Lợi nhuận dương màu xanh lá và Lợi nhuận âm màu đỏ trên Tổng quan
 - [x] Giữ hiệu ứng RGB cho mức Lợi nhuận bằng 0
 - [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Sắp xếp Chyusen theo hạn đăng ký
+- [x] Đưa chương trình có hạn hôm nay lên đầu danh sách
+- [x] Sắp xếp các hạn còn 1, 2 và nhiều ngày theo thứ tự tăng dần
+- [x] Giữ thứ tự ổn định cho chương trình không có hạn hoặc đã có kết quả
+- [x] Bổ sung kiểm thử và lưu checkpoint
