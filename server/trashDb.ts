@@ -63,10 +63,11 @@ export async function markLatestTrashItemRestored(userId: number, entityType: Tr
   if (item) await markTrashItemRestored(userId, item.id);
 }
 
-export async function emptyTrashItems(userId: number) {
+export async function emptyTrashItems(userId: number, itemIds?: number[]) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const items = await listTrashItems(userId);
+  const requestedIds = itemIds ? Array.from(new Set(itemIds)) : undefined;
+  const items = (await listTrashItems(userId)).filter((item) => !requestedIds || requestedIds.includes(item.id));
   if (!items.length) return { purgedCount: 0 };
 
   const chyusenIds = items.filter((item) => item.entityType === "chyusen").map((item) => item.entityId);
@@ -76,6 +77,6 @@ export async function emptyTrashItems(userId: number) {
     await db.delete(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), inArray(chyusenEntries.id, chyusenIds)));
   }
   if (notificationIds.length) await db.delete(chyusenNotifications).where(and(eq(chyusenNotifications.userId, userId), inArray(chyusenNotifications.id, notificationIds)));
-  await db.delete(trashItems).where(and(eq(trashItems.userId, userId), isNull(trashItems.restoredAt)));
+  await db.delete(trashItems).where(and(eq(trashItems.userId, userId), isNull(trashItems.restoredAt), inArray(trashItems.id, items.map((item) => item.id))));
   return { purgedCount: items.length };
 }

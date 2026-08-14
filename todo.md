@@ -449,3 +449,9 @@
 - [x] Thêm tìm kiếm và lọc theo ngày xóa trong Thùng rác
 - [x] Thêm Làm sạch thùng rác với xác nhận xóa vĩnh viễn
 - [x] Kiểm thử luồng khôi phục, lọc và dọn sạch trước khi lưu checkpoint
+
+## Thao tác hàng loạt Thùng rác
+- [x] Thêm checkbox chọn nhiều mục và chọn tất cả mục đang hiển thị
+- [x] Thêm khôi phục hàng loạt các mục đã chọn
+- [x] Thêm xóa vĩnh viễn hàng loạt với xác nhận an toàn
+- [x] Kiểm thử thao tác hàng loạt và lưu checkpoint

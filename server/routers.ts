@@ -372,9 +372,20 @@ export const appRouter = router({
     restore: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => restoreTrashItem(ctx.user.id, input.id)),
+    restoreMany: protectedProcedure
+      .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100) }))
+      .mutation(async ({ ctx, input }) => {
+        const ids = Array.from(new Set(input.ids));
+        const restored = [];
+        for (const id of ids) restored.push(await restoreTrashItem(ctx.user.id, id));
+        return { restoredCount: restored.length, titles: restored.map((item) => item.title) };
+      }),
     empty: protectedProcedure
       .input(z.object({ confirmed: z.literal(true) }))
       .mutation(({ ctx }) => emptyTrashItems(ctx.user.id)),
+    purgeMany: protectedProcedure
+      .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100), confirmed: z.literal(true) }))
+      .mutation(({ ctx, input }) => emptyTrashItems(ctx.user.id, input.ids)),
   }),
 
   activities: router({

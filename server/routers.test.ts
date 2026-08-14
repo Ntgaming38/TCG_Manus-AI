@@ -184,12 +184,29 @@ describe("appRouter", () => {
       expect(restoreTrashItem).toHaveBeenCalledWith(1, 41);
     });
 
+    it("khôi phục nhiều mục Thùng rác theo đúng người dùng đang đăng nhập", async () => {
+      vi.mocked(restoreTrashItem).mockResolvedValueOnce({ id: 41, entityType: "product", title: "Pikachu", restored: true }).mockResolvedValueOnce({ id: 42, entityType: "sale", title: "Bán Pikachu", restored: true });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.trash.restoreMany({ ids: [41, 42, 41] })).resolves.toMatchObject({ restoredCount: 2 });
+      expect(restoreTrashItem).toHaveBeenCalledWith(1, 41);
+      expect(restoreTrashItem).toHaveBeenCalledWith(1, 42);
+    });
+
     it("chỉ dọn sạch mục Thùng rác của người dùng sau khi xác nhận", async () => {
       vi.mocked(emptyTrashItems).mockResolvedValue({ purgedCount: 2 });
       const caller = appRouter.createCaller(createAuthContext());
 
       await expect(caller.trash.empty({ confirmed: true })).resolves.toEqual({ purgedCount: 2 });
       expect(emptyTrashItems).toHaveBeenCalledWith(1);
+    });
+
+    it("xóa vĩnh viễn chỉ các mục đã chọn", async () => {
+      vi.mocked(emptyTrashItems).mockResolvedValue({ purgedCount: 2 });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.trash.purgeMany({ ids: [41, 42], confirmed: true })).resolves.toEqual({ purgedCount: 2 });
+      expect(emptyTrashItems).toHaveBeenCalledWith(1, [41, 42]);
     });
   });
 
