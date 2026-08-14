@@ -17,12 +17,13 @@ import {
   Search,
   ShoppingBag,
   Store,
+  Ticket,
   Trash2,
   TrendingUp,
 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 
-type HistoryFilter = "all" | "auto_sync" | "product" | "purchase" | "sale" | "shop";
+type HistoryFilter = "all" | "auto_sync" | "product" | "purchase" | "sale" | "shop" | "chyusen";
 
 const fieldLabels: Record<string, string> = {
   name: "Tên", type: "Loại", quantity: "Số lượng", damagedQuantity: "Số lượng hỏng",
@@ -30,6 +31,8 @@ const fieldLabels: Record<string, string> = {
   totalPrice: "Tổng tiền mua", totalRevenue: "Tổng doanh thu", salePrice: "Giá bán",
   profit: "Lợi nhuận", shop: "Cửa hàng", note: "Ghi chú", status: "Trạng thái",
   damageNote: "Ghi chú hàng hỏng", platform: "Nền tảng",
+  productName: "Tên sản phẩm", series: "Series", applicationStatus: "Trạng thái đăng ký", resultStatus: "Kết quả",
+  applicationEnd: "Hạn đăng ký", resultDate: "Ngày công bố", purchaseCreatedAt: "Đã chuyển Mua Hàng",
 };
 
 const filters: Array<{ value: HistoryFilter; label: string }> = [
@@ -38,10 +41,13 @@ const filters: Array<{ value: HistoryFilter; label: string }> = [
   { value: "product", label: "Kho hàng" },
   { value: "purchase", label: "Mua hàng" },
   { value: "sale", label: "Bán hàng" },
+  { value: "chyusen", label: "Chyusen" },
   { value: "shop", label: "Cửa hàng" },
 ];
 
 export function getActivityTone(action: string, entityType: string | null) {
+  if (action === "chyusen_restored") return { label: "Đã khôi phục", icon: ArchiveRestore, badgeClass: "border-cyan-400/40 bg-cyan-500/15 text-cyan-300", buttonClass: "border-cyan-400 bg-cyan-400 text-black hover:bg-cyan-300", accentClass: "border-cyan-400/60", fieldClass: "bg-cyan-500/10 text-cyan-200", valueClass: "bg-cyan-500/5 text-cyan-100" };
+  if (action === "chyusen_purchase_linked") return { label: "Đã mua", icon: ShoppingBag, badgeClass: "border-emerald-400/40 bg-emerald-500/15 text-emerald-300", buttonClass: "border-emerald-400 bg-emerald-400 text-black hover:bg-emerald-300", accentClass: "border-emerald-400/60", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
   if (action.endsWith("_deleted")) return { label: "Đã xóa", icon: Trash2, badgeClass: "border-rose-400/40 bg-rose-500/15 text-rose-300", buttonClass: "border-rose-400 bg-rose-400 text-black hover:bg-rose-300", accentClass: "border-rose-400/60", fieldClass: "bg-rose-500/10 text-rose-200", valueClass: "bg-rose-500/5 text-rose-100" };
   if (action.endsWith("_updated") || action === "market_price_updated" || action === "snkrdunk_url_updated") return { label: "Đã sửa", icon: Pencil, badgeClass: "border-orange-400/40 bg-orange-500/15 text-orange-300", buttonClass: "border-orange-400 bg-orange-400 text-black hover:bg-orange-300", accentClass: "border-orange-400/60", fieldClass: "bg-orange-500/10 text-orange-200", valueClass: "bg-orange-500/5 text-orange-100" };
   if (entityType === "purchase") return { label: "Đã mua", icon: ShoppingBag, badgeClass: "border-emerald-400/40 bg-emerald-500/15 text-emerald-300", buttonClass: "border-emerald-400 bg-emerald-400 text-black hover:bg-emerald-300", accentClass: "border-emerald-400/60", fieldClass: "bg-emerald-500/10 text-emerald-200", valueClass: "bg-emerald-500/5 text-emerald-100" };
@@ -57,6 +63,7 @@ export function isAutoSyncActivity(action: string) {
 }
 
 function getEntityIcon(entityType: string | null) {
+  if (entityType === "chyusen") return Ticket;
   if (entityType === "purchase") return ShoppingBag;
   if (entityType === "sale") return TrendingUp;
   if (entityType === "shop") return Store;

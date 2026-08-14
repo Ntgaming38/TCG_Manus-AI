@@ -545,3 +545,16 @@
 - [x] Tự nhận diện và điền cửa hàng từ URL QR Chyusen đáng tin cậy
 - [x] Thêm vuốt xuống để làm mới dữ liệu trên toàn ứng dụng
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Xem trước QR Chyusen
+- [x] Thêm xem trước nội dung QR, cửa hàng và liên kết trước khi áp dụng
+- [x] Kiểm thử xem trước QR desktop/mobile và lưu checkpoint
+
+## Lịch sử hoạt động Chyusen
+- [x] Ghi các thao tác tạo, cập nhật trạng thái, hoàn tác và xóa Chyusen vào Lịch sử
+- [x] Hiển thị/bộ lọc đúng các hoạt động Chyusen trong trang Lịch sử
+- [x] Kiểm thử hồi quy và lưu checkpoint
+
+## Vuốt làm mới biểu mẫu Chyusen
+- [x] Tắt vuốt xuống làm mới khi màn hình Thêm/Sửa Chyusen đang mở
+- [x] Kiểm thử thao tác biểu mẫu và lưu checkpoint

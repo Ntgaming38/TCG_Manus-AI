@@ -37,4 +37,9 @@ describe("ActivityHistory detail changes", () => {
     expect(isAutoSyncActivity("product_updated")).toBe(false);
     expect(isAutoSyncActivity("market_price_updated")).toBe(false);
   });
+
+  it("hiển thị nhãn phù hợp cho Chyusen đã khôi phục và đã chuyển Mua Hàng", () => {
+    expect(getActivityTone("chyusen_restored", "chyusen").label).toBe("Đã khôi phục");
+    expect(getActivityTone("chyusen_purchase_linked", "chyusen").label).toBe("Đã mua");
+  });
 });

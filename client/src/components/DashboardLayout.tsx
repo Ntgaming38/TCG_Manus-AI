@@ -164,7 +164,8 @@ function DashboardLayoutContent({
     const getScrollTop = () => document.scrollingElement?.scrollTop ?? window.scrollY;
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
-      pullStartRef.current = touch && getScrollTop() <= 0 ? { x: touch.clientX, y: touch.clientY } : null;
+      const isChyusenFormOpen = document.body.dataset.chyusenFormOpen === "true";
+      pullStartRef.current = touch && getScrollTop() <= 0 && !isChyusenFormOpen ? { x: touch.clientX, y: touch.clientY } : null;
     };
     const onTouchMove = (event: TouchEvent) => {
       const touch = event.touches[0];
@@ -181,7 +182,7 @@ function DashboardLayoutContent({
       const start = pullStartRef.current;
       pullStartRef.current = null;
       if (!touch || !start) { setPullDistance(0); return; }
-      const shouldRefresh = shouldTriggerPullToRefresh({ startX: start.x, startY: start.y, endX: touch.clientX, endY: touch.clientY, scrollTop: getScrollTop() });
+      const shouldRefresh = shouldTriggerPullToRefresh({ startX: start.x, startY: start.y, endX: touch.clientX, endY: touch.clientY, scrollTop: getScrollTop(), disabled: document.body.dataset.chyusenFormOpen === "true" });
       setPullDistance(0);
       if (!shouldRefresh) return;
       setIsRefreshing(true);

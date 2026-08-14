@@ -31,7 +31,13 @@ const fakeDb = {
   })),
 };
 
-vi.mock("./db", () => ({ getDb: vi.fn(async () => fakeDb) }));
+vi.mock("./db", () => ({
+  getDb: vi.fn(async () => fakeDb),
+  serializeActivityChange: vi.fn((before: unknown, after: unknown) => ({
+    oldValue: before == null ? null : JSON.stringify(before),
+    newValue: after == null ? null : JSON.stringify(after),
+  })),
+}));
 
 import { deleteChyusenEntry, restoreChyusenEntry } from "./chyusenDb";
 
@@ -50,6 +56,7 @@ describe("chyusen delete undo source safety", () => {
 
     expect(updateSets).toContainEqual({ isActive: 0, pausedByEntryDelete: 1, activeBeforeEntryDelete: 1 });
     expect(insertValues).toContainEqual(expect.objectContaining({ entryId: 44, fieldName: "deleted" }));
+    expect(insertValues).toContainEqual(expect.objectContaining({ action: "chyusen_deleted", entityType: "chyusen", entityId: 44 }));
   });
 
   it("khôi phục đúng trạng thái tắt ban đầu của nguồn sau hoàn tác", async () => {
@@ -62,5 +69,6 @@ describe("chyusen delete undo source safety", () => {
 
     expect(updateSets).toContainEqual({ isActive: 0, pausedByEntryDelete: 0, activeBeforeEntryDelete: null, nextCheckAt: null });
     expect(insertValues).toContainEqual(expect.objectContaining({ entryId: 44, fieldName: "restored" }));
+    expect(insertValues).toContainEqual(expect.objectContaining({ action: "chyusen_restored", entityType: "chyusen", entityId: 44 }));
   });
 });

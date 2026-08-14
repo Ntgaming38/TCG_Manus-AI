@@ -2,13 +2,14 @@ import { and, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import {
   chyusenEntries,
   chyusenHistory,
+  activityLogs,
   chyusenMonitorConfig,
   chyusenNotifications,
   chyusenNotificationSettings,
   chyusenSources,
   chyusenSourceHistory,
 } from "../drizzle/schema";
-import { getDb } from "./db";
+import { getDb, serializeActivityChange } from "./db";
 import { getChyusenTimeState, getChyusenUrgency } from "./chyusenUtils";
 import { createTrashItem, markLatestTrashItemRestored } from "./trashDb";
 
@@ -65,6 +66,46 @@ const serialize = (value: unknown): string | null => {
 
 const normalizeDuplicateText = (value: string | null | undefined) => (value || "").trim().toLocaleLowerCase();
 const toDateKey = (value: Date | null | undefined) => value ? value.toISOString() : "";
+
+type ChyusenActivityEntry = {
+  title?: string | null;
+  productName?: string | null;
+  series?: string | null;
+  shop?: string | null;
+  customShopName?: string | null;
+  applicationStatus?: ChyusenEntryInput["applicationStatus"] | null;
+  resultStatus?: ChyusenEntryInput["resultStatus"] | null;
+  applicationEnd?: Date | null;
+  resultDate?: Date | null;
+  purchaseCreatedAt?: Date | string | null;
+};
+
+function chyusenActivitySnapshot(entry: ChyusenActivityEntry) {
+  return {
+    title: entry.title || "Chyusen",
+    productName: entry.productName || "",
+    series: entry.series || "Pokemon",
+    shop: entry.customShopName || entry.shop || "Khác",
+    applicationStatus: entry.applicationStatus || "not_registered",
+    resultStatus: entry.resultStatus || "pending",
+    applicationEnd: serialize(entry.applicationEnd),
+    resultDate: serialize(entry.resultDate),
+    purchaseCreatedAt: serialize(entry.purchaseCreatedAt),
+  };
+}
+
+async function writeChyusenActivity(userId: number, action: string, entryId: number, description: string, before: unknown, after: unknown) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(activityLogs).values({
+    userId,
+    action,
+    description,
+    entityType: "chyusen",
+    entityId: entryId,
+    ...serializeActivityChange(before, after),
+  });
+}
 
 export async function findDuplicateChyusenEntry(userId: number, input: Pick<ChyusenEntryInput, "sourceUrl" | "externalProductId" | "productName" | "shop" | "customShopName" | "applicationStart" | "applicationEnd">, excludeEntryId?: number) {
   const db = await getDb();
@@ -218,6 +259,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     newValue: "Chyusen đã được lưu sau khi người dùng xác nhận.",
     changeSource: input.parserStatus === "manual" ? "manual" : "source_import",
   });
+  await writeChyusenActivity(userId, "chyusen_created", entryId, `Thêm Chyusen: ${input.title}`, null, chyusenActivitySnapshot(input));
   return { id: entryId, sourceId: source?.id ?? null };
 }
 
@@ -261,6 +303,17 @@ export async function updateChyusenEntry(userId: number, entryId: number, input:
   if (Object.keys(update).length > 0) {
     await db.update(chyusenEntries).set(update).where(eq(chyusenEntries.id, entryId));
     if (historyRows.length) await db.insert(chyusenHistory).values(historyRows);
+    if (changeSource === "manual") {
+      const statusChanged = input.applicationStatus !== undefined || input.resultStatus !== undefined;
+      await writeChyusenActivity(
+        userId,
+        statusChanged ? "chyusen_status_updated" : "chyusen_updated",
+        entryId,
+        `${statusChanged ? "Cập nhật trạng thái" : "Cập nhật"} Chyusen: ${existing.title}`,
+        chyusenActivitySnapshot(existing),
+        chyusenActivitySnapshot({ ...existing, ...update } as ChyusenActivityEntry),
+      );
+    }
   }
   if (input.sourceUrl && input.sourceUrl !== existing.sourceUrl) {
     await upsertChyusenSource(userId, input.sourceUrl, { entryId, label: input.shop || existing.shop || "Nguồn Chyusen" });
@@ -287,6 +340,7 @@ export async function deleteChyusenEntry(userId: number, entryId: number) {
   await db.update(chyusenNotifications).set({ deletedAt }).where(and(eq(chyusenNotifications.userId, userId), eq(chyusenNotifications.entryId, entryId)));
   await Promise.all(linkedSources.map((source) => db.update(chyusenSources).set({ isActive: 0, pausedByEntryDelete: 1, activeBeforeEntryDelete: source.isActive }).where(eq(chyusenSources.id, source.id))));
   await db.insert(chyusenHistory).values({ userId, entryId, fieldName: "deleted", oldValue: null, newValue: deletedAt.toISOString(), changeSource: "manual" });
+  await writeChyusenActivity(userId, "chyusen_deleted", entryId, `Chuyển Chyusen vào Thùng rác: ${entry.title}`, chyusenActivitySnapshot(entry), null);
   return { id: entryId, title: entry.title, deletedAt, trashId: trash.id };
 }
 
@@ -312,6 +366,7 @@ export async function restoreChyusenEntry(userId: number, entryId: number) {
   }));
   await db.insert(chyusenHistory).values({ userId, entryId, fieldName: "restored", oldValue: entry.deletedAt.toISOString(), newValue: new Date().toISOString(), changeSource: "manual" });
   await markLatestTrashItemRestored(userId, "chyusen", entryId);
+  await writeChyusenActivity(userId, "chyusen_restored", entryId, `Khôi phục Chyusen từ Thùng rác: ${entry.title}`, null, chyusenActivitySnapshot(entry));
   return { id: entryId, title: entry.title, restored: true };
 }
 
@@ -330,6 +385,7 @@ export async function markChyusenPurchaseCreated(userId: number, entryId: number
     newValue: new Date().toISOString(),
     changeSource: "manual",
   });
+  await writeChyusenActivity(userId, "chyusen_purchase_linked", entryId, `Xác nhận mua hàng từ Chyusen: ${entry.title}`, chyusenActivitySnapshot(entry), { ...chyusenActivitySnapshot(entry), purchaseCreatedAt: new Date().toISOString() });
 }
 
 export async function listChyusenNotifications(userId: number) {

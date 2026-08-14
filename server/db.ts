@@ -501,7 +501,7 @@ export async function getDamagedProducts(userId: number) {
 // ========== ACTIVITY LOGS ==========
 
 export type ActivityLogFilters = {
-  entityType?: "product" | "purchase" | "sale" | "shop";
+  entityType?: "product" | "purchase" | "sale" | "shop" | "chyusen";
   action?: string;
   syncScope?: "only" | "exclude";
   search?: string;
