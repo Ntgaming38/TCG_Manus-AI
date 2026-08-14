@@ -37,4 +37,10 @@ describe("TCG Manager RGB logo", () => {
     expect(css).toContain('.rgb-effects-preview[data-rgb-speed="fast"] { --rgb-preview-duration: 3.2s; }');
     expect(css).toContain(".rgb-effects-preview.is-disabled .rgb-effects-preview-logo");
   });
+
+  it("dùng biến bảng màu có thể tùy chỉnh cho logo, tiêu đề và bản xem trước", () => {
+    expect(css).toContain("var(--tcg-rgb-gradient");
+    expect(css).toContain(".tcg-logo-text");
+    expect(css).toContain(":root[data-rgb-effects=\"enabled\"] main h1");
+  });
 });

@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createChyusenSourceUpdatePayload } from "@shared/chyusenSourceUpdate";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
-import { DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectSpeed } from "@/lib/rgbEffects";
+import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsColors, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsColors, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectColors, type RgbEffectSpeed } from "@/lib/rgbEffects";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
@@ -38,6 +38,7 @@ export default function Settings() {
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [rgbEffectsEnabled, setRgbEffectsEnabled] = useState(() => readRgbEffectsEnabled(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsSpeed, setRgbEffectsSpeed] = useState<RgbEffectSpeed>(() => readRgbEffectsSpeed(typeof window === "undefined" ? undefined : window.localStorage));
+  const [rgbEffectsColors, setRgbEffectsColors] = useState<RgbEffectColors>(() => readRgbEffectsColors(typeof window === "undefined" ? undefined : window.localStorage));
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -88,11 +89,18 @@ export default function Settings() {
     setRgbEffectsSpeed(speed);
     toast.success(`Đã đặt tốc độ hiệu ứng RGB: ${speed === "slow" ? "Chậm" : speed === "fast" ? "Nhanh" : "Bình thường"}.`);
   };
+  const updateRgbEffectsColor = (index: number, color: string) => {
+    const next = rgbEffectsColors.map((current, currentIndex) => currentIndex === index ? color : current) as RgbEffectColors;
+    saveRgbEffectsColors(next, window.localStorage);
+    setRgbEffectsColors(next);
+  };
   const resetRgbEffects = () => {
     saveRgbEffectsEnabled(DEFAULT_RGB_EFFECTS_ENABLED, window.localStorage);
     saveRgbEffectsSpeed(DEFAULT_RGB_EFFECTS_SPEED, window.localStorage);
+    saveRgbEffectsColors(DEFAULT_RGB_EFFECT_COLORS, window.localStorage);
     setRgbEffectsEnabled(DEFAULT_RGB_EFFECTS_ENABLED);
     setRgbEffectsSpeed(DEFAULT_RGB_EFFECTS_SPEED);
+    setRgbEffectsColors(DEFAULT_RGB_EFFECT_COLORS);
     toast.success("Đã khôi phục hiệu ứng RGB mặc định.");
   };
 
@@ -101,7 +109,7 @@ export default function Settings() {
 
     <Card>
       <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-fuchsia-400" />Hiệu ứng RGB</CardTitle><CardDescription>Bật hoặc tắt hiệu ứng màu chạy ngang cho logo TCG Manager và tiêu đề chính. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
-      <CardContent className="space-y-3"><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Dải màu RGB</p><p className="mt-1 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Đang bật cho logo và tiêu đề trang" : "Đang tắt — tiêu đề hiển thị màu mặc định"}</p></div><Switch checked={rgbEffectsEnabled} onCheckedChange={updateRgbEffects} aria-label="Bật hoặc tắt hiệu ứng RGB" /></div><div className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px] sm:items-center"><div><p className="text-sm font-semibold">Tốc độ hiệu ứng</p><p className="mt-1 text-xs text-muted-foreground">Áp dụng cho dải màu RGB của logo và tiêu đề.</p></div><Select value={rgbEffectsSpeed} onValueChange={(value) => updateRgbEffectsSpeed(value as RgbEffectSpeed)}><SelectTrigger aria-label="Tốc độ hiệu ứng RGB"><SelectValue /></SelectTrigger><SelectContent>{RGB_EFFECT_SPEEDS.map((speed) => <SelectItem key={speed} value={speed}>{speed === "slow" ? "Chậm" : speed === "fast" ? "Nhanh" : "Bình thường"}</SelectItem>)}</SelectContent></Select></div><div className={`rgb-effects-preview ${rgbEffectsEnabled ? "" : "is-disabled"}`} data-rgb-speed={rgbEffectsSpeed}><div className="flex items-center justify-between gap-3"><span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước hiệu ứng</span><span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{rgbEffectsSpeed === "slow" ? "Chậm" : rgbEffectsSpeed === "fast" ? "Nhanh" : "Bình thường"}</span></div><p className="rgb-effects-preview-logo mt-3">TCG Manager</p><p className="rgb-effects-preview-title mt-1">Tiêu đề trang của bạn</p><p className="mt-2 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Bản xem trước thay đổi ngay theo tốc độ bạn chọn." : "Bật hiệu ứng RGB để xem chuyển động màu."}</p></div><div className="flex justify-end"><Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={resetRgbEffects}><TimerReset className="h-3.5 w-3.5" />Đặt lại mặc định</Button></div></CardContent>
+      <CardContent className="space-y-3"><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Dải màu RGB</p><p className="mt-1 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Đang bật cho logo và tiêu đề trang" : "Đang tắt — tiêu đề hiển thị màu mặc định"}</p></div><Switch checked={rgbEffectsEnabled} onCheckedChange={updateRgbEffects} aria-label="Bật hoặc tắt hiệu ứng RGB" /></div><div className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px] sm:items-center"><div><p className="text-sm font-semibold">Tốc độ hiệu ứng</p><p className="mt-1 text-xs text-muted-foreground">Áp dụng cho dải màu RGB của logo và tiêu đề.</p></div><Select value={rgbEffectsSpeed} onValueChange={(value) => updateRgbEffectsSpeed(value as RgbEffectSpeed)}><SelectTrigger aria-label="Tốc độ hiệu ứng RGB"><SelectValue /></SelectTrigger><SelectContent>{RGB_EFFECT_SPEEDS.map((speed) => <SelectItem key={speed} value={speed}>{speed === "slow" ? "Chậm" : speed === "fast" ? "Nhanh" : "Bình thường"}</SelectItem>)}</SelectContent></Select></div><div className="rounded-lg border p-3"><p className="text-sm font-semibold">Màu gradient</p><p className="mt-1 text-xs text-muted-foreground">Chọn bốn màu để tạo dải gradient chạy theo ý thích.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">{rgbEffectsColors.map((color, index) => <label key={`${color}-${index}`} className="flex items-center gap-2 rounded-md border bg-background/40 px-2 py-1.5 text-xs"><input type="color" value={color} onChange={(event) => updateRgbEffectsColor(index, event.target.value.toUpperCase())} className="h-7 w-7 cursor-pointer rounded border-0 bg-transparent p-0" aria-label={`Chọn màu gradient ${index + 1}`} /><span className="font-mono text-muted-foreground">{color}</span></label>)}</div></div><div className={`rgb-effects-preview ${rgbEffectsEnabled ? "" : "is-disabled"}`} data-rgb-speed={rgbEffectsSpeed}><div className="flex items-center justify-between gap-3"><span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước hiệu ứng</span><span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{rgbEffectsSpeed === "slow" ? "Chậm" : rgbEffectsSpeed === "fast" ? "Nhanh" : "Bình thường"}</span></div><p className="rgb-effects-preview-logo mt-3">TCG Manager</p><p className="rgb-effects-preview-title mt-1">Tiêu đề trang của bạn</p><p className="mt-2 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Bản xem trước thay đổi ngay theo tốc độ và màu bạn chọn." : "Bật hiệu ứng RGB để xem chuyển động màu."}</p></div><div className="flex justify-end"><Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={resetRgbEffects}><TimerReset className="h-3.5 w-3.5" />Đặt lại mặc định</Button></div></CardContent>
     </Card>
 
     <Card>

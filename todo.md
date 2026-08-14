@@ -599,3 +599,9 @@
 - [x] Thêm nút Đặt lại mặc định trong thẻ Hiệu ứng RGB
 - [x] Khôi phục trạng thái bật và tốc độ Bình thường ngay lập tức
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Bảng màu gradient RGB
+- [x] Thêm bộ chọn bảng màu gradient trong Cài đặt
+- [x] Lưu bảng màu theo thiết bị và áp dụng cho logo, tiêu đề, bản xem trước
+- [x] Mở rộng Đặt lại mặc định để khôi phục bảng màu mặc định
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
