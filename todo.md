@@ -605,3 +605,9 @@
 - [x] Lưu bảng màu theo thiết bị và áp dụng cho logo, tiêu đề, bản xem trước
 - [x] Mở rộng Đặt lại mặc định để khôi phục bảng màu mặc định
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Nền đăng nhập và logo màn hình chính
+- [x] Dùng ảnh Pokémon người dùng cung cấp làm nền màn hình đăng nhập
+- [x] Đổi chữ POKÉMON tại logo màn hình chính thành TCG Manager
+- [x] Liên kết logo chính với bảng màu và tốc độ RGB đang chọn
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

@@ -35,13 +35,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Full background image - the Pokemon artwork */}
+      {/* Full background image - artwork supplied by the user */}
       <div className="absolute inset-0">
         <img
-          src="/manus-storage/pokemon-login-bg_e32eb1ad.png"
-          alt="Pokemon Trading Manager"
+          src="/manus-storage/tcg-manager-login-background_ab4c32e6.png"
+          alt="Pikachu và Lucario trên nền đăng nhập TCG Manager"
           className="w-full h-full object-cover"
         />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/10 to-slate-950/70" />
       </div>
 
       {/* Transition overlay - fades to black when starting */}
@@ -58,9 +59,9 @@ export default function Home() {
 
       {/* Overlay content - positioned over the image */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-between py-8">
-        {/* Top area - POKÉMON logo - larger and perfectly centered */}
+        {/* Top area - TCG Manager logo with the user's RGB preferences */}
         <div className="flex flex-col items-center justify-center mt-2 w-full animate-slide-down">
-          <h1 className="pokemon-logo-text text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider select-none text-center leading-none">
+          <h1 className="tcg-logo-text text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider select-none text-center leading-none">
             TCG Manager
           </h1>
         </div>
