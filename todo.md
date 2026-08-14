@@ -703,3 +703,9 @@
 - [x] Thêm viền đỏ cho trường lỗi đầu tiên sau khi tự cuộn tới
 - [x] Thêm hiệu ứng rung nhẹ và tôn trọng chế độ giảm chuyển động
 - [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Tối ưu trang Chyusen và chỉ số Lợi nhuận
+- [x] Bỏ thẻ Cài đặt Chyusen khỏi trang Chyusen, giữ cấu hình trong trang Cài đặt
+- [x] Hiển thị Lợi nhuận dương màu xanh lá và Lợi nhuận âm màu đỏ trên Tổng quan
+- [x] Giữ hiệu ứng RGB cho mức Lợi nhuận bằng 0
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint

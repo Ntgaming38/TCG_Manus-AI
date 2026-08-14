@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { BellRing, CalendarClock, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, QrCode, Radio, RotateCcw, Search, Settings2, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
+import { BellRing, CalendarClock, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, QrCode, Radio, RotateCcw, Search, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
 import jsQR from "jsqr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -507,8 +507,6 @@ export default function Chyusen() {
           <CardContent className="flex flex-wrap gap-2">{resultAnnouncementToday.slice(0, 4).map((entry: any) => <Button key={entry.id} type="button" size="sm" variant="outline" className="border-violet-300/60 text-violet-100 hover:bg-violet-500/20" onClick={() => openEdit(entry)}>{entry.title}<span className="ml-2 text-violet-200/70">• {entry.shop || "Khác"}</span></Button>)}</CardContent>
         </Card>
       )}
-
-      <Card className="border-dashed bg-muted/20"><CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Cài đặt Chyusen</p><p className="text-xs text-muted-foreground">Nhắc hạn, nguồn theo dõi và tần suất đã được chuyển vào trang Cài đặt để màn quản lý gọn hơn.</p></div><Button variant="outline" onClick={() => window.location.assign("/cai-dat")}><Settings2 className="mr-2 h-4 w-4" />Mở Cài đặt</Button></CardContent></Card>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm sản phẩm, cửa hàng, series..." className="pl-9" /></div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { RarityBadge } from "@/components/RarityBadge";
+import { getDashboardProfitTone } from "@shared/dashboardProfitTone";
 
 // Sample chart data - will be replaced with real data from API
 const monthlyData = [
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
   const totalProfit = stats?.totalProfit ?? 0;
+  const profitTone = getDashboardProfitTone(totalProfit);
   const totalInStock = stats?.totalInStock ?? 0;
   const inStockCards = stats?.inStockCards ?? 0;
   const inStockBoxes = stats?.inStockBoxes ?? 0;
@@ -83,7 +85,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Lợi nhuận</p>
-                <p className={`text-2xl font-bold mt-1 ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <p className={`text-2xl font-bold mt-1 ${profitTone}`}>
                   {totalProfit >= 0 ? '+' : ''}¥{totalProfit.toLocaleString()}
                 </p>
               </div>
