@@ -5,7 +5,7 @@ const home = readFileSync(new URL("../client/src/pages/Home.tsx", import.meta.ur
 
 describe("Login branding", () => {
   it("dùng ảnh nền người dùng cung cấp cho màn hình đăng nhập", () => {
-    expect(home).toContain('readLoginBackgroundUrl');
+    expect(home).toContain('resolveLoginBackgroundUrl');
     expect(home).toContain('src={backgroundUrl}');
   });
 

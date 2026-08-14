@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { createChyusenSourceUpdatePayload } from "@shared/chyusenSourceUpdate";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsColors, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsColors, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectColors, type RgbEffectSpeed } from "@/lib/rgbEffects";
-import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
+import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
@@ -20,7 +20,7 @@ const BATCH_SIZES = [6, 12, 18, 20] as const;
 const TRASH_RETENTION_DAYS = [7, 14, 30, 60, 90, 180] as const;
 type SourceDraft = { label: string; sourceUrl: string; checkIntervalMinutes: string; isActive: boolean };
 type SourceFilter = "all" | "errors";
-type SettingsSection = "rgb" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundHistory";
+type SettingsSection = "rgb" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
 
 function statusStyle(status?: string | null) {
   if (status === "unavailable") return "border-red-200 bg-red-50 text-red-700";
@@ -44,9 +44,10 @@ export default function Settings() {
   const [rgbEffectsColors, setRgbEffectsColors] = useState<RgbEffectColors>(() => readRgbEffectsColors(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundUrl, setLoginBackgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundHistory, setLoginBackgroundHistory] = useState<LoginBackgroundHistoryItem[]>(() => readLoginBackgroundHistory(typeof window === "undefined" ? undefined : window.localStorage));
+  const [loginBackgroundDailyRandom, setLoginBackgroundDailyRandom] = useState(() => readLoginBackgroundDailyRandom(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundDraft, setLoginBackgroundDraft] = useState<{ source: string; edit: LoginBackgroundEdit } | null>(null);
   const [pendingBackgroundRemoval, setPendingBackgroundRemoval] = useState<string | null>(null);
-  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundHistory: true });
+  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -145,6 +146,11 @@ export default function Settings() {
     if (loginBackgroundUrl === url) setLoginBackgroundUrl(saveLoginBackgroundUrl(DEFAULT_LOGIN_BACKGROUND_URL, window.localStorage));
     toast.success("Đã xóa nền khỏi danh sách gần đây.");
   };
+  const updateLoginBackgroundDailyRandom = (enabled: boolean) => {
+    saveLoginBackgroundDailyRandom(enabled, window.localStorage);
+    setLoginBackgroundDailyRandom(enabled);
+    toast.success(enabled ? "Đã bật đổi nền ngẫu nhiên mỗi ngày." : "Đã tắt đổi nền ngẫu nhiên mỗi ngày.");
+  };
   const toggleSettingsSection = (section: SettingsSection, event: React.MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button, input, [role=switch], [role=combobox]")) return;
     setCollapsedSettingsSections((current) => ({ ...current, [section]: !current[section] }));
@@ -197,6 +203,11 @@ export default function Settings() {
     <Card className="settings-login-background-card settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backgroundHistory}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backgroundHistory", event)}><CardTitle className="text-base">Nền đã tải gần đây</CardTitle><CardDescription>Chọn nhanh một trong tối đa sáu hình nền đã lưu trên thiết bị này.</CardDescription></CardHeader>
       <CardContent>{loginBackgroundHistory.length > 0 ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{loginBackgroundHistory.map((item) => <div key={item.url} className="relative aspect-video"><button type="button" aria-label="Dùng nền đã tải" onClick={() => selectLoginBackground(item.url)} className={`h-full w-full overflow-hidden rounded-md border transition ${loginBackgroundUrl === item.url ? "ring-2 ring-red-500" : "hover:border-sky-400"}`}><img src={item.url} alt="Nền đăng nhập đã tải" className="h-full w-full object-cover" /></button><button type="button" aria-label="Xóa nền khỏi danh sách gần đây" title="Xóa nền khỏi danh sách gần đây" onClick={() => setPendingBackgroundRemoval(item.url)} className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow transition hover:bg-red-700"><Trash2 className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="rounded-lg border border-dashed px-3 py-5 text-center text-sm text-muted-foreground">Chưa có hình nền tùy chỉnh. Hãy tải và lưu ảnh đầu tiên ở mục Nền đăng nhập.</p>}</CardContent>
+    </Card>
+
+    <Card className="settings-login-background-card settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backgroundDaily}>
+      <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backgroundDaily", event)}><CardTitle className="text-base">Nền ngẫu nhiên mỗi ngày</CardTitle><CardDescription>Tự chọn một ảnh khác mỗi ngày từ các nền bạn đã tải lên.</CardDescription></CardHeader>
+      <CardContent><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Đổi nền tự động mỗi ngày</p><p className="mt-1 text-xs text-muted-foreground">{loginBackgroundHistory.length > 0 ? "Ảnh được chọn theo ngày trên thiết bị này khi mở màn hình đăng nhập." : "Tải ít nhất một nền tùy chỉnh để bật tính năng này."}</p></div><Switch checked={loginBackgroundDailyRandom} disabled={loginBackgroundHistory.length === 0} onCheckedChange={updateLoginBackgroundDailyRandom} aria-label="Bật đổi nền ngẫu nhiên mỗi ngày" /></div></CardContent>
     </Card>
 
     <AlertDialog open={deleteSourceId !== null} onOpenChange={(open) => !open && setDeleteSourceId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nguồn theo dõi?</AlertDialogTitle><AlertDialogDescription>Nguồn sẽ không còn được kiểm tra tự động. Các Chyusen và audit log hiện có vẫn được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteSourceId && deleteSource.mutate({ id: deleteSourceId })}>Xóa nguồn</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

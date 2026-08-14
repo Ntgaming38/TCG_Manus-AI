@@ -646,3 +646,9 @@
 - [x] Thêm hộp thoại xác nhận trước khi xóa từng nền đăng nhập gần đây
 - [x] Chỉ xóa nền khỏi danh sách sau khi người dùng xác nhận
 - [x] Bổ sung kiểm thử và lưu checkpoint
+
+## Khoảng cách đăng nhập và nền ngẫu nhiên hằng ngày
+- [x] Tăng khoảng cách giữa logo TCG MANAGER và nút Bắt đầu khoảng 1 cm
+- [x] Thêm tùy chọn đổi nền đăng nhập ngẫu nhiên theo ngày từ danh sách đã tải
+- [x] Lưu tùy chọn theo thiết bị và xử lý khi chưa có nền tùy chỉnh
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

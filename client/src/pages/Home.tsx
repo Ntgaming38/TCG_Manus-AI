@@ -4,13 +4,13 @@ import { startLogin } from "@/const";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { readLoginBackgroundUrl } from "@/lib/loginBackground";
+import { resolveLoginBackgroundUrl } from "@/lib/loginBackground";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [transitioning, setTransitioning] = useState(false);
-  const [backgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
+  const [backgroundUrl] = useState(() => resolveLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
 
   useEffect(() => {
     if (user && !loading) {
@@ -72,7 +72,7 @@ export default function Home() {
             onClick={handleStart}
             disabled={transitioning}
             size="lg"
-            className="w-full max-w-[220px] red-btn text-xl rounded-lg py-7 border-0 btn-red-pulse disabled:opacity-70"
+            className="mt-7 w-full max-w-[220px] red-btn text-xl rounded-lg py-7 border-0 btn-red-pulse disabled:opacity-70"
           >
             {transitioning ? (
               <><Loader2 className="h-5 w-5 animate-spin" /><span>Đang xử lý...</span></>
