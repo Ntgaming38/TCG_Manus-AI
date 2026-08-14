@@ -38,7 +38,7 @@ export default function Inventory() {
 
   const { data: products } = trpc.products.list.useQuery({
     type: typeFilter !== "all" ? typeFilter : undefined,
-    status: statusFilter !== "all" ? statusFilter : undefined,
+    status: statusFilter === "all" ? "all" : statusFilter,
     search: search || undefined,
   });
   const { data: soldProducts } = trpc.products.list.useQuery({ status: INVENTORY_HIDDEN_STATUS });

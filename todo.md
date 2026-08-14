@@ -663,3 +663,10 @@
 - [x] Đặt nhãn Mở/Thu gọn sát góc phải mỗi mục Cài đặt
 - [x] Bảo đảm tiêu đề và mô tả không bị nhãn che trên màn hình hẹp
 - [x] Bổ sung kiểm thử, xác minh mobile và lưu checkpoint
+
+## Bộ lọc Kho Hàng và đọc ảnh Chyusen
+- [x] Cho bộ lọc Tất cả trong Kho Hàng hiển thị cả sản phẩm đã bán
+- [x] Giữ từng bộ lọc trạng thái chỉ hiển thị sản phẩm đúng trạng thái được chọn
+- [x] Tách lựa chọn Đọc thông tin từ ảnh và Quét mã QR trong Chyusen
+- [x] Bảo đảm Quét mã QR vẫn phân tích đầy đủ nội dung toàn bộ ảnh
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

@@ -84,8 +84,13 @@ export async function listProducts(userId: number, opts?: { type?: string; statu
   if (!db) return [];
   const conditions = [eq(products.userId, userId)];
   if (opts?.type) conditions.push(eq(products.type, opts.type as any));
-  if (opts?.status) conditions.push(eq(products.status, opts.status as any));
-  else conditions.push(ne(products.status, "sold"));
+  if (opts?.status === "all") {
+    // Bộ lọc Tất cả trong Kho Hàng phải bao gồm cả sản phẩm đã bán.
+  } else if (opts?.status) {
+    conditions.push(eq(products.status, opts.status as any));
+  } else {
+    conditions.push(ne(products.status, "sold"));
+  }
   if (opts?.search) conditions.push(like(products.name, `%${opts.search}%`));
   const rows = await db.select().from(products).where(and(...conditions)).orderBy(desc(products.updatedAt));
   return opts?.status ? rows : rows.filter(shouldDisplayProductInCatalog);
