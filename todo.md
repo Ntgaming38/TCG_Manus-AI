@@ -474,3 +474,8 @@
 - [x] Thu gọn ô ngày tháng Thùng rác bằng ô Tất cả dữ liệu
 - [x] Đưa nút đóng X đỏ về kích thước mặc định
 - [x] Kiểm thử mobile và lưu checkpoint
+
+## Lọc thời gian Thùng rác
+- [x] Hiển thị nhãn Ngày xóa khi chưa chọn ngày
+- [x] Thêm lọc nhanh mục đã xóa trong tuần và tháng này
+- [x] Kiểm thử giao diện và lưu checkpoint

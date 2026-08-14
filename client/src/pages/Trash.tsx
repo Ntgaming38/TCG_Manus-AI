@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import { matchesTrashQuickPeriod, type TrashQuickPeriod } from "@shared/trashQuickPeriod";
 
 const TYPES = {
   product: { label: "Sản phẩm", icon: Package, className: "border-sky-300 bg-sky-50 text-sky-900" },
@@ -34,6 +35,7 @@ export default function Trash() {
   const [filter, setFilter] = useState<"all" | TrashType>("all");
   const [search, setSearch] = useState("");
   const [deletedDate, setDeletedDate] = useState("");
+  const [quickPeriod, setQuickPeriod] = useState<TrashQuickPeriod>("all");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { data: items = [], isLoading } = trpc.trash.list.useQuery();
   const utils = trpc.useUtils();
@@ -64,16 +66,17 @@ export default function Trash() {
     onError: (error) => toast.error(error.message),
   });
 
-  const hasFilters = filter !== "all" || Boolean(search.trim()) || Boolean(deletedDate);
+  const hasFilters = filter !== "all" || Boolean(search.trim()) || Boolean(deletedDate) || quickPeriod !== "all";
   const filteredItems = useMemo(() => {
     const keyword = search.trim().toLocaleLowerCase("vi-VN");
     return items.filter((item) => {
       const config = TYPES[item.entityType as TrashType] || TYPES.product;
       return (filter === "all" || item.entityType === filter)
         && (!keyword || item.title.toLocaleLowerCase("vi-VN").includes(keyword) || config.label.toLocaleLowerCase("vi-VN").includes(keyword))
-        && (!deletedDate || deletedDateKey(item.deletedAt) === deletedDate);
+        && (!deletedDate || deletedDateKey(item.deletedAt) === deletedDate)
+        && matchesTrashQuickPeriod(item.deletedAt, quickPeriod);
     });
-  }, [deletedDate, filter, items, search]);
+  }, [deletedDate, filter, items, quickPeriod, search]);
   const visibleIds = useMemo(() => filteredItems.map((item) => item.id), [filteredItems]);
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id));
@@ -83,7 +86,7 @@ export default function Trash() {
     return next.length === current.length ? current : next;
   }), [items]);
 
-  const clearFilters = () => { setFilter("all"); setSearch(""); setDeletedDate(""); };
+  const clearFilters = () => { setFilter("all"); setSearch(""); setDeletedDate(""); setQuickPeriod("all"); };
   const toggleSelected = (id: number, checked: boolean) => setSelectedIds((current) => checked ? Array.from(new Set([...current, id])) : current.filter((selectedId) => selectedId !== id));
   const toggleAllVisible = (checked: boolean) => setSelectedIds((current) => checked ? Array.from(new Set([...current, ...visibleIds])) : current.filter((id) => !visibleIds.includes(id)));
 
@@ -94,7 +97,7 @@ export default function Trash() {
 
         <Card className="border-red-200 bg-red-50/60 dark:border-red-900/60 dark:bg-red-950/20"><CardContent className="flex gap-3 p-4 text-sm text-red-900 dark:text-red-100"><ChevronLeft className="mt-0.5 h-4 w-4 shrink-0" /><p>Khôi phục sẽ đưa dữ liệu về trạng thái ngay trước khi xóa. Dữ liệu phụ thuộc như giao dịch mua/bán của sản phẩm cũng được khôi phục cùng bản ghi liên quan.</p></CardContent></Card>
 
-        <section className="space-y-3 rounded-2xl border border-border bg-card/70 p-3 shadow-sm"><div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm tên mục hoặc loại dữ liệu..." className="pl-9" aria-label="Tìm trong Thùng rác" /></div><div className="flex min-w-0 gap-2 sm:items-center"><div className="min-w-0 flex-1 sm:w-48 sm:flex-none"><Select value={filter} onValueChange={(value) => setFilter(value as "all" | TrashType)}><SelectTrigger className="h-9 w-full px-2 text-xs sm:h-10 sm:px-3 sm:text-sm"><SelectValue placeholder="Lọc loại dữ liệu" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả dữ liệu</SelectItem>{Object.entries(TYPES).map(([key, config]) => <SelectItem key={key} value={key}>{config.label}</SelectItem>)}</SelectContent></Select></div><Input type="date" value={deletedDate} onChange={(event) => setDeletedDate(event.target.value)} className="h-9 min-w-0 flex-1 px-1.5 text-[11px] sm:h-10 sm:w-44 sm:flex-none sm:px-3 sm:text-sm" aria-label="Lọc theo ngày xóa" /></div></div>{hasFilters && <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs"><span className="text-muted-foreground">Đang lọc {filteredItems.length} mục theo điều kiện đã chọn.</span><Button size="sm" variant="ghost" onClick={clearFilters}><FilterX className="mr-1.5 h-3.5 w-3.5" />Xóa bộ lọc</Button></div>}</section>
+        <section className="space-y-3 rounded-2xl border border-border bg-card/70 p-3 shadow-sm"><div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm tên mục hoặc loại dữ liệu..." className="pl-9" aria-label="Tìm trong Thùng rác" /></div><div className="flex min-w-0 gap-2 sm:items-center"><div className="min-w-0 flex-1 sm:w-48 sm:flex-none"><Select value={filter} onValueChange={(value) => setFilter(value as "all" | TrashType)}><SelectTrigger className="h-9 w-full px-2 text-xs sm:h-10 sm:px-3 sm:text-sm"><SelectValue placeholder="Lọc loại dữ liệu" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả dữ liệu</SelectItem>{Object.entries(TYPES).map(([key, config]) => <SelectItem key={key} value={key}>{config.label}</SelectItem>)}</SelectContent></Select></div><div className="relative min-w-0 flex-1 sm:w-44 sm:flex-none">{!deletedDate && <span className="pointer-events-none absolute left-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1 text-[11px] text-muted-foreground sm:left-3 sm:text-sm"><CalendarDays className="h-3.5 w-3.5" />Ngày xóa</span>}<Input type="date" value={deletedDate} onChange={(event) => { setDeletedDate(event.target.value); setQuickPeriod("all"); }} className={`h-9 min-w-0 w-full px-1.5 text-[11px] sm:h-10 sm:px-3 sm:text-sm ${deletedDate ? "" : "text-transparent"}`} aria-label="Lọc theo ngày xóa" /></div></div></div><div className="flex flex-wrap items-center gap-1.5 border-t border-border pt-3"><span className="mr-1 text-xs text-muted-foreground">Lọc nhanh:</span>{([{ value: "week", label: "Tuần này" }, { value: "month", label: "Tháng này" }] as const).map((option) => <Button key={option.value} type="button" size="sm" variant={quickPeriod === option.value ? "default" : "outline"} className={quickPeriod === option.value ? "h-7 bg-red-600 px-2 text-xs text-white hover:bg-red-700" : "h-7 px-2 text-xs"} onClick={() => { setQuickPeriod(option.value); setDeletedDate(""); }}>{option.label}</Button>)}</div>{hasFilters && <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs"><span className="text-muted-foreground">Đang lọc {filteredItems.length} mục theo điều kiện đã chọn.</span><Button size="sm" variant="ghost" onClick={clearFilters}><FilterX className="mr-1.5 h-3.5 w-3.5" />Xóa bộ lọc</Button></div>}</section>
 
         {selectedIds.length > 0 && <section className="sticky top-3 z-10 flex flex-col gap-3 rounded-xl border border-red-500/30 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between"><p className="text-sm font-semibold">Đã chọn {selectedIds.length} mục</p><div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => restoreMany.mutate({ ids: selectedIds })} disabled={restoreMany.isPending || purgeMany.isPending}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Khôi phục đã chọn</Button><AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="destructive" disabled={restoreMany.isPending || purgeMany.isPending}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Xóa vĩnh viễn</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa vĩnh viễn {selectedIds.length} mục đã chọn?</AlertDialogTitle><AlertDialogDescription>Các mục đã chọn sẽ không thể khôi phục sau thao tác này.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => purgeMany.mutate({ ids: selectedIds, confirmed: true })}>Xóa vĩnh viễn</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog><Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Bỏ chọn</Button></div></section>}
 
