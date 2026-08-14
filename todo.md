@@ -535,3 +535,8 @@
 - [x] Chuyển Chyusen Đã trượt vào Thùng rác tự động
 - [x] Chuyển Chyusen đã xác nhận mua vào Thùng rác tự động
 - [x] Kiểm thử luồng, Thùng rác và thống kê rồi lưu checkpoint
+
+## Tối ưu AI và QR Chyusen
+- [x] Tối ưu luồng đọc ảnh AI để phản hồi nhanh hơn
+- [x] Quét mã QR từ ảnh và hiển thị liên kết cần xác nhận
+- [x] Kiểm thử tốc độ, QR và lưu checkpoint

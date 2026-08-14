@@ -117,7 +117,7 @@ export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<Chy
   validateImageDataUrls(imageDataUrls);
   const response = await invokeLLM({
     model: "gemini-3-flash-preview",
-    maxTokens: 3200,
+    maxTokens: 2200,
     responseFormat: {
       type: "json_schema",
       json_schema: {
@@ -152,7 +152,7 @@ export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<Chy
         role: "system",
         content: "Extract only facts visibly written across these Japanese Chyusen announcement images. Treat the images as one source; a later image may clarify or continue an earlier image. Never invent missing facts. First distinguish labels: application start (応募開始/受付開始), deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup (受取). For dates with explicit year/month/day, return ISO 8601 with +09:00. If an image visibly has month/day but omits year or time, return exactly MM/DD, never guess a year or time; the application will flag it for review. Use null for unreadable or conflicting values. Keep Japanese product names exactly as shown. Use only these series: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. Return one short exact sourceExcerpt from the visible image (max 180 characters) that supports the key dates and product. Keep note to one concise sentence. Do not return field-by-field evidence or confidence objects. Return JSON only.",
       },
-      { role: "user", content: [{ type: "text", text: `Read ${imageDataUrls.length} image(s) in order and extract one Chyusen record.` }, ...imageDataUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "high" as const } }))] },
+      { role: "user", content: [{ type: "text", text: `Read ${imageDataUrls.length} image(s) in order and extract one Chyusen record.` }, ...imageDataUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "auto" as const } }))] },
     ],
   });
   const raw = extractAssistantText(response);
@@ -162,7 +162,7 @@ export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<Chy
   } catch {
     const retry = await invokeLLM({
       model: "gemini-3-flash-preview",
-      maxTokens: 2200,
+      maxTokens: 1800,
       messages: [
         { role: "system", content: "Read the Japanese Chyusen image precisely. Return one compact JSON object only. Include visible title, productName, series, productType, shop, price, quantityLimit, applicationStart, applicationEnd, resultDate, pickupStart, pickupNote, requirements, sourceExcerpt, and note. Use null for missing values. Dates may be ISO or Japanese year/month/day. Do not add explanations or markdown." },
         { role: "user", content: [{ type: "text", text: `Retry reading ${imageDataUrls.length} image(s) in order. Keep the JSON concise.` }, ...imageDataUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "high" as const } }))] },

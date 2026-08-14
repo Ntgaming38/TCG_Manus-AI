@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { BellRing, CalendarClock, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, Radio, RotateCcw, Search, Settings2, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
+import { BellRing, CalendarClock, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, ImageUp, Link2, Pencil, Plus, QrCode, Radio, RotateCcw, Search, Settings2, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
+import jsQR from "jsqr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +26,7 @@ import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
 import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCardSeries";
 import { isChyusenResultAnnouncementToday } from "@shared/chyusenResultReminder";
+import { normalizeChyusenQrUrl } from "@shared/chyusenQr";
 
 const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Bandai Premium", "Pokémon Center", "Rakuten", "Khác"];
 const CHYUSEN_TOAST_DURATION = 8_000;
@@ -45,6 +47,42 @@ function ToastCountdown({ tone = "success" }: { tone?: "success" | "destructive"
 
 function displayDate(value: Date | string | null | undefined) {
   return formatChyusenDayMonth(value) || "Chưa có thông tin";
+}
+
+async function prepareChyusenImage(file: File): Promise<string> {
+  if (!window.createImageBitmap) {
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Không thể đọc ảnh"));
+      reader.onerror = () => reject(new Error("Không thể đọc ảnh"));
+      reader.readAsDataURL(file);
+    });
+  }
+  const bitmap = await window.createImageBitmap(file);
+  const longestSide = Math.max(bitmap.width, bitmap.height);
+  const scale = Math.min(1, 1600 / longestSide);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Không thể chuẩn bị ảnh");
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.88);
+}
+
+async function scanQrFromImageDataUrl(imageDataUrl: string) {
+  const image = new Image();
+  image.src = imageDataUrl;
+  await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error("Không thể quét QR")); });
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+  context.drawImage(image, 0, 0);
+  const qr = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height, { inversionAttempts: "attemptBoth" });
+  return normalizeChyusenQrUrl(qr?.data);
 }
 
 function timeBadge(timeState: string) {
@@ -102,6 +140,7 @@ export default function Chyusen() {
   const [aiProposal, setAiProposal] = useState<{ draft: ChyusenDraft; fields: Array<keyof ChyusenDraft>; confidence: Partial<Record<keyof ChyusenDraft, "high" | "medium" | "low">>; evidence: Partial<Record<keyof ChyusenDraft, string>>; imageCount: number } | null>(null);
   const [aiDraftBackup, setAiDraftBackup] = useState<ChyusenDraft | null>(null);
   const [aiRetryHint, setAiRetryHint] = useState(false);
+  const [qrRegistrationUrl, setQrRegistrationUrl] = useState<string | null>(null);
   const [deadlineTooltipId, setDeadlineTooltipId] = useState<number | null>(null);
   const [showTodayTooltip] = useState(() => new URLSearchParams(window.location.search).get("tooltip") === "today");
 
@@ -252,7 +291,11 @@ export default function Chyusen() {
     if (!files.length) return;
     if (files.length > 4 || files.some((file) => !/image\/(png|jpeg|webp)/.test(file.type) || file.size > 4 * 1024 * 1024) || files.reduce((total, file) => total + file.size, 0) > 12 * 1024 * 1024) { toast.error("Chỉ tải 1–4 ảnh PNG, JPEG hoặc WEBP, tối đa 4 MB/ảnh và 12 MB tổng."); return; }
     try {
-      const imageDataUrls = await Promise.all(files.map((file) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Không thể đọc ảnh")); reader.onerror = () => reject(new Error("Không thể đọc ảnh")); reader.readAsDataURL(file); })));
+      const imageDataUrls = await Promise.all(files.map(prepareChyusenImage));
+      const qrUrls = await Promise.all(imageDataUrls.map((imageDataUrl) => scanQrFromImageDataUrl(imageDataUrl).catch(() => null)));
+      const firstQrUrl = qrUrls.find((url): url is string => Boolean(url));
+      setQrRegistrationUrl(firstQrUrl || null);
+      if (firstQrUrl) toast.success("Đã tìm thấy mã QR. Hãy xác nhận liên kết trước khi dùng.");
       const retryHintTimer = window.setTimeout(() => setAiRetryHint(true), 1_800);
       analyzeImages.mutate({ imageDataUrls }, { onSettled: () => { window.clearTimeout(retryHintTimer); setAiRetryHint(false); } });
     } catch { toast.error("Không thể đọc tệp ảnh này."); }
@@ -360,7 +403,7 @@ export default function Chyusen() {
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>URL là tùy chọn: dán link để tự động điền khi đọc được, hoặc nhập thủ công và lưu trực tiếp.</DialogDescription></DialogHeader>
           <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選 <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Nếu link không đọc được, hệ thống sẽ để trống URL để bạn tiếp tục nhập tay và lưu bình thường.</p></div>
             {draft.parserNote && <div className={`rounded-lg border px-3 py-2 text-sm ${draft.parserStatus === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{draft.parserNote}</div>}
-            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Đọc thông tin từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Tải tối đa 4 ảnh thông báo để AI đối chiếu và gợi ý một bản ghi chung. Chỉ dữ liệu nhìn thấy rõ mới được dùng.</p><Input className="mt-3 cursor-pointer" type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={analyzeImages.isPending} onChange={handleImageUpload} />{analyzeImages.isPending && <p className="mt-2 text-xs font-medium text-primary">{aiRetryHint ? "AI đang thử lại để hoàn tất dữ liệu ảnh..." : "AI đang đối chiếu nội dung ảnh..."}</p>}</div>
+            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Đọc thông tin từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Ảnh được nén an toàn trước khi gửi AI để phản hồi nhanh hơn. Mã QR hợp lệ sẽ được quét ngay trên thiết bị của bạn.</p><Input className="mt-3 cursor-pointer" type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={analyzeImages.isPending} onChange={handleImageUpload} />{qrRegistrationUrl && <div className="mt-3 rounded-md border border-sky-400/40 bg-sky-500/10 p-2 text-xs"><p className="flex items-center gap-1 font-medium text-sky-100"><QrCode className="h-3.5 w-3.5" />Đã phát hiện mã QR</p><p className="mt-1 break-all text-sky-200">{qrRegistrationUrl}</p><div className="mt-2 flex flex-wrap gap-2"><Button type="button" size="sm" className="h-7 bg-sky-400 text-slate-950 hover:bg-sky-300" onClick={() => updateDraft("sourceUrl", qrRegistrationUrl)}>Dùng liên kết QR</Button><a className="inline-flex h-7 items-center rounded-md border border-sky-300/60 px-2 font-medium text-sky-100 hover:bg-sky-500/15" href={qrRegistrationUrl} target="_blank" rel="noreferrer">Mở kiểm tra</a></div></div>}{analyzeImages.isPending && <p className="mt-2 text-xs font-medium text-primary">{aiRetryHint ? "AI đang thử lại để hoàn tất dữ liệu ảnh..." : "AI đang đối chiếu nội dung ảnh..."}</p>}</div>
             {aiProposal && <div className="space-y-3 rounded-lg border border-amber-400/60 bg-amber-500/10 p-3"><div><p className="flex items-center gap-2 text-sm font-semibold text-amber-100"><Sparkles className="h-4 w-4" />So sánh đề xuất AI từ {aiProposal.imageCount} ảnh</p><p className="mt-1 text-xs text-amber-50/80">Kiểm tra giá trị mới và đoạn bằng chứng trước khi áp dụng.</p></div><div className="space-y-2">{aiProposal.fields.map((field) => <div key={field} className="rounded-md border border-amber-300/25 bg-black/10 p-2 text-xs"><p className="font-medium text-amber-100">{field}</p><p className="mt-1 text-muted-foreground">Hiện tại: <span className="text-foreground">{String(draft[field] || "—")}</span></p><p className="text-emerald-200">AI đề xuất: {String(aiProposal.draft[field] || "—")}</p>{aiProposal.evidence[field] && <p className="mt-1 rounded bg-black/15 px-2 py-1 text-amber-50">Bằng chứng: “{aiProposal.evidence[field]}”</p>}</div>)}</div><div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={applyAiProposal}>Áp dụng dữ liệu AI</Button><Button type="button" size="sm" variant="outline" className="border-amber-200/60 text-amber-50 hover:bg-amber-400/15" onClick={() => setAiProposal(null)}>Giữ dữ liệu hiện tại</Button></div></div>}
             {aiFilledFields.length > 0 && <div className="flex flex-col gap-2 rounded-lg border border-sky-400/50 bg-sky-500/10 p-3"><p className="flex items-center gap-2 text-sm font-medium text-sky-200"><Sparkles className="h-4 w-4" />AI đã điền {aiFilledFields.length} trường — các ô xanh cần kiểm tra.</p>{Object.keys(aiFieldEvidence).length > 0 && <div className="space-y-1 rounded-md bg-black/10 p-2 text-xs text-sky-50">{Object.entries(aiFieldEvidence).map(([field, evidence]) => <p key={field}><strong>{field}:</strong> “{evidence}”</p>)}</div>}<div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" className="border-sky-300/60 bg-transparent text-sky-100 hover:bg-sky-500/20" onClick={focusFirstAiField}>Chỉnh sửa nhanh</Button><Button type="button" size="sm" className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={acceptAiDraft}>Chấp nhận tất cả</Button><Button type="button" size="sm" variant="outline" className="border-red-300/60 bg-transparent text-red-200 hover:bg-red-500/15" disabled={!aiDraftBackup} onClick={undoAiDraft}>Hoàn tác AI</Button></div></div>}
             <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình" error={validationErrors.title} aiConfidence={aiFieldConfidence.title}><Input aria-invalid={Boolean(validationErrors.title)} value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm" error={validationErrors.productName} aiConfidence={aiFieldConfidence.productName}><Input aria-invalid={Boolean(validationErrors.productName)} value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series" aiConfidence={aiFieldConfidence.series}><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TRADING_CARD_SERIES.map((series) => <SelectItem key={series} value={series}>{tradingCardSeriesLabel(series)}</SelectItem>)}</SelectContent></Select></Field><Field label="Loại sản phẩm" aiConfidence={aiFieldConfidence.productType}><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as ChyusenDraft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng" aiConfidence={aiFieldConfidence.shop}><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)" aiConfidence={aiFieldConfidence.price}><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng" aiConfidence={aiFieldConfidence.quantityLimit}><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><div ref={dateFieldsRef} className="sm:col-span-2 h-0" aria-hidden="true" /><Field label="Bắt đầu đăng ký" aiConfidence={aiFieldConfidence.applicationStart}><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Hết hạn đăng ký" error={validationErrors.applicationEnd} aiConfidence={aiFieldConfidence.applicationEnd}><Input aria-invalid={Boolean(validationErrors.applicationEnd)} type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Công bố kết quả" error={validationErrors.resultDate} aiConfidence={aiFieldConfidence.resultDate}><Input aria-invalid={Boolean(validationErrors.resultDate)} type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.resultDate} onChange={(event) => updateDraft("resultDate", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Ngày nhận hàng" aiConfidence={aiFieldConfidence.pickupStart}><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Ghi chú thời điểm nhận hàng" aiConfidence={aiFieldConfidence.pickupNote}><Input value={draft.pickupNote} onChange={(event) => updateDraft("pickupNote", event.target.value)} placeholder="VD: Khoảng đầu tháng 9" /></Field><Field label="Điều kiện tham gia" aiConfidence={aiFieldConfidence.requirements}><Textarea value={draft.requirements} onChange={(event) => updateDraft("requirements", event.target.value)} placeholder="VD: Thành viên Joshin, yêu cầu đăng nhập..." /></Field><p className="sm:col-span-2 text-xs text-muted-foreground">Nhập ngày theo dạng <strong>dd/mm</strong>. Năm hiện tại theo giờ Nhật Bản sẽ được tự gán khi bạn bấm Lưu.</p></div>
