@@ -641,3 +641,8 @@
 - [x] Bỏ ô TCG Manager v1.0, đưa nút Bắt đầu lên và hiển thị Phiên bản v1.1
 - [x] Thêm nút xóa riêng cho từng nền gần đây và xử lý nền đang được chọn
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Xác nhận xóa nền gần đây
+- [x] Thêm hộp thoại xác nhận trước khi xóa từng nền đăng nhập gần đây
+- [x] Chỉ xóa nền khỏi danh sách sau khi người dùng xác nhận
+- [x] Bổ sung kiểm thử và lưu checkpoint

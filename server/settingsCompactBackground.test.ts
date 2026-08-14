@@ -17,4 +17,10 @@ describe("compact settings and login background editor", () => {
     expect(settings).toContain('data-collapsed={collapsedSettingsSections');
     expect(css).toContain('.settings-collapsible-panel[data-collapsed="true"] > :not([data-settings-header])');
   });
+
+  it("yêu cầu xác nhận trước khi xóa nền gần đây", () => {
+    expect(settings).toContain("Bạn có chắc chắn muốn xóa?");
+    expect(settings).toContain("pendingBackgroundRemoval");
+    expect(settings).toContain("Xóa nền");
+  });
 });
