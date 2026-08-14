@@ -268,6 +268,41 @@
   :root[data-rgb-speed="normal"] { --tcg-rgb-duration: 5.8s; }
   :root[data-rgb-speed="fast"] { --tcg-rgb-duration: 3.2s; }
 
+  .rgb-effects-preview {
+    --rgb-preview-duration: 5.8s;
+    border: 1px solid rgba(255, 203, 5, 0.22);
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgba(255, 203, 5, 0.08), rgba(120, 80, 255, 0.1) 52%, rgba(60, 185, 255, 0.08));
+    padding: 0.9rem;
+  }
+
+  .rgb-effects-preview[data-rgb-speed="slow"] { --rgb-preview-duration: 10s; }
+  .rgb-effects-preview[data-rgb-speed="normal"] { --rgb-preview-duration: 5.8s; }
+  .rgb-effects-preview[data-rgb-speed="fast"] { --rgb-preview-duration: 3.2s; }
+
+  .rgb-effects-preview-logo,
+  .rgb-effects-preview-title {
+    width: fit-content;
+    background-image: linear-gradient(90deg, #FFCB05 0%, #FFE16A 14%, #FF4D6D 30%, #B66CFF 46%, #42B9FF 62%, #44E28D 78%, #FFCB05 94%);
+    background-size: 240% 100%;
+    background-position: 200% 50%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: tcg-rgb-flow var(--rgb-preview-duration) linear infinite;
+  }
+
+  .rgb-effects-preview-logo { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 900; letter-spacing: 0.04em; }
+  .rgb-effects-preview-title { font-size: 1rem; font-weight: 800; }
+
+  .rgb-effects-preview.is-disabled .rgb-effects-preview-logo,
+  .rgb-effects-preview.is-disabled .rgb-effects-preview-title {
+    background-image: none;
+    color: var(--foreground);
+    -webkit-text-fill-color: currentColor;
+    animation: none;
+  }
+
   :root[data-rgb-effects="enabled"] main h1 {
     background-image: linear-gradient(90deg, #FFCB05 0%, #FFE16A 14%, #FF4D6D 30%, #B66CFF 46%, #42B9FF 62%, #44E28D 78%, #FFCB05 94%);
     background-size: 240% 100%;
@@ -289,6 +324,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     :root[data-rgb-effects="enabled"] main h1 { animation: none; background-position: 50% 50%; }
+    .rgb-effects-preview-logo, .rgb-effects-preview-title { animation: none; background-position: 50% 50%; }
   }
 
   @keyframes yellow-pulse {

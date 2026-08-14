@@ -589,3 +589,8 @@
 - [x] Thêm lựa chọn Chậm, Bình thường và Nhanh trong Cài đặt
 - [x] Lưu tốc độ theo thiết bị và áp dụng ngay cho logo cùng tiêu đề
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Xem trước hiệu ứng RGB
+- [x] Thêm khu vực xem trước RGB trong trang Cài đặt
+- [x] Phản chiếu trạng thái bật/tắt và tốc độ RGB đang chọn trong bản xem trước
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

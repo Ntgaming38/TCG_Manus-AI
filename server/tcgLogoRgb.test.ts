@@ -30,4 +30,11 @@ describe("TCG Manager RGB logo", () => {
     expect(css).toContain(':root[data-rgb-speed="fast"] { --tcg-rgb-duration: 3.2s; }');
     expect(css).toContain("animation: tcg-rgb-flow var(--tcg-rgb-duration, 5.8s) linear infinite;");
   });
+
+  it("có bản xem trước RGB phản chiếu tốc độ và trạng thái tắt", () => {
+    expect(css).toContain(".rgb-effects-preview");
+    expect(css).toContain('.rgb-effects-preview[data-rgb-speed="slow"] { --rgb-preview-duration: 10s; }');
+    expect(css).toContain('.rgb-effects-preview[data-rgb-speed="fast"] { --rgb-preview-duration: 3.2s; }');
+    expect(css).toContain(".rgb-effects-preview.is-disabled .rgb-effects-preview-logo");
+  });
 });
