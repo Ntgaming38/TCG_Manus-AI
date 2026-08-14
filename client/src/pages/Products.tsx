@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
+import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCardSeries";
 import { RarityBadge } from "@/components/RarityBadge";
 import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
@@ -218,11 +219,7 @@ export default function Products() {
                   <Label>Series</Label>
                   <Select value={newProduct.series} onValueChange={(v) => setNewProduct(p => ({ ...p, series: v, rarity: p.series === v ? p.rarity : "" }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pokemon">Pokémon</SelectItem>
-                      <SelectItem value="One Piece">One Piece</SelectItem>
-                      <SelectItem value="Other">Khác</SelectItem>
-                    </SelectContent>
+                    <SelectContent>{TRADING_CARD_SERIES.map((series) => <SelectItem key={series} value={series}>{tradingCardSeriesLabel(series)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
@@ -330,11 +327,7 @@ export default function Products() {
                   <Label>Series</Label>
                   <Select value={editingProduct.series} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, series: value, rarity: p.series === value ? p.rarity : "" }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pokemon">Pokémon</SelectItem>
-                      <SelectItem value="One Piece">One Piece</SelectItem>
-                      <SelectItem value="Other">Khác</SelectItem>
-                    </SelectContent>
+                    <SelectContent>{TRADING_CARD_SERIES.map((series) => <SelectItem key={series} value={series}>{tradingCardSeriesLabel(series)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
