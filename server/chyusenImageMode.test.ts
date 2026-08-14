@@ -6,7 +6,7 @@ const chyusenPage = readFileSync(new URL("../client/src/pages/Chyusen.tsx", impo
 describe("lựa chọn phân tích ảnh Chyusen", () => {
   it("hiển thị hai lựa chọn đọc ảnh và quét QR", () => {
     expect(chyusenPage).toContain("Đọc thông tin từ ảnh");
-    expect(chyusenPage).toContain("Quét mã QR + đọc ảnh");
+    expect(chyusenPage).toContain("Quét QR + đọc ảnh");
   });
 
   it("vẫn luôn gửi toàn bộ ảnh vào AI sau khi quét QR", () => {

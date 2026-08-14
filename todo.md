@@ -670,3 +670,10 @@
 - [x] Tách lựa chọn Đọc thông tin từ ảnh và Quét mã QR trong Chyusen
 - [x] Bảo đảm Quét mã QR vẫn phân tích đầy đủ nội dung toàn bộ ảnh
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Quét QR từ camera Chyusen
+- [x] Mở camera sau khi người dùng chủ động chọn Quét QR từ camera
+- [x] Quét QR liên tục, hiển thị liên kết để người dùng xác nhận trước khi áp dụng
+- [x] Thông báo rõ khi quyền camera bị từ chối hoặc thiết bị không hỗ trợ
+- [x] Dừng camera an toàn khi đóng form hoặc dialog quét
+- [x] Bổ sung kiểm thử, xác minh mobile và lưu checkpoint

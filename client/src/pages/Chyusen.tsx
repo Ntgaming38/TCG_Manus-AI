@@ -145,6 +145,12 @@ export default function Chyusen() {
   const [showQrPreview, setShowQrPreview] = useState(false);
   const [imageAnalysisMode, setImageAnalysisMode] = useState<"image" | "qr">("image");
   const imageUploadInputRef = useRef<HTMLInputElement>(null);
+  const [showCameraQrDialog, setShowCameraQrDialog] = useState(false);
+  const [cameraQrStatus, setCameraQrStatus] = useState<"idle" | "requesting" | "scanning" | "detected" | "error">("idle");
+  const [cameraQrError, setCameraQrError] = useState<string | null>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const cameraAnimationFrameRef = useRef<number | null>(null);
   const [deadlineTooltipId, setDeadlineTooltipId] = useState<number | null>(null);
   const [showTodayTooltip] = useState(() => new URLSearchParams(window.location.search).get("tooltip") === "today");
 
@@ -152,6 +158,17 @@ export default function Chyusen() {
     document.body.dataset.chyusenFormOpen = showDialog ? "true" : "false";
     return () => { delete document.body.dataset.chyusenFormOpen; };
   }, [showDialog]);
+
+  const stopCameraQrScanner = () => {
+    if (cameraAnimationFrameRef.current !== null) window.cancelAnimationFrame(cameraAnimationFrameRef.current);
+    cameraAnimationFrameRef.current = null;
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+  };
+
+  useEffect(() => () => stopCameraQrScanner(), []);
+  useEffect(() => { if (!showDialog) stopCameraQrScanner(); }, [showDialog]);
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -318,6 +335,60 @@ export default function Chyusen() {
       analyzeImages.mutate({ imageDataUrls }, { onSettled: () => { window.clearTimeout(retryHintTimer); setAiRetryHint(false); } });
     } catch { toast.error("Không thể đọc tệp ảnh này."); }
   };
+  const startCameraQrScanner = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraQrStatus("error");
+      setCameraQrError("Thiết bị hoặc trình duyệt này không hỗ trợ mở camera. Hãy dùng tải ảnh để quét QR.");
+      return;
+    }
+    stopCameraQrScanner();
+    setCameraQrError(null);
+    setCameraQrStatus("requesting");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      if (!showCameraQrDialog) { stream.getTracks().forEach((track) => track.stop()); return; }
+      cameraStreamRef.current = stream;
+      const video = cameraVideoRef.current;
+      if (!video) throw new Error("Không thể hiển thị camera.");
+      video.srcObject = stream;
+      await video.play();
+      setCameraQrStatus("scanning");
+      const canvas = document.createElement("canvas");
+      const scanFrame = () => {
+        const activeVideo = cameraVideoRef.current;
+        if (!activeVideo || !cameraStreamRef.current) return;
+        if (activeVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && activeVideo.videoWidth > 0) {
+          canvas.width = activeVideo.videoWidth;
+          canvas.height = activeVideo.videoHeight;
+          const context = canvas.getContext("2d", { willReadFrequently: true });
+          if (context) {
+            context.drawImage(activeVideo, 0, 0, canvas.width, canvas.height);
+            const qr = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height, { inversionAttempts: "attemptBoth" });
+            const qrUrl = normalizeChyusenQrUrl(qr?.data);
+            if (qrUrl) {
+              setQrRegistrationUrl(qrUrl);
+              const detectedShop = detectChyusenShopFromQrUrl(qrUrl);
+              setQrDetectedShop(detectedShop);
+              if (detectedShop) updateDraft("shop", detectedShop);
+              stopCameraQrScanner();
+              setCameraQrStatus("detected");
+              setShowCameraQrDialog(false);
+              setShowQrPreview(true);
+              toast.success("Đã quét mã QR. Hãy kiểm tra liên kết trước khi áp dụng.");
+              return;
+            }
+          }
+        }
+        cameraAnimationFrameRef.current = window.requestAnimationFrame(scanFrame);
+      };
+      cameraAnimationFrameRef.current = window.requestAnimationFrame(scanFrame);
+    } catch (error) {
+      stopCameraQrScanner();
+      setCameraQrStatus("error");
+      const name = error instanceof DOMException ? error.name : "";
+      setCameraQrError(name === "NotAllowedError" ? "Bạn đã từ chối quyền camera. Hãy cấp quyền camera trong trình duyệt rồi thử lại." : "Không thể mở camera. Hãy kiểm tra quyền truy cập hoặc dùng tải ảnh để quét QR.");
+    }
+  };
   const openNewSource = () => { setEditingSourceId(null); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); setShowSourceDialog(true); };
   const openEditSource = (source: any) => { setEditingSourceId(source.id); setSourceDraft({ label: source.label || "", sourceUrl: source.sourceUrl || "", checkIntervalMinutes: source.checkIntervalMinutes || 360, isActive: Boolean(source.isActive) }); setShowSourceDialog(true); };
   const saveSource = () => {
@@ -421,7 +492,7 @@ export default function Chyusen() {
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>URL là tùy chọn: dán link để tự động điền khi đọc được, hoặc nhập thủ công và lưu trực tiếp.</DialogDescription></DialogHeader>
           <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選 <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Nếu link không đọc được, hệ thống sẽ để trống URL để bạn tiếp tục nhập tay và lưu bình thường.</p></div>
             {draft.parserNote && <div className={`rounded-lg border px-3 py-2 text-sm ${draft.parserStatus === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{draft.parserNote}</div>}
-            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Phân tích từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Chọn cách mở ảnh. Dù chọn quét QR, AI vẫn đọc đầy đủ mọi thông tin hiển thị trong toàn bộ ảnh.</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><Button type="button" variant={imageAnalysisMode === "image" ? "default" : "outline"} className={imageAnalysisMode === "image" ? "bg-red-600 hover:bg-red-700" : ""} disabled={analyzeImages.isPending} onClick={() => { setImageAnalysisMode("image"); imageUploadInputRef.current?.click(); }}><FileSearch className="mr-2 h-4 w-4" />Đọc thông tin từ ảnh</Button><Button type="button" variant={imageAnalysisMode === "qr" ? "default" : "outline"} className={imageAnalysisMode === "qr" ? "bg-sky-500 text-slate-950 hover:bg-sky-400" : ""} disabled={analyzeImages.isPending} onClick={() => { setImageAnalysisMode("qr"); imageUploadInputRef.current?.click(); }}><QrCode className="mr-2 h-4 w-4" />Quét mã QR + đọc ảnh</Button><Input ref={imageUploadInputRef} className="hidden" type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={analyzeImages.isPending} onChange={handleImageUpload} /></div>{qrRegistrationUrl && <div className="mt-3 rounded-md border border-sky-400/40 bg-sky-500/10 p-2 text-xs"><p className="flex items-center gap-1 font-medium text-sky-100"><QrCode className="h-3.5 w-3.5" />Đã phát hiện mã QR</p><p className="mt-1 break-all text-sky-200">{qrRegistrationUrl}</p>{qrDetectedShop ? <p className="mt-1 text-emerald-200">Cửa hàng nhận diện: <strong>{qrDetectedShop}</strong></p> : <p className="mt-1 text-sky-100/75">Không xác định được cửa hàng từ miền QR.</p>}<div className="mt-2 flex flex-wrap gap-2"><Button type="button" size="sm" className="h-7 bg-sky-400 text-slate-950 hover:bg-sky-300" onClick={() => setShowQrPreview(true)}>Xem trước QR</Button><a className="inline-flex h-7 items-center rounded-md border border-sky-300/60 px-2 font-medium text-sky-100 hover:bg-sky-500/15" href={qrRegistrationUrl} target="_blank" rel="noreferrer">Mở kiểm tra</a></div></div>}{analyzeImages.isPending && <p className="mt-2 text-xs font-medium text-primary">{aiRetryHint ? "AI đang thử lại để hoàn tất dữ liệu ảnh..." : imageAnalysisMode === "qr" ? "Đang quét QR và đọc đầy đủ nội dung ảnh..." : "AI đang đọc đầy đủ nội dung ảnh..."}</p>}</div>
+            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Phân tích từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Chọn cách mở ảnh. Dù chọn quét QR, AI vẫn đọc đầy đủ mọi thông tin hiển thị trong toàn bộ ảnh.</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><Button type="button" variant={imageAnalysisMode === "image" ? "default" : "outline"} className={imageAnalysisMode === "image" ? "bg-red-600 hover:bg-red-700" : ""} disabled={analyzeImages.isPending} onClick={() => { setImageAnalysisMode("image"); imageUploadInputRef.current?.click(); }}><FileSearch className="mr-2 h-4 w-4" />Đọc thông tin từ ảnh</Button><Button type="button" variant={imageAnalysisMode === "qr" ? "default" : "outline"} className={imageAnalysisMode === "qr" ? "bg-sky-500 text-slate-950 hover:bg-sky-400" : ""} disabled={analyzeImages.isPending} onClick={() => { setImageAnalysisMode("qr"); imageUploadInputRef.current?.click(); }}><QrCode className="mr-2 h-4 w-4" />Quét QR + đọc ảnh</Button><Button type="button" variant="outline" className="border-sky-400/60 text-sky-200 hover:bg-sky-500/15 hover:text-sky-100" onClick={() => { setCameraQrError(null); setCameraQrStatus("idle"); setShowCameraQrDialog(true); }}><QrCode className="mr-2 h-4 w-4" />Quét QR từ camera</Button><Input ref={imageUploadInputRef} className="hidden" type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={analyzeImages.isPending} onChange={handleImageUpload} /></div>{qrRegistrationUrl && <div className="mt-3 rounded-md border border-sky-400/40 bg-sky-500/10 p-2 text-xs"><p className="flex items-center gap-1 font-medium text-sky-100"><QrCode className="h-3.5 w-3.5" />Đã phát hiện mã QR</p><p className="mt-1 break-all text-sky-200">{qrRegistrationUrl}</p>{qrDetectedShop ? <p className="mt-1 text-emerald-200">Cửa hàng nhận diện: <strong>{qrDetectedShop}</strong></p> : <p className="mt-1 text-sky-100/75">Không xác định được cửa hàng từ miền QR.</p>}<div className="mt-2 flex flex-wrap gap-2"><Button type="button" size="sm" className="h-7 bg-sky-400 text-slate-950 hover:bg-sky-300" onClick={() => setShowQrPreview(true)}>Xem trước QR</Button><a className="inline-flex h-7 items-center rounded-md border border-sky-300/60 px-2 font-medium text-sky-100 hover:bg-sky-500/15" href={qrRegistrationUrl} target="_blank" rel="noreferrer">Mở kiểm tra</a></div></div>}{analyzeImages.isPending && <p className="mt-2 text-xs font-medium text-primary">{aiRetryHint ? "AI đang thử lại để hoàn tất dữ liệu ảnh..." : imageAnalysisMode === "qr" ? "Đang quét QR và đọc đầy đủ nội dung ảnh..." : "AI đang đọc đầy đủ nội dung ảnh..."}</p>}</div>
             {aiProposal && <div className="space-y-3 rounded-lg border border-amber-400/60 bg-amber-500/10 p-3"><div><p className="flex items-center gap-2 text-sm font-semibold text-amber-100"><Sparkles className="h-4 w-4" />So sánh đề xuất AI từ {aiProposal.imageCount} ảnh</p><p className="mt-1 text-xs text-amber-50/80">Kiểm tra giá trị mới và đoạn bằng chứng trước khi áp dụng.</p></div><div className="space-y-2">{aiProposal.fields.map((field) => <div key={field} className="rounded-md border border-amber-300/25 bg-black/10 p-2 text-xs"><p className="font-medium text-amber-100">{field}</p><p className="mt-1 text-muted-foreground">Hiện tại: <span className="text-foreground">{String(draft[field] || "—")}</span></p><p className="text-emerald-200">AI đề xuất: {String(aiProposal.draft[field] || "—")}</p>{aiProposal.evidence[field] && <p className="mt-1 rounded bg-black/15 px-2 py-1 text-amber-50">Bằng chứng: “{aiProposal.evidence[field]}”</p>}</div>)}</div><div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={applyAiProposal}>Áp dụng dữ liệu AI</Button><Button type="button" size="sm" variant="outline" className="border-amber-200/60 text-amber-50 hover:bg-amber-400/15" onClick={() => setAiProposal(null)}>Giữ dữ liệu hiện tại</Button></div></div>}
             {aiFilledFields.length > 0 && <div className="flex flex-col gap-2 rounded-lg border border-sky-400/50 bg-sky-500/10 p-3"><p className="flex items-center gap-2 text-sm font-medium text-sky-200"><Sparkles className="h-4 w-4" />AI đã điền {aiFilledFields.length} trường — các ô xanh cần kiểm tra.</p>{Object.keys(aiFieldEvidence).length > 0 && <div className="space-y-1 rounded-md bg-black/10 p-2 text-xs text-sky-50">{Object.entries(aiFieldEvidence).map(([field, evidence]) => <p key={field}><strong>{field}:</strong> “{evidence}”</p>)}</div>}<div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" className="border-sky-300/60 bg-transparent text-sky-100 hover:bg-sky-500/20" onClick={focusFirstAiField}>Chỉnh sửa nhanh</Button><Button type="button" size="sm" className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={acceptAiDraft}>Chấp nhận tất cả</Button><Button type="button" size="sm" variant="outline" className="border-red-300/60 bg-transparent text-red-200 hover:bg-red-500/15" disabled={!aiDraftBackup} onClick={undoAiDraft}>Hoàn tác AI</Button></div></div>}
             <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình" error={validationErrors.title} aiConfidence={aiFieldConfidence.title}><Input aria-invalid={Boolean(validationErrors.title)} value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm" error={validationErrors.productName} aiConfidence={aiFieldConfidence.productName}><Input aria-invalid={Boolean(validationErrors.productName)} value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series" aiConfidence={aiFieldConfidence.series}><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TRADING_CARD_SERIES.map((series) => <SelectItem key={series} value={series}>{tradingCardSeriesLabel(series)}</SelectItem>)}</SelectContent></Select></Field><Field label="Loại sản phẩm" aiConfidence={aiFieldConfidence.productType}><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as ChyusenDraft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng" aiConfidence={aiFieldConfidence.shop}><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)" aiConfidence={aiFieldConfidence.price}><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng" aiConfidence={aiFieldConfidence.quantityLimit}><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><div ref={dateFieldsRef} className="sm:col-span-2 h-0" aria-hidden="true" /><Field label="Bắt đầu đăng ký" aiConfidence={aiFieldConfidence.applicationStart}><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Hết hạn đăng ký" error={validationErrors.applicationEnd} aiConfidence={aiFieldConfidence.applicationEnd}><Input aria-invalid={Boolean(validationErrors.applicationEnd)} type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Công bố kết quả" error={validationErrors.resultDate} aiConfidence={aiFieldConfidence.resultDate}><Input aria-invalid={Boolean(validationErrors.resultDate)} type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.resultDate} onChange={(event) => updateDraft("resultDate", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Ngày nhận hàng" aiConfidence={aiFieldConfidence.pickupStart}><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Ghi chú thời điểm nhận hàng" aiConfidence={aiFieldConfidence.pickupNote}><Input value={draft.pickupNote} onChange={(event) => updateDraft("pickupNote", event.target.value)} placeholder="VD: Khoảng đầu tháng 9" /></Field><Field label="Điều kiện tham gia" aiConfidence={aiFieldConfidence.requirements}><Textarea value={draft.requirements} onChange={(event) => updateDraft("requirements", event.target.value)} placeholder="VD: Thành viên Joshin, yêu cầu đăng nhập..." /></Field><p className="sm:col-span-2 text-xs text-muted-foreground">Nhập ngày theo dạng <strong>dd/mm</strong>. Năm hiện tại theo giờ Nhật Bản sẽ được tự gán khi bạn bấm Lưu.</p></div>
@@ -429,6 +500,10 @@ export default function Chyusen() {
             <Button className="w-full bg-red-600 text-white hover:bg-red-700" onClick={submit} disabled={create.isPending || update.isPending}>{create.isPending || update.isPending ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Lưu 抽選"}</Button>
           </div>
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCameraQrDialog} onOpenChange={(open) => { setShowCameraQrDialog(open); if (!open) stopCameraQrScanner(); }}>
+        <DialogContent className="max-w-md"><DialogHeader><DialogTitle>Quét mã QR từ camera</DialogTitle><DialogDescription>Đưa mã QR vào giữa khung hình. Camera chỉ hoạt động trên thiết bị này và sẽ tắt ngay sau khi quét hoặc đóng hộp thoại.</DialogDescription></DialogHeader><div className="space-y-3"><div className="relative aspect-video overflow-hidden rounded-lg bg-black"><video ref={cameraVideoRef} className="h-full w-full object-cover" autoPlay muted playsInline /><div className="pointer-events-none absolute inset-[18%] rounded-lg border-2 border-sky-300/90 shadow-[0_0_24px_rgba(56,189,248,0.5)]" /></div>{cameraQrError ? <p className="rounded-md border border-red-400/50 bg-red-500/10 p-2 text-sm text-red-200">{cameraQrError}</p> : <p className="text-sm text-muted-foreground">{cameraQrStatus === "requesting" ? "Đang xin quyền mở camera..." : cameraQrStatus === "scanning" ? "Đang tìm mã QR..." : "Bấm Bật camera để bắt đầu quét."}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setShowCameraQrDialog(false)}>Đóng</Button><Button type="button" className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={() => void startCameraQrScanner()}>{cameraQrStatus === "scanning" ? "Đang quét" : "Bật camera"}</Button></div></div></DialogContent>
       </Dialog>
 
       <Dialog open={showQrPreview} onOpenChange={setShowQrPreview}>
