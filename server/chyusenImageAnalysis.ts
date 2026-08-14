@@ -20,6 +20,7 @@ export const chyusenImageAnalysisSchema = z.object({
   pickupNote: z.string().nullable(),
   requirements: z.string().nullable(),
   fieldConfidence: z.record(z.string(), z.enum(confidenceLevels)),
+  fieldEvidence: z.record(z.string(), z.string()).default({}),
   note: z.string(),
 });
 
@@ -69,12 +70,20 @@ function validateImageDataUrl(imageDataUrl: string) {
   }
 }
 
+function validateImageDataUrls(imageDataUrls: string[]) {
+  if (!imageDataUrls.length || imageDataUrls.length > 4) throw new Error("Hãy tải từ 1 đến 4 ảnh thông báo.");
+  imageDataUrls.forEach(validateImageDataUrl);
+  if (imageDataUrls.reduce((total, image) => total + image.length, 0) > 12_000_000) {
+    throw new Error("Tổng dung lượng ảnh quá lớn. Hãy dùng tối đa 12 MB ảnh PNG, JPEG hoặc WEBP.");
+  }
+}
+
 export function parseChyusenImageAnalysis(raw: string): ChyusenImageAnalysis {
   return normalizeImageAnalysisDates(chyusenImageAnalysisSchema.parse(JSON.parse(raw)));
 }
 
-export async function analyzeChyusenImage(imageDataUrl: string): Promise<ChyusenImageAnalysis> {
-  validateImageDataUrl(imageDataUrl);
+export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<ChyusenImageAnalysis> {
+  validateImageDataUrls(imageDataUrls);
   const response = await invokeLLM({
     model: "gemini-3-flash-preview",
     maxTokens: 1600,
@@ -100,9 +109,10 @@ export async function analyzeChyusenImage(imageDataUrl: string): Promise<Chyusen
             pickupNote: { type: ["string", "null"] },
             requirements: { type: ["string", "null"] },
             fieldConfidence: { type: "object", additionalProperties: { type: "string", enum: [...confidenceLevels] } },
+            fieldEvidence: { type: "object", additionalProperties: { type: "string" } },
             note: { type: "string" },
           },
-          required: ["title", "productName", "series", "productType", "shop", "price", "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupNote", "requirements", "fieldConfidence", "note"],
+          required: ["title", "productName", "series", "productType", "shop", "price", "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupNote", "requirements", "fieldConfidence", "fieldEvidence", "note"],
           additionalProperties: false,
         },
       },
@@ -110,9 +120,9 @@ export async function analyzeChyusenImage(imageDataUrl: string): Promise<Chyusen
     messages: [
       {
         role: "system",
-        content: "Extract only facts visibly written in this Japanese Chyusen announcement image. Never invent missing facts. First distinguish labels: application start (応募開始/受付開始), deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup (受取). For dates with explicit year/month/day, return ISO 8601 with +09:00. If the image visibly has month/day but omits year or time, return exactly MM/DD, never guess a year or time; the application will flag it for review. Use null for unreadable or uncertain values. Keep Japanese product names exactly as shown. Use only these series: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. For each non-null field, provide high confidence only if clearly legible and linked to the right label; use medium for visible values needing verification and low for partly obscured values. Omit confidence for null fields. Return JSON only.",
+        content: "Extract only facts visibly written across these Japanese Chyusen announcement images. Treat the images as one source; a later image may clarify or continue an earlier image. Never invent missing facts. First distinguish labels: application start (応募開始/受付開始), deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup (受取). For dates with explicit year/month/day, return ISO 8601 with +09:00. If an image visibly has month/day but omits year or time, return exactly MM/DD, never guess a year or time; the application will flag it for review. Use null for unreadable or conflicting values. Keep Japanese product names exactly as shown. Use only these series: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. For every non-null value, return fieldEvidence with a short exact visible excerpt from the image (max 120 characters), keyed by the field name. For each non-null field, provide high confidence only if clearly legible and linked to the right label; use medium for visible values needing verification and low for partly obscured values. Omit confidence and evidence for null fields. Return JSON only.",
       },
-      { role: "user", content: [{ type: "text", text: "Read this image and extract Chyusen details." }, { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } }] },
+      { role: "user", content: [{ type: "text", text: `Read ${imageDataUrls.length} image(s) in order and extract one Chyusen record.` }, ...imageDataUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "high" as const } }))] },
     ],
   });
   const raw = extractAssistantText(response);
@@ -122,4 +132,8 @@ export async function analyzeChyusenImage(imageDataUrl: string): Promise<Chyusen
   } catch {
     throw new Error("AI trả về dữ liệu ảnh không hợp lệ. Hãy thử lại hoặc nhập thủ công.");
   }
+}
+
+export async function analyzeChyusenImage(imageDataUrl: string): Promise<ChyusenImageAnalysis> {
+  return analyzeChyusenImages([imageDataUrl]);
 }

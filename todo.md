@@ -504,3 +504,10 @@
 ## Bổ sung Series Yu-Gi-Oh!
 - [x] Thêm Yu-Gi-Oh! vào danh sách Series dùng chung trên tất cả biểu mẫu
 - [x] Kiểm thử hiển thị Series và lưu checkpoint
+
+## Bằng chứng và nhiều ảnh AI Chyusen
+- [x] Hiển thị đoạn bằng chứng nguồn cho từng trường AI Chyusen
+- [x] Thêm so sánh dữ liệu AI với dữ liệu đang nhập trước khi áp dụng
+- [x] Hỗ trợ tải và hợp nhất nhiều ảnh thông báo Chyusen
+- [x] Thêm hiệu ứng RGB tinh tế cho logo TCG Manager
+- [x] Kiểm thử AI Chyusen, logo desktop/mobile và lưu checkpoint

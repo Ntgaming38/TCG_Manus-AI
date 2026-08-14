@@ -95,6 +95,8 @@ export default function Chyusen() {
   const [validationErrors, setValidationErrors] = useState<ChyusenManualValidationErrors>({});
   const [aiFilledFields, setAiFilledFields] = useState<Array<keyof ChyusenDraft>>([]);
   const [aiFieldConfidence, setAiFieldConfidence] = useState<Partial<Record<keyof ChyusenDraft, "high" | "medium" | "low">>>({});
+  const [aiFieldEvidence, setAiFieldEvidence] = useState<Partial<Record<keyof ChyusenDraft, string>>>({});
+  const [aiProposal, setAiProposal] = useState<{ draft: ChyusenDraft; fields: Array<keyof ChyusenDraft>; confidence: Partial<Record<keyof ChyusenDraft, "high" | "medium" | "low">>; evidence: Partial<Record<keyof ChyusenDraft, string>>; imageCount: number } | null>(null);
   const [aiDraftBackup, setAiDraftBackup] = useState<ChyusenDraft | null>(null);
   const [deadlineTooltipId, setDeadlineTooltipId] = useState<number | null>(null);
   const [showTodayTooltip] = useState(() => new URLSearchParams(window.location.search).get("tooltip") === "today");
@@ -194,38 +196,22 @@ export default function Chyusen() {
   const createSource = trpc.chyusen.createSource.useMutation({ onSuccess: () => { toast.success("Đã lưu nguồn theo dõi."); setShowSourceDialog(false); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { toast.success("Đã cập nhật nguồn theo dõi."); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
   const deleteSource = trpc.chyusen.deleteSource.useMutation({ onSuccess: () => { toast.success("Đã xóa nguồn theo dõi."); setDeleteSourceId(null); invalidate(); }, onError: (error) => toast.error(error.message) });
-  const analyzeImage = trpc.chyusen.analyzeImage.useMutation({
-    onSuccess: (data) => {
+  const analyzeImages = trpc.chyusen.analyzeImages.useMutation({
+    onSuccess: (data, variables) => {
       const extracted = toChyusenDraft({ ...data, parserStatus: "partial", parserNote: data.note, fieldConfidence: {} });
       const detectedFields = getChyusenAiFilledFields({
         title: data.title, productName: data.productName, series: data.series, productType: data.productType, shop: data.shop,
         price: data.price, quantityLimit: data.quantityLimit, applicationStart: extracted.applicationStart, applicationEnd: extracted.applicationEnd,
         resultDate: extracted.resultDate, pickupStart: extracted.pickupStart, pickupNote: data.pickupNote, requirements: data.requirements,
       }) as Array<keyof ChyusenDraft>;
-      setAiFilledFields(detectedFields);
-      setAiFieldConfidence(Object.fromEntries(detectedFields.map((field) => [field, data.fieldConfidence[field] || "medium"])) as Partial<Record<keyof ChyusenDraft, "high" | "medium" | "low">>);
       setDraft((current) => {
-        setAiDraftBackup(current);
-        return {
-        ...current,
-        title: data.title || current.title,
-        productName: data.productName || current.productName,
-        series: data.series || current.series,
-        productType: data.productType || current.productType,
-        shop: data.shop || current.shop,
-        price: data.price === null ? current.price : String(data.price),
-        quantityLimit: data.quantityLimit || current.quantityLimit,
-        applicationStart: extracted.applicationStart || current.applicationStart,
-        applicationEnd: extracted.applicationEnd || current.applicationEnd,
-        resultDate: extracted.resultDate || current.resultDate,
-        pickupStart: extracted.pickupStart || current.pickupStart,
-        pickupNote: data.pickupNote || current.pickupNote,
-        requirements: data.requirements || current.requirements,
-        parserStatus: "partial",
-        parserNote: data.note || "AI đã đọc ảnh. Hãy kiểm tra lại trước khi lưu.",
-        };
+        const next = { ...current, title: data.title || current.title, productName: data.productName || current.productName, series: data.series || current.series, productType: data.productType || current.productType, shop: data.shop || current.shop, price: data.price === null ? current.price : String(data.price), quantityLimit: data.quantityLimit || current.quantityLimit, applicationStart: extracted.applicationStart || current.applicationStart, applicationEnd: extracted.applicationEnd || current.applicationEnd, resultDate: extracted.resultDate || current.resultDate, pickupStart: extracted.pickupStart || current.pickupStart, pickupNote: data.pickupNote || current.pickupNote, requirements: data.requirements || current.requirements, parserStatus: "partial" as const, parserNote: data.note || "AI đã đọc ảnh. Hãy kiểm tra lại trước khi lưu." };
+        const confidence = Object.fromEntries(detectedFields.map((field) => [field, data.fieldConfidence[field] || "medium"])) as Partial<Record<keyof ChyusenDraft, "high" | "medium" | "low">>;
+        const evidence = Object.fromEntries(detectedFields.map((field) => [field, data.fieldEvidence?.[field] || ""]).filter(([, value]) => Boolean(value))) as Partial<Record<keyof ChyusenDraft, string>>;
+        setAiProposal({ draft: next, fields: detectedFields, confidence, evidence, imageCount: variables.imageDataUrls.length });
+        return current;
       });
-      toast.success("AI đã đọc ảnh. Hãy kiểm tra lại thông tin trước khi lưu.");
+      toast.success(`AI đã đọc ${variables.imageDataUrls.length} ảnh. Hãy so sánh trước khi áp dụng.`);
     },
     onError: (error) => toast.error(error.message || "Không thể đọc ảnh. Hãy thử ảnh rõ hơn."),
   });
@@ -247,22 +233,20 @@ export default function Chyusen() {
     setDraft((current) => ({ ...current, [key]: value }));
     setAiFilledFields((current) => current.filter((field) => field !== key));
     setAiFieldConfidence((current) => { const next = { ...current }; delete next[key]; return next; });
+    setAiFieldEvidence((current) => { const next = { ...current }; delete next[key]; return next; });
     if (["title", "productName", "applicationEnd", "resultDate"].includes(String(key))) {
       setValidationErrors((current) => ({ ...current, [key]: undefined }));
     }
   };
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
     event.target.value = "";
-    if (!file) return;
-    if (!/image\/(png|jpeg|webp)/.test(file.type)) { toast.error("Chỉ hỗ trợ ảnh PNG, JPEG hoặc WEBP."); return; }
-    if (file.size > 4 * 1024 * 1024) { toast.error("Ảnh tối đa 4 MB để AI có thể đọc nhanh."); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") analyzeImage.mutate({ imageDataUrl: reader.result });
-    };
-    reader.onerror = () => toast.error("Không thể đọc tệp ảnh này.");
-    reader.readAsDataURL(file);
+    if (!files.length) return;
+    if (files.length > 4 || files.some((file) => !/image\/(png|jpeg|webp)/.test(file.type) || file.size > 4 * 1024 * 1024) || files.reduce((total, file) => total + file.size, 0) > 12 * 1024 * 1024) { toast.error("Chỉ tải 1–4 ảnh PNG, JPEG hoặc WEBP, tối đa 4 MB/ảnh và 12 MB tổng."); return; }
+    try {
+      const imageDataUrls = await Promise.all(files.map((file) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Không thể đọc ảnh")); reader.onerror = () => reject(new Error("Không thể đọc ảnh")); reader.readAsDataURL(file); })));
+      analyzeImages.mutate({ imageDataUrls });
+    } catch { toast.error("Không thể đọc tệp ảnh này."); }
   };
   const openNewSource = () => { setEditingSourceId(null); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); setShowSourceDialog(true); };
   const openEditSource = (source: any) => { setEditingSourceId(source.id); setSourceDraft({ label: source.label || "", sourceUrl: source.sourceUrl || "", checkIntervalMinutes: source.checkIntervalMinutes || 360, isActive: Boolean(source.isActive) }); setShowSourceDialog(true); };
@@ -292,9 +276,10 @@ export default function Chyusen() {
     else create.mutate(payload);
   };
   const focusFirstAiField = () => window.setTimeout(() => document.querySelector<HTMLElement>("[data-ai-filled='true'] input, [data-ai-filled='true'] button")?.focus(), 0);
-  const acceptAiDraft = () => { setAiFilledFields([]); setAiFieldConfidence({}); setAiDraftBackup(null); toast.success("Đã chấp nhận dữ liệu AI. Bạn vẫn có thể sửa trước khi lưu."); };
-  const undoAiDraft = () => { if (!aiDraftBackup) return; setDraft(aiDraftBackup); setAiFilledFields([]); setAiFieldConfidence({}); setAiDraftBackup(null); toast.info("Đã hoàn tác dữ liệu AI vừa điền."); };
-  const resetAiDraftState = () => { setAiFilledFields([]); setAiFieldConfidence({}); setAiDraftBackup(null); };
+  const applyAiProposal = () => { if (!aiProposal) return; setAiDraftBackup(draft); setDraft(aiProposal.draft); setAiFilledFields(aiProposal.fields); setAiFieldConfidence(aiProposal.confidence); setAiFieldEvidence(aiProposal.evidence); setAiProposal(null); toast.success("Đã áp dụng dữ liệu AI. Bạn vẫn có thể sửa trước khi lưu."); };
+  const acceptAiDraft = () => { setAiFilledFields([]); setAiFieldConfidence({}); setAiFieldEvidence({}); setAiDraftBackup(null); toast.success("Đã chấp nhận dữ liệu AI. Bạn vẫn có thể sửa trước khi lưu."); };
+  const undoAiDraft = () => { if (!aiDraftBackup) return; setDraft(aiDraftBackup); setAiFilledFields([]); setAiFieldConfidence({}); setAiFieldEvidence({}); setAiDraftBackup(null); toast.info("Đã hoàn tác dữ liệu AI vừa điền."); };
+  const resetAiDraftState = () => { setAiFilledFields([]); setAiFieldConfidence({}); setAiFieldEvidence({}); setAiDraftBackup(null); setAiProposal(null); };
   const openNew = () => { setEditingId(null); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); resetAiDraftState(); setShowDialog(true); };
   const openEdit = (entry: any) => { setEditingId(entry.id); setDraft(toChyusenDraft(entry)); setValidationErrors({}); resetAiDraftState(); setShowDialog(true); };
 
@@ -358,8 +343,9 @@ export default function Chyusen() {
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{editingId ? "Sửa 抽選" : "Thêm 抽選"}</DialogTitle><DialogDescription>URL là tùy chọn: dán link để tự động điền khi đọc được, hoặc nhập thủ công và lưu trực tiếp.</DialogDescription></DialogHeader>
           <div className="space-y-5 py-2"><div className="rounded-lg border border-border bg-secondary/30 p-4"><Label>Link website 抽選 <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><Input value={draft.sourceUrl} onChange={(event) => updateDraft("sourceUrl", event.target.value)} placeholder="https://..." /><Button type="button" variant="outline" disabled={!draft.sourceUrl || previewUrl.isPending} onClick={() => previewUrl.mutate({ sourceUrl: draft.sourceUrl })}><Link2 className="mr-2 h-4 w-4" />{previewUrl.isPending ? "Đang đọc..." : "Đọc thông tin"}</Button></div><p className="mt-2 text-xs text-muted-foreground">Nếu link không đọc được, hệ thống sẽ để trống URL để bạn tiếp tục nhập tay và lưu bình thường.</p></div>
             {draft.parserNote && <div className={`rounded-lg border px-3 py-2 text-sm ${draft.parserStatus === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{draft.parserNote}</div>}
-            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Đọc thông tin từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Tải ảnh thông báo Chyusen để AI gợi ý thông tin. Chỉ dữ liệu nhìn thấy rõ trong ảnh mới được điền; hãy kiểm tra trước khi lưu.</p><Input className="mt-3 cursor-pointer" type="file" accept="image/png,image/jpeg,image/webp" disabled={analyzeImage.isPending} onChange={handleImageUpload} />{analyzeImage.isPending && <p className="mt-2 text-xs font-medium text-primary">AI đang đọc nội dung ảnh...</p>}</div>
-            {aiFilledFields.length > 0 && <div className="flex flex-col gap-2 rounded-lg border border-sky-400/50 bg-sky-500/10 p-3"><p className="flex items-center gap-2 text-sm font-medium text-sky-200"><Sparkles className="h-4 w-4" />AI đã điền {aiFilledFields.length} trường — các ô xanh cần kiểm tra.</p><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" className="border-sky-300/60 bg-transparent text-sky-100 hover:bg-sky-500/20" onClick={focusFirstAiField}>Chỉnh sửa nhanh</Button><Button type="button" size="sm" className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={acceptAiDraft}>Chấp nhận tất cả</Button><Button type="button" size="sm" variant="outline" className="border-red-300/60 bg-transparent text-red-200 hover:bg-red-500/15" disabled={!aiDraftBackup} onClick={undoAiDraft}>Hoàn tác AI</Button></div></div>}
+            <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 p-4"><Label className="flex items-center gap-2"><ImageUp className="h-4 w-4 text-primary" />Đọc thông tin từ ảnh</Label><p className="mt-1 text-xs text-muted-foreground">Tải tối đa 4 ảnh thông báo để AI đối chiếu và gợi ý một bản ghi chung. Chỉ dữ liệu nhìn thấy rõ mới được dùng.</p><Input className="mt-3 cursor-pointer" type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={analyzeImages.isPending} onChange={handleImageUpload} />{analyzeImages.isPending && <p className="mt-2 text-xs font-medium text-primary">AI đang đối chiếu nội dung ảnh...</p>}</div>
+            {aiProposal && <div className="space-y-3 rounded-lg border border-amber-400/60 bg-amber-500/10 p-3"><div><p className="flex items-center gap-2 text-sm font-semibold text-amber-100"><Sparkles className="h-4 w-4" />So sánh đề xuất AI từ {aiProposal.imageCount} ảnh</p><p className="mt-1 text-xs text-amber-50/80">Kiểm tra giá trị mới và đoạn bằng chứng trước khi áp dụng.</p></div><div className="space-y-2">{aiProposal.fields.map((field) => <div key={field} className="rounded-md border border-amber-300/25 bg-black/10 p-2 text-xs"><p className="font-medium text-amber-100">{field}</p><p className="mt-1 text-muted-foreground">Hiện tại: <span className="text-foreground">{String(draft[field] || "—")}</span></p><p className="text-emerald-200">AI đề xuất: {String(aiProposal.draft[field] || "—")}</p>{aiProposal.evidence[field] && <p className="mt-1 rounded bg-black/15 px-2 py-1 text-amber-50">Bằng chứng: “{aiProposal.evidence[field]}”</p>}</div>)}</div><div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={applyAiProposal}>Áp dụng dữ liệu AI</Button><Button type="button" size="sm" variant="outline" className="border-amber-200/60 text-amber-50 hover:bg-amber-400/15" onClick={() => setAiProposal(null)}>Giữ dữ liệu hiện tại</Button></div></div>}
+            {aiFilledFields.length > 0 && <div className="flex flex-col gap-2 rounded-lg border border-sky-400/50 bg-sky-500/10 p-3"><p className="flex items-center gap-2 text-sm font-medium text-sky-200"><Sparkles className="h-4 w-4" />AI đã điền {aiFilledFields.length} trường — các ô xanh cần kiểm tra.</p>{Object.keys(aiFieldEvidence).length > 0 && <div className="space-y-1 rounded-md bg-black/10 p-2 text-xs text-sky-50">{Object.entries(aiFieldEvidence).map(([field, evidence]) => <p key={field}><strong>{field}:</strong> “{evidence}”</p>)}</div>}<div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" className="border-sky-300/60 bg-transparent text-sky-100 hover:bg-sky-500/20" onClick={focusFirstAiField}>Chỉnh sửa nhanh</Button><Button type="button" size="sm" className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={acceptAiDraft}>Chấp nhận tất cả</Button><Button type="button" size="sm" variant="outline" className="border-red-300/60 bg-transparent text-red-200 hover:bg-red-500/15" disabled={!aiDraftBackup} onClick={undoAiDraft}>Hoàn tác AI</Button></div></div>}
             <div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình" error={validationErrors.title} aiConfidence={aiFieldConfidence.title}><Input aria-invalid={Boolean(validationErrors.title)} value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} /></Field><Field label="Tên sản phẩm" error={validationErrors.productName} aiConfidence={aiFieldConfidence.productName}><Input aria-invalid={Boolean(validationErrors.productName)} value={draft.productName} onChange={(event) => updateDraft("productName", event.target.value)} /></Field><Field label="Series" aiConfidence={aiFieldConfidence.series}><Select value={draft.series} onValueChange={(value) => updateDraft("series", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TRADING_CARD_SERIES.map((series) => <SelectItem key={series} value={series}>{tradingCardSeriesLabel(series)}</SelectItem>)}</SelectContent></Select></Field><Field label="Loại sản phẩm" aiConfidence={aiFieldConfidence.productType}><Select value={draft.productType} onValueChange={(value) => updateDraft("productType", value as ChyusenDraft["productType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="card">Card</SelectItem><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="set">Set</SelectItem><SelectItem value="other">Khác</SelectItem></SelectContent></Select></Field><Field label="Cửa hàng" aiConfidence={aiFieldConfidence.shop}><Select value={draft.shop} onValueChange={(value) => updateDraft("shop", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHOPS.map((shop) => <SelectItem key={shop} value={shop}>{shop}</SelectItem>)}</SelectContent></Select></Field>{draft.shop === "Khác" && <Field label="Tên cửa hàng thực tế"><Input value={draft.customShopName} onChange={(event) => updateDraft("customShopName", event.target.value)} /></Field>}<Field label="Product ID (nếu có)"><Input value={draft.externalProductId} onChange={(event) => updateDraft("externalProductId", event.target.value)} placeholder="VD: 1000255803" /></Field><Field label="Giá (¥)" aiConfidence={aiFieldConfidence.price}><Input type="number" min="0" value={draft.price} onChange={(event) => updateDraft("price", event.target.value)} /></Field><Field label="Giới hạn số lượng" aiConfidence={aiFieldConfidence.quantityLimit}><Input value={draft.quantityLimit} onChange={(event) => updateDraft("quantityLimit", event.target.value)} placeholder="VD: 1 Box / người" /></Field><div ref={dateFieldsRef} className="sm:col-span-2 h-0" aria-hidden="true" /><Field label="Bắt đầu đăng ký" aiConfidence={aiFieldConfidence.applicationStart}><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationStart} onChange={(event) => updateDraft("applicationStart", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Hết hạn đăng ký" error={validationErrors.applicationEnd} aiConfidence={aiFieldConfidence.applicationEnd}><Input aria-invalid={Boolean(validationErrors.applicationEnd)} type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.applicationEnd} onChange={(event) => updateDraft("applicationEnd", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Công bố kết quả" error={validationErrors.resultDate} aiConfidence={aiFieldConfidence.resultDate}><Input aria-invalid={Boolean(validationErrors.resultDate)} type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.resultDate} onChange={(event) => updateDraft("resultDate", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Ngày nhận hàng" aiConfidence={aiFieldConfidence.pickupStart}><Input type="text" inputMode="numeric" placeholder="dd/mm" maxLength={5} value={draft.pickupStart} onChange={(event) => updateDraft("pickupStart", formatChyusenDayMonthInput(event.target.value))} /></Field><Field label="Ghi chú thời điểm nhận hàng" aiConfidence={aiFieldConfidence.pickupNote}><Input value={draft.pickupNote} onChange={(event) => updateDraft("pickupNote", event.target.value)} placeholder="VD: Khoảng đầu tháng 9" /></Field><Field label="Điều kiện tham gia" aiConfidence={aiFieldConfidence.requirements}><Textarea value={draft.requirements} onChange={(event) => updateDraft("requirements", event.target.value)} placeholder="VD: Thành viên Joshin, yêu cầu đăng nhập..." /></Field><p className="sm:col-span-2 text-xs text-muted-foreground">Nhập ngày theo dạng <strong>dd/mm</strong>. Năm hiện tại theo giờ Nhật Bản sẽ được tự gán khi bạn bấm Lưu.</p></div>
             {Object.keys(draft.fieldConfidence).length > 0 && <div className="rounded-lg border border-border p-3"><p className="mb-2 text-sm font-medium">Độ tin cậy dữ liệu</p><div className="flex flex-wrap gap-2">{Object.entries(draft.fieldConfidence).map(([field, value]) => <Badge key={field} variant="outline" className={value === "detected" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : value === "needs_review" ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-300 bg-slate-50 text-slate-700"}>{field}: {value === "detected" ? "đã nhận diện" : value === "needs_review" ? "cần kiểm tra" : "thiếu"}</Badge>)}</div></div>}
             <Button className="w-full bg-red-600 text-white hover:bg-red-700" onClick={submit} disabled={create.isPending || update.isPending}>{create.isPending || update.isPending ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Lưu 抽選"}</Button>

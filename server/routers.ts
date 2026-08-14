@@ -12,7 +12,7 @@ import * as chyusenDb from "./chyusenDb";
 import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
 import { checkChyusenSourceNow } from "./chyusenMonitor";
-import { analyzeChyusenImage } from "./chyusenImageAnalysis";
+import { analyzeChyusenImage, analyzeChyusenImages } from "./chyusenImageAnalysis";
 import { emptyTrashItems, getTrashAutoCleanupSettings, listTrashItems, saveTrashAutoCleanupSettings, setTrashAutoCleanupTask, TRASH_AUTO_CLEANUP_CRON } from "./trashDb";
 import { restoreTrashItem } from "./trashRestore";
 import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
@@ -447,6 +447,10 @@ export const appRouter = router({
     analyzeImage: protectedProcedure
       .input(z.object({ imageDataUrl: z.string().trim().min(64).max(7_000_000) }))
       .mutation(({ input }) => analyzeChyusenImage(input.imageDataUrl)),
+
+    analyzeImages: protectedProcedure
+      .input(z.object({ imageDataUrls: z.array(z.string().trim().min(64).max(7_000_000)).min(1).max(4) }))
+      .mutation(({ input }) => analyzeChyusenImages(input.imageDataUrls)),
 
     refreshPreview: protectedProcedure
       .input(z.object({ id: z.number() }))
