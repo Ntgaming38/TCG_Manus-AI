@@ -526,3 +526,7 @@
 - [x] Chặn đánh dấu Đã trúng trước ngày công bố kết quả ở UI và API
 - [x] Làm mới chỉ số Tổng quan sau cập nhật, hoàn tác và xóa Chyusen
 - [x] Kiểm thử ràng buộc ngày công bố và lưu checkpoint
+
+## Nhắc ngày công bố Chyusen
+- [x] Hiển thị nhắc nhở khi Chyusen đến ngày công bố kết quả
+- [x] Kiểm thử nhận diện ngày công bố và lưu checkpoint

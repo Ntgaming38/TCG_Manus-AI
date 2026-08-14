@@ -24,6 +24,7 @@ import { getChyusenAiFilledFields } from "@shared/chyusenAiFields";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
 import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCardSeries";
+import { isChyusenResultAnnouncementToday } from "@shared/chyusenResultReminder";
 
 const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Bandai Premium", "Pokémon Center", "Rakuten", "Khác"];
 const CHYUSEN_TOAST_DURATION = 8_000;
@@ -80,6 +81,7 @@ export default function Chyusen() {
   const { data: sources = [] } = trpc.chyusen.sources.useQuery();
   const { data: sourceHistory = [] } = trpc.chyusen.sourceHistory.useQuery();
   const { data: notificationSettings } = trpc.chyusen.notificationSettings.useQuery();
+  const resultAnnouncementToday = entries.filter((entry: any) => isChyusenResultAnnouncementToday(entry));
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [showDialog, setShowDialog] = useState(false);
@@ -308,6 +310,13 @@ export default function Chyusen() {
         <Card className="border-amber-200 bg-amber-50/60">
           <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base text-amber-950"><BellRing className="h-4 w-4 text-amber-700" />Thông báo Chyusen ({unreadNotifications.length})</CardTitle><CardDescription className="text-amber-900">Nhắc hạn đăng ký, ngày công bố kết quả hoặc thay đổi từ nguồn công khai.</CardDescription></CardHeader>
           <CardContent className="space-y-2">{unreadNotifications.slice(0, 4).map((notification: any) => <div key={notification.id} className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-white/80 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-amber-950">{notification.title}</p><p className="mt-0.5 text-xs text-amber-900">{notification.message}</p></div><Button variant="outline" size="sm" className="border-amber-300 bg-white" onClick={() => markNotificationRead.mutate({ id: notification.id, isRead: true })}>Đã xem</Button></div>)}</CardContent>
+        </Card>
+      )}
+
+      {resultAnnouncementToday.length > 0 && (
+        <Card className="border-violet-300 bg-violet-500/10 shadow-[0_0_0_1px_rgba(196,181,253,0.18)]">
+          <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base text-violet-100"><Trophy className="h-4 w-4 text-yellow-300" />Hôm nay có kết quả Chyusen ({resultAnnouncementToday.length})</CardTitle><CardDescription className="text-violet-200/85">Kiểm tra kết quả từ cửa hàng trước khi đánh dấu Đã trúng hoặc Đã trượt.</CardDescription></CardHeader>
+          <CardContent className="flex flex-wrap gap-2">{resultAnnouncementToday.slice(0, 4).map((entry: any) => <Button key={entry.id} type="button" size="sm" variant="outline" className="border-violet-300/60 text-violet-100 hover:bg-violet-500/20" onClick={() => openEdit(entry)}>{entry.title}<span className="ml-2 text-violet-200/70">• {entry.shop || "Khác"}</span></Button>)}</CardContent>
         </Card>
       )}
 
