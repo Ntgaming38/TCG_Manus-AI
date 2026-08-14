@@ -715,3 +715,9 @@
 - [x] Sắp xếp các hạn còn 1, 2 và nhiều ngày theo thứ tự tăng dần
 - [x] Giữ thứ tự ổn định cho chương trình không có hạn hoặc đã có kết quả
 - [x] Bổ sung kiểm thử và lưu checkpoint
+
+## Giải thích chỉ số Tổng quan
+- [x] Thêm biểu tượng i ở góc phải các khung chỉ số Tổng quan
+- [x] Hiển thị công thức và các khoản cấu thành Tổng vốn, Giá trị hiện tại, Lợi nhuận và số lượng sản phẩm
+- [x] Tăng nhẹ kích thước và đặt biểu tượng i sát góc phải từng khung
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

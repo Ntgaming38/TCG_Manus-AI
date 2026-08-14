@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, Ticket, Clock3, ExternalLink } from "lucide-react";
+import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, Ticket, Clock3, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { RarityBadge } from "@/components/RarityBadge";
 import { getDashboardProfitTone } from "@shared/dashboardProfitTone";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Sample chart data - will be replaced with real data from API
 const monthlyData = [
@@ -19,6 +20,12 @@ const monthlyData = [
   { month: "T8", revenue: 0, profit: 0 },
 ];
 
+const formatYen = (value: number) => `¥${value.toLocaleString()}`;
+
+function MetricInfo({ label, children }: { label: string; children: React.ReactNode }) {
+  return <Popover><PopoverTrigger asChild><button type="button" aria-label={`Giải thích ${label}`} className="-mr-1 ml-auto shrink-0 rounded-full p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><Info className="h-5 w-5" /></button></PopoverTrigger><PopoverContent side="top" align="end" className="w-72 border-border bg-popover p-3 text-popover-foreground"><p className="font-semibold">{label}</p><div className="mt-2 space-y-1.5 text-xs leading-relaxed text-muted-foreground">{children}</div></PopoverContent></Popover>;
+}
+
 export default function Dashboard() {
   const { data: stats } = trpc.dashboard.stats.useQuery();
   const [, setLocation] = useLocation();
@@ -27,6 +34,9 @@ export default function Dashboard() {
   const currentValue = stats?.currentValue ?? 0;
   const totalProfit = stats?.totalProfit ?? 0;
   const profitTone = getDashboardProfitTone(totalProfit);
+  const capitalByType = stats?.capitalByType ?? { card: 0, box: 0, pack: 0 };
+  const currentValueByType = stats?.currentValueByType ?? { card: 0, box: 0, pack: 0 };
+  const profitByType = stats?.profitByType ?? { card: 0, box: 0, pack: 0 };
   const totalInStock = stats?.totalInStock ?? 0;
   const inStockCards = stats?.inStockCards ?? 0;
   const inStockBoxes = stats?.inStockBoxes ?? 0;
@@ -55,8 +65,8 @@ export default function Dashboard() {
         <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Tổng vốn</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng vốn</p><MetricInfo label="Tổng vốn"><p>Giá mua × số lượng còn trong kho.</p><p>Card {formatYen(capitalByType.card)} + Box {formatYen(capitalByType.box)} + Pack {formatYen(capitalByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalCapital)}</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">¥{totalCapital.toLocaleString()}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -69,8 +79,8 @@ export default function Dashboard() {
         <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Giá trị hiện tại</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Giá trị hiện tại</p><MetricInfo label="Giá trị hiện tại"><p>Giá thị trường × số lượng còn trong kho; nếu chưa có giá thị trường, hệ thống dùng giá mua.</p><p>Card {formatYen(currentValueByType.card)} + Box {formatYen(currentValueByType.box)} + Pack {formatYen(currentValueByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(currentValue)}</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">¥{currentValue.toLocaleString()}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -83,8 +93,8 @@ export default function Dashboard() {
         <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Lợi nhuận</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Lợi nhuận</p><MetricInfo label="Lợi nhuận"><p>Tổng lợi nhuận của các giao dịch đã bán: doanh thu − giá vốn.</p><p>Card {formatYen(profitByType.card)} + Box {formatYen(profitByType.box)} + Pack {formatYen(profitByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalProfit)}</p></MetricInfo></div>
                 <p className={`text-2xl font-bold mt-1 ${profitTone}`}>
                   {totalProfit >= 0 ? '+' : ''}¥{totalProfit.toLocaleString()}
                 </p>
@@ -99,8 +109,8 @@ export default function Dashboard() {
         <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Tổng sản phẩm trong kho</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng sản phẩm trong kho</p><MetricInfo label="Tổng sản phẩm trong kho"><p>Tổng số lượng sản phẩm có trạng thái Trong kho.</p><p>Card {inStockCards} + Box {inStockBoxes} + Pack {inStockPacks}.</p><p className="font-medium text-foreground">= {totalInStock} sản phẩm</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">{totalInStock}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Card: {inStockCards} | Box: {inStockBoxes} | Pack: {inStockPacks}
@@ -116,8 +126,8 @@ export default function Dashboard() {
         <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Tổng sản phẩm đã bán</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng sản phẩm đã bán</p><MetricInfo label="Tổng sản phẩm đã bán"><p>Tổng số lượng trong các giao dịch Bán Hàng đã lưu.</p><p>Card {soldCards} + Box {soldBoxes} + Pack {soldPacks}.</p><p className="font-medium text-foreground">= {totalSold} sản phẩm</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">{totalSold}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Card: {soldCards} | Box: {soldBoxes} | Pack: {soldPacks}

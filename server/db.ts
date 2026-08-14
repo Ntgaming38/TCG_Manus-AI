@@ -13,6 +13,7 @@ import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyus
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../shared/marketplacePriceHistory';
 import { shouldDisplayProductInCatalog } from '../shared/productVisibility';
+import { getSalesProfitBreakdown, getStockMetricBreakdown } from '../shared/dashboardMetricBreakdown';
 import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1073,6 +1074,7 @@ export async function getDashboardStats(userId: number) {
   const db = await getDb();
   if (!db) return {
     totalCapital: 0, currentValue: 0, totalProfit: 0,
+    capitalByType: { card: 0, box: 0, pack: 0 }, currentValueByType: { card: 0, box: 0, pack: 0 }, profitByType: { card: 0, box: 0, pack: 0 },
     totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
     totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
     cardRarityStats: [], chartData: [], recentActivities: [],
@@ -1142,6 +1144,9 @@ export async function getDashboardStats(userId: number) {
 
   // Get total profit from sales
   const totalProfit = userSalesForCount.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+  const capitalByType = getStockMetricBreakdown(inStockProducts, "capital");
+  const currentValueByType = getStockMetricBreakdown(inStockProducts, "market");
+  const profitByType = getSalesProfitBreakdown(userSalesForCount, userProducts);
 
   // Chart data - last 6 months
   const chartData: { month: string; revenue: number; profit: number }[] = [];
@@ -1166,7 +1171,7 @@ export async function getDashboardStats(userId: number) {
     .limit(10);
 
   return {
-    totalCapital, currentValue, totalProfit,
+    totalCapital, currentValue, totalProfit, capitalByType, currentValueByType, profitByType,
     totalInStock, inStockCards, inStockBoxes, inStockPacks,
     totalSold, soldCards, soldBoxes, soldPacks,
     cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders, chyusenNearestDeadline, chyusenRegisterNow,
