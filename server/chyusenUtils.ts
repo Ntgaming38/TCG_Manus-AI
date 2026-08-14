@@ -90,6 +90,8 @@ export function detectProductType(text: string): "card" | "box" | "pack" | "set"
 
 export function detectSeries(text: string): string {
   if (/one\s*piece|ワンピース/i.test(text)) return "One Piece";
+  if (/dragon\s*ball|ドラゴンボール/i.test(text)) return "Dragon Ball";
+  if (/yu-?gi-?oh|遊戯王/i.test(text)) return "Yu-Gi-Oh!";
   return "Pokemon";
 }
 
@@ -115,6 +117,22 @@ function makeTokyoDate(year: string, month: string, day: string, hour: string, m
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function currentTokyoYear(now = new Date()) {
+  return new Intl.DateTimeFormat("en-US", { timeZone: CHYUSEN_TIMEZONE, year: "numeric" }).format(now);
+}
+
+/** Extracts Japanese month/day values that are visibly written; missing years are marked for user review downstream. */
+export function extractJapaneseDateMentions(text: string, now = new Date()): Date[] {
+  const matches = Array.from(text.matchAll(/(?:(20\d{2})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日(?:\s*[（(]?[月火水木金土日][）)]?)?(?:\s*(\d{1,2})\s*[:：]\s*(\d{2}))?/g));
+  const seen = new Set<string>();
+  return matches.flatMap((match) => {
+    const date = makeTokyoDate(match[1] || currentTokyoYear(now), match[2], match[3], match[4] || "0", match[5] || "0");
+    if (!date || seen.has(date.toISOString())) return [];
+    seen.add(date.toISOString());
+    return [date];
+  });
+}
+
 /** Returns only full date+time values; it deliberately rejects missing years/times. */
 export function extractExplicitTokyoDates(text: string): Date[] {
   const matches = [
@@ -132,6 +150,17 @@ export function findDateNearKeywords(text: string, keywords: string[]): Date | n
     if (keywords.some((keyword) => candidate.includes(keyword))) {
       const date = extractExplicitTokyoDates(candidate)[0];
       if (date) return date;
+    }
+  }
+  return null;
+}
+
+/** Finds a visible Japanese date near a relevant label, even when source only provides month/day. */
+export function findVisibleDateNearKeywords(text: string, keywords: string[], now = new Date()): Date | null {
+  const sentenceCandidates = text.split(/[。\n]|\s{3,}/).filter(Boolean);
+  for (const candidate of sentenceCandidates) {
+    if (keywords.some((keyword) => candidate.includes(keyword))) {
+      return extractExplicitTokyoDates(candidate)[0] || extractJapaneseDateMentions(candidate, now)[0] || null;
     }
   }
   return null;

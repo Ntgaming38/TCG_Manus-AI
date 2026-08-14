@@ -493,9 +493,9 @@
 - [x] Kiểm thử tác vụ, cấu hình và lưu checkpoint
 
 ## Nâng cấp AI Chyusen
-- [ ] Rà soát chất lượng đọc ảnh và liên kết Chyusen hiện tại
-- [ ] Nâng cấp trích xuất ngày tiếng Nhật, dữ liệu nguồn và độ tin cậy theo trường
-- [ ] Kiểm thử ảnh/liên kết và lưu checkpoint
+- [x] Rà soát chất lượng đọc ảnh và liên kết Chyusen hiện tại
+- [x] Nâng cấp trích xuất ngày tiếng Nhật, dữ liệu nguồn và độ tin cậy theo trường
+- [x] Kiểm thử ảnh/liên kết và lưu checkpoint
 
 ## Bổ sung Series Dragon Ball
 - [x] Thêm Dragon Ball vào danh sách Series dùng chung trên tất cả biểu mẫu

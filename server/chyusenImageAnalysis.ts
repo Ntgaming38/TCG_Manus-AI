@@ -25,6 +25,44 @@ export const chyusenImageAnalysisSchema = z.object({
 
 export type ChyusenImageAnalysis = z.infer<typeof chyusenImageAnalysisSchema>;
 
+const dateFields = ["applicationStart", "applicationEnd", "resultDate", "pickupStart"] as const;
+
+function currentTokyoYear(now = new Date()) {
+  return new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tokyo", year: "numeric" }).format(now);
+}
+
+function normalizeVisibleJapaneseDate(value: string | null) {
+  if (!value) return { value, inferredYear: false };
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime()) && /20\d{2}/.test(value)) return { value, inferredYear: false };
+  const match = value.match(/^(?:(20\d{2})\s*(?:年|[-/.]))?\s*(\d{1,2})\s*(?:月|[-/.])\s*(\d{1,2})\s*(?:日)?$/);
+  if (!match) return { value: null, inferredYear: false };
+  const year = match[1] || currentTokyoYear();
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const checked = new Date(Date.UTC(Number(year), month - 1, day));
+  if (checked.getUTCFullYear() !== Number(year) || checked.getUTCMonth() !== month - 1 || checked.getUTCDate() !== day) return { value: null, inferredYear: false };
+  return { value: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00+09:00`, inferredYear: !match[1] };
+}
+
+function normalizeImageAnalysisDates(analysis: ChyusenImageAnalysis): ChyusenImageAnalysis {
+  const normalized = { ...analysis, fieldConfidence: { ...analysis.fieldConfidence } };
+  const assumedCurrentYear: string[] = [];
+  for (const field of dateFields) {
+    const result = normalizeVisibleJapaneseDate(normalized[field]);
+    normalized[field] = result.value;
+    if (result.inferredYear && result.value) {
+      normalized.fieldConfidence[field] = "medium";
+      assumedCurrentYear.push(field);
+    }
+  }
+  if (!assumedCurrentYear.length) return normalized;
+  return {
+    ...normalized,
+    note: `${normalized.note} Các ngày chỉ có tháng/ngày được gán năm hiện tại theo giờ Nhật; hãy kiểm tra lại trước khi lưu.`,
+  };
+}
+
 function validateImageDataUrl(imageDataUrl: string) {
   if (!/^data:image\/(png|jpe?g|webp);base64,[a-zA-Z0-9+/=\s]+$/.test(imageDataUrl)) {
     throw new Error("Ảnh không hợp lệ. Hãy dùng PNG, JPEG hoặc WEBP.");
@@ -32,14 +70,14 @@ function validateImageDataUrl(imageDataUrl: string) {
 }
 
 export function parseChyusenImageAnalysis(raw: string): ChyusenImageAnalysis {
-  return chyusenImageAnalysisSchema.parse(JSON.parse(raw));
+  return normalizeImageAnalysisDates(chyusenImageAnalysisSchema.parse(JSON.parse(raw)));
 }
 
 export async function analyzeChyusenImage(imageDataUrl: string): Promise<ChyusenImageAnalysis> {
   validateImageDataUrl(imageDataUrl);
   const response = await invokeLLM({
     model: "gemini-3-flash-preview",
-    maxTokens: 1200,
+    maxTokens: 1600,
     responseFormat: {
       type: "json_schema",
       json_schema: {
@@ -72,7 +110,7 @@ export async function analyzeChyusenImage(imageDataUrl: string): Promise<Chyusen
     messages: [
       {
         role: "system",
-        content: "You extract only facts visibly written in a Japanese lottery / Chyusen announcement image. Never guess or infer missing facts. Use null when any field is missing or uncertain. For exact dates, return ISO 8601 with +09:00 only if the image explicitly states year, month, and day; otherwise put wording such as early or late month in pickupNote only. Keep Japanese names exactly as shown. For each non-null field, include fieldConfidence: high only when clearly and directly legible, medium when visible but needs human verification, low when partially obscured. Omit confidence for null fields. Return JSON only.",
+        content: "Extract only facts visibly written in this Japanese Chyusen announcement image. Never invent missing facts. First distinguish labels: application start (応募開始/受付開始), deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup (受取). For dates with explicit year/month/day, return ISO 8601 with +09:00. If the image visibly has month/day but omits year or time, return exactly MM/DD, never guess a year or time; the application will flag it for review. Use null for unreadable or uncertain values. Keep Japanese product names exactly as shown. Use only these series: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. For each non-null field, provide high confidence only if clearly legible and linked to the right label; use medium for visible values needing verification and low for partly obscured values. Omit confidence for null fields. Return JSON only.",
       },
       { role: "user", content: [{ type: "text", text: "Read this image and extract Chyusen details." }, { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } }] },
     ],

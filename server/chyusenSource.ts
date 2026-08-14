@@ -8,9 +8,11 @@ import {
   detectSeries,
   detectShop,
   extractExplicitTokyoDates,
+  extractJapaneseDateMentions,
   extractHtmlTitle,
   extractMetaImage,
   findDateNearKeywords,
+  findVisibleDateNearKeywords,
   getSourceLabel,
   hashSourceContent,
   stripHtml,
@@ -123,22 +125,24 @@ function explicitDateFromIso(text: string, value?: string | null): Date | null {
 function buildDeterministicPreview(source: FetchedChyusenSource): ChyusenPreview {
   const { text, title, url, imageUrl, contentHash } = source;
   const hasLotteryKeyword = /抽選|応募|受付期間|申込期間|当選発表/.test(text);
-  const dates = extractExplicitTokyoDates(text);
-  const applicationStart = findDateNearKeywords(text, ["応募開始", "応募受付", "受付開始", "申込開始"])
+  const fullDates = extractExplicitTokyoDates(text);
+  const dates = extractJapaneseDateMentions(text);
+  const applicationStart = findVisibleDateNearKeywords(text, ["応募開始", "応募受付", "受付開始", "申込開始"])
     || (/(応募期間|受付期間|申込期間)/.test(text) ? dates[0] || null : null);
-  const applicationEnd = findDateNearKeywords(text, ["応募締切", "受付締切", "締切", "応募期間", "受付期間", "申込期間"])
+  const applicationEnd = findVisibleDateNearKeywords(text, ["応募締切", "受付締切", "締切", "応募期間", "受付期間", "申込期間"])
     || (/(応募期間|受付期間|申込期間)/.test(text) && dates.length >= 2 ? dates[1] : null);
-  const resultDate = findDateNearKeywords(text, ["当選発表", "結果発表"]);
-  const pickupStart = findDateNearKeywords(text, ["受取開始", "受取期間", "商品受取"]);
+  const resultDate = findVisibleDateNearKeywords(text, ["当選発表", "結果発表"]);
+  const pickupStart = findVisibleDateNearKeywords(text, ["受取開始", "受取期間", "商品受取"]);
+  const isFullySpecifiedDate = (value: Date | null) => Boolean(value && fullDates.some((date) => date.toLocaleDateString("en-CA", { timeZone: CHYUSEN_TIMEZONE }) === value.toLocaleDateString("en-CA", { timeZone: CHYUSEN_TIMEZONE })));
   const detectedShop = detectShop(text, url);
   const inferredTitle = title || getSourceLabel(url);
   const confidence: ChyusenPreview["fieldConfidence"] = {
     title: title ? "detected" : "needs_review",
     productName: title ? "needs_review" : "missing",
     shop: detectedShop.shop === "Khác" ? "needs_review" : "detected",
-    applicationStart: applicationStart ? "detected" : "missing",
-    applicationEnd: applicationEnd ? "detected" : "missing",
-    resultDate: resultDate ? "detected" : "missing",
+    applicationStart: applicationStart ? isFullySpecifiedDate(applicationStart) ? "detected" : "needs_review" : "missing",
+    applicationEnd: applicationEnd ? isFullySpecifiedDate(applicationEnd) ? "detected" : "needs_review" : "missing",
+    resultDate: resultDate ? isFullySpecifiedDate(resultDate) ? "detected" : "needs_review" : "missing",
     price: detectPrice(text) ? "detected" : "missing",
     quantityLimit: detectQuantityLimit(text) ? "detected" : "missing",
   };
@@ -160,7 +164,9 @@ function buildDeterministicPreview(source: FetchedChyusenSource): ChyusenPreview
     pickupStart,
     parserStatus: hasLotteryKeyword ? "partial" : "unavailable",
     parserNote: hasLotteryKeyword
-      ? "Đã đọc nội dung công khai. Hãy kiểm tra các trường được đánh dấu trước khi lưu."
+      ? [applicationStart, applicationEnd, resultDate].some((date) => date && !isFullySpecifiedDate(date))
+        ? "Đã đọc nội dung công khai và nhận diện ngày/tháng, nhưng nguồn chưa nêu đủ năm hoặc giờ. Hãy kiểm tra các trường vàng trước khi lưu."
+        : "Đã đọc nội dung công khai. Hãy kiểm tra các trường được đánh dấu trước khi lưu."
       : "Không tìm thấy từ khóa Chyusen rõ ràng trong nội dung công khai; bạn có thể nhập thủ công.",
     fieldConfidence: confidence,
     sourceContentHash: contentHash,
@@ -171,7 +177,7 @@ function buildDeterministicPreview(source: FetchedChyusenSource): ChyusenPreview
 async function enrichPreviewWithAI(source: FetchedChyusenSource, preview: ChyusenPreview): Promise<ChyusenPreview> {
   const response = await invokeLLM({
     model: "gpt-5-mini",
-    maxTokens: 900,
+    maxTokens: 1400,
     responseFormat: {
       type: "json_schema",
       json_schema: {
@@ -201,7 +207,7 @@ async function enrichPreviewWithAI(source: FetchedChyusenSource, preview: Chyuse
     messages: [
       {
         role: "system",
-        content: "Extract only facts stated in the public Japanese Chyusen source. Use null for any missing or uncertain value. Dates must be ISO 8601 with +09:00 and are valid only when the source explicitly includes a year, month, day, and time. Never infer a year, a time, a deadline, a draw date, or a price.",
+        content: "Extract only facts explicitly written in the public Japanese Chyusen source. Work in this order: identify the product and publisher; distinguish application start (応募開始/受付開始), application deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup terms (受取); then extract price, limit and requirements. Use null for missing or uncertain values. For dates, return ISO 8601 with +09:00 only if the source explicitly includes year, month, day and time; never invent a year, time, deadline, result date or price. Use only these series labels when supported by the text: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. Keep Japanese product names exactly as written and explain any uncertainty in note.",
       },
       { role: "user", content: source.text },
     ],
