@@ -460,3 +460,8 @@
 - [x] Thu gọn và sửa hiển thị ô lọc ngày Thùng rác trên điện thoại
 - [x] Sửa hiển thị hộp thoại Lịch sử giá Marketplace trên điện thoại
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Chuẩn hóa nút đóng
+- [x] Tạo kiểu nút đóng X đỏ dùng chung cho giao diện
+- [x] Áp dụng nút đóng chuẩn cho các hộp thoại và bảng nổi phù hợp
+- [x] Kiểm thử desktop/mobile và lưu checkpoint
