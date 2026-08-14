@@ -721,3 +721,14 @@
 - [x] Hiển thị công thức và các khoản cấu thành Tổng vốn, Giá trị hiện tại, Lợi nhuận và số lượng sản phẩm
 - [x] Tăng nhẹ kích thước và đặt biểu tượng i sát góc phải từng khung
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Khắc phục API Chyusen trả HTML
+- [x] Xác định nguyên nhân truy vấn Chyusen nhận HTML thay vì JSON
+- [x] Khôi phục phản hồi JSON đúng chuẩn cho API Chyusen
+- [x] Kiểm thử tải trang Chyusen và lưu checkpoint
+
+## Xu hướng tháng trong Tổng quan
+- [x] Tính phần trăm thay đổi có cơ sở dữ liệu so với tháng trước cho các chỉ số Tổng quan
+- [x] Hiển thị chỉ báo tăng/giảm bên dưới từng số liệu, kèm trạng thái khi chưa đủ dữ liệu
+- [x] Đưa biểu tượng i sát góc phải từng ô chỉ số Tổng quan
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

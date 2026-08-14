@@ -14,6 +14,7 @@ import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../shared/marketplacePriceHistory';
 import { shouldDisplayProductInCatalog } from '../shared/productVisibility';
 import { getSalesProfitBreakdown, getStockMetricBreakdown } from '../shared/dashboardMetricBreakdown';
+import { getDashboardMonthlyTrend } from '../shared/dashboardMonthlyTrend';
 import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1122,6 +1123,7 @@ export async function getDashboardStats(userId: number) {
   // Sold products
   // Sold quantity: count from actual sales records (sum of quantities sold)
   const userSalesForCount = await db.select().from(sales).where(eq(sales.userId, userId));
+  const userPurchasesForTrend = await db.select().from(purchases).where(eq(purchases.userId, userId));
   const totalSold = userSalesForCount.reduce((sum, s) => sum + s.quantity, 0);
   const productMap = new Map(userProducts.map(p => [p.id, p]));
   let soldCards = 0, soldBoxes = 0, soldPacks = 0;
@@ -1148,6 +1150,36 @@ export async function getDashboardStats(userId: number) {
   const currentValueByType = getStockMetricBreakdown(inStockProducts, "market");
   const profitByType = getSalesProfitBreakdown(userSalesForCount, userProducts);
 
+  const trendNow = new Date();
+  const currentYear = trendNow.getFullYear();
+  const currentMonth = trendNow.getMonth();
+  const matchesMonth = (value: Date, year: number, month: number) => value.getFullYear() === year && value.getMonth() === month;
+  const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+  const currentMonthSales = userSalesForCount.filter((sale) => matchesMonth(new Date(sale.saleDate), currentYear, currentMonth));
+  const previousMonthSales = userSalesForCount.filter((sale) => matchesMonth(new Date(sale.saleDate), previousMonthDate.getFullYear(), previousMonthDate.getMonth()));
+  const currentMonthPurchases = userPurchasesForTrend.filter((purchase) => matchesMonth(new Date(purchase.purchaseDate), currentYear, currentMonth));
+
+  const currentPurchasesByProduct = new Map<number, number>();
+  const currentSalesByProduct = new Map<number, number>();
+  for (const purchase of currentMonthPurchases) currentPurchasesByProduct.set(purchase.productId, (currentPurchasesByProduct.get(purchase.productId) || 0) + purchase.quantity);
+  for (const sale of currentMonthSales) currentSalesByProduct.set(sale.productId, (currentSalesByProduct.get(sale.productId) || 0) + sale.quantity);
+  const previousStockProducts = userProducts.map((product) => ({
+    ...product,
+    quantity: Math.max(0, (product.quantity || 0) - (currentPurchasesByProduct.get(product.id) || 0) + (currentSalesByProduct.get(product.id) || 0)),
+  })).filter((product) => product.quantity > 0);
+  const previousCapital = Object.values(getStockMetricBreakdown(previousStockProducts, "capital")).reduce((sum, value) => sum + value, 0);
+  const previousCurrentValue = Object.values(getStockMetricBreakdown(previousStockProducts, "market")).reduce((sum, value) => sum + value, 0);
+  const previousInStock = previousStockProducts.reduce((sum, product) => sum + (product.quantity || 0), 0);
+  const currentMonthProfit = currentMonthSales.reduce((sum, sale) => sum + Number(sale.profit || 0), 0);
+  const previousMonthProfit = previousMonthSales.reduce((sum, sale) => sum + Number(sale.profit || 0), 0);
+  const monthlyTrends = {
+    capital: getDashboardMonthlyTrend(totalCapital, previousCapital),
+    currentValue: getDashboardMonthlyTrend(currentValue, previousCurrentValue),
+    profit: getDashboardMonthlyTrend(currentMonthProfit, previousMonthProfit),
+    inStock: getDashboardMonthlyTrend(totalInStock, previousInStock),
+    sold: getDashboardMonthlyTrend(currentMonthSales.reduce((sum, sale) => sum + sale.quantity, 0), previousMonthSales.reduce((sum, sale) => sum + sale.quantity, 0)),
+  };
+
   // Chart data - last 6 months
   const chartData: { month: string; revenue: number; profit: number }[] = [];
   const now = new Date();
@@ -1171,7 +1203,7 @@ export async function getDashboardStats(userId: number) {
     .limit(10);
 
   return {
-    totalCapital, currentValue, totalProfit, capitalByType, currentValueByType, profitByType,
+    totalCapital, currentValue, totalProfit, capitalByType, currentValueByType, profitByType, monthlyTrends,
     totalInStock, inStockCards, inStockBoxes, inStockPacks,
     totalSold, soldCards, soldBoxes, soldPacks,
     cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders, chyusenNearestDeadline, chyusenRegisterNow,

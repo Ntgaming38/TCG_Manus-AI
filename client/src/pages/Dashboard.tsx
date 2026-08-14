@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, Ticket, Clock3, ExternalLink, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, Ticket, Clock3, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -26,6 +26,14 @@ function MetricInfo({ label, children }: { label: string; children: React.ReactN
   return <Popover><PopoverTrigger asChild><button type="button" aria-label={`Giải thích ${label}`} className="-mr-1 ml-auto shrink-0 rounded-full p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><Info className="h-5 w-5" /></button></PopoverTrigger><PopoverContent side="top" align="end" className="w-72 border-border bg-popover p-3 text-popover-foreground"><p className="font-semibold">{label}</p><div className="mt-2 space-y-1.5 text-xs leading-relaxed text-muted-foreground">{children}</div></PopoverContent></Popover>;
 }
 
+function MonthlyTrend({ trend, label }: { trend: { percent: number | null; direction: "up" | "down" | "flat" | "new" }; label: string }) {
+  if (trend.direction === "new") return <p className="mt-1 flex items-center gap-1 text-xs font-medium text-blue-400"><TrendingUp className="h-3.5 w-3.5" />Mới trong tháng này</p>;
+  const Icon = trend.direction === "up" ? TrendingUp : trend.direction === "down" ? TrendingDown : Minus;
+  const tone = trend.direction === "up" ? "text-green-400" : trend.direction === "down" ? "text-red-400" : "text-muted-foreground";
+  const prefix = trend.direction === "up" ? "+" : "";
+  return <p className={`mt-1 flex items-center gap-1 text-xs font-medium ${tone}`}><Icon className="h-3.5 w-3.5" />{prefix}{trend.percent ?? 0}% so với tháng trước <span className="sr-only">({label})</span></p>;
+}
+
 export default function Dashboard() {
   const { data: stats } = trpc.dashboard.stats.useQuery();
   const [, setLocation] = useLocation();
@@ -37,6 +45,9 @@ export default function Dashboard() {
   const capitalByType = stats?.capitalByType ?? { card: 0, box: 0, pack: 0 };
   const currentValueByType = stats?.currentValueByType ?? { card: 0, box: 0, pack: 0 };
   const profitByType = stats?.profitByType ?? { card: 0, box: 0, pack: 0 };
+  const monthlyTrends = stats?.monthlyTrends ?? {
+    capital: { percent: 0, direction: "flat" as const }, currentValue: { percent: 0, direction: "flat" as const }, profit: { percent: 0, direction: "flat" as const }, inStock: { percent: 0, direction: "flat" as const }, sold: { percent: 0, direction: "flat" as const },
+  };
   const totalInStock = stats?.totalInStock ?? 0;
   const inStockCards = stats?.inStockCards ?? 0;
   const inStockBoxes = stats?.inStockBoxes ?? 0;
@@ -68,6 +79,7 @@ export default function Dashboard() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng vốn</p><MetricInfo label="Tổng vốn"><p>Giá mua × số lượng còn trong kho.</p><p>Card {formatYen(capitalByType.card)} + Box {formatYen(capitalByType.box)} + Pack {formatYen(capitalByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalCapital)}</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">¥{totalCapital.toLocaleString()}</p>
+                <MonthlyTrend trend={monthlyTrends.capital} label="Tổng vốn" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-blue-400" />
@@ -82,6 +94,7 @@ export default function Dashboard() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Giá trị hiện tại</p><MetricInfo label="Giá trị hiện tại"><p>Giá thị trường × số lượng còn trong kho; nếu chưa có giá thị trường, hệ thống dùng giá mua.</p><p>Card {formatYen(currentValueByType.card)} + Box {formatYen(currentValueByType.box)} + Pack {formatYen(currentValueByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(currentValue)}</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">¥{currentValue.toLocaleString()}</p>
+                <MonthlyTrend trend={monthlyTrends.currentValue} label="Giá trị hiện tại" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <TrendingUp className="h-5 w-5 text-green-400" />
@@ -98,6 +111,7 @@ export default function Dashboard() {
                 <p className={`text-2xl font-bold mt-1 ${profitTone}`}>
                   {totalProfit >= 0 ? '+' : ''}¥{totalProfit.toLocaleString()}
                 </p>
+                <MonthlyTrend trend={monthlyTrends.profit} label="Lợi nhuận tháng này" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
                 <BarChart3 className="h-5 w-5 text-yellow-400" />
@@ -112,6 +126,7 @@ export default function Dashboard() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng sản phẩm trong kho</p><MetricInfo label="Tổng sản phẩm trong kho"><p>Tổng số lượng sản phẩm có trạng thái Trong kho.</p><p>Card {inStockCards} + Box {inStockBoxes} + Pack {inStockPacks}.</p><p className="font-medium text-foreground">= {totalInStock} sản phẩm</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">{totalInStock}</p>
+                <MonthlyTrend trend={monthlyTrends.inStock} label="Sản phẩm trong kho" />
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Card: {inStockCards} | Box: {inStockBoxes} | Pack: {inStockPacks}
                 </p>
@@ -129,6 +144,7 @@ export default function Dashboard() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng sản phẩm đã bán</p><MetricInfo label="Tổng sản phẩm đã bán"><p>Tổng số lượng trong các giao dịch Bán Hàng đã lưu.</p><p>Card {soldCards} + Box {soldBoxes} + Pack {soldPacks}.</p><p className="font-medium text-foreground">= {totalSold} sản phẩm</p></MetricInfo></div>
                 <p className="text-2xl font-bold text-foreground mt-1">{totalSold}</p>
+                <MonthlyTrend trend={monthlyTrends.sold} label="Sản phẩm bán tháng này" />
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Card: {soldCards} | Box: {soldBoxes} | Pack: {soldPacks}
                 </p>
