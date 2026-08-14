@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { BarChart3, TrendingUp, Package, DollarSign, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
+import { formatSignedYen, formatYen } from "@shared/formatYen";
 
 export default function Reports() {
   const { data: report } = trpc.reports.overview.useQuery();
@@ -25,9 +26,9 @@ export default function Reports() {
     let csv = "\uFEFF"; // BOM for Excel UTF-8
     csv += "BÁO CÁO KINH DOANH POKÉMON TRADING\n\n";
     csv += "TỔNG QUAN\n";
-    csv += `Tổng đã mua,¥${totalBought.toLocaleString()}\n`;
-    csv += `Tổng đã bán,¥${totalSold.toLocaleString()}\n`;
-    csv += `Lợi nhuận,¥${totalProfit.toLocaleString()}\n`;
+    csv += `Tổng đã mua,"${formatYen(totalBought)}"\n`;
+    csv += `Tổng đã bán,"${formatYen(totalSold)}"\n`;
+    csv += `Lợi nhuận,"${formatYen(totalProfit)}"\n`;
     csv += `ROI,${roi.toFixed(1)}%\n\n`;
 
     if (monthlyData.length > 0) {
@@ -81,7 +82,7 @@ export default function Reports() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Tổng đã mua</p>
-                <p className="text-lg font-bold">¥{totalBought.toLocaleString()}</p>
+                <p className="text-lg font-bold">{formatYen(totalBought)}</p>
               </div>
             </div>
           </CardContent>
@@ -94,7 +95,7 @@ export default function Reports() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Tổng đã bán</p>
-                <p className="text-lg font-bold">¥{totalSold.toLocaleString()}</p>
+                <p className="text-lg font-bold">{formatYen(totalSold)}</p>
               </div>
             </div>
           </CardContent>
@@ -108,7 +109,7 @@ export default function Reports() {
               <div>
                 <p className="text-xs text-muted-foreground">Lợi nhuận</p>
                 <p className={`text-lg font-bold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {totalProfit >= 0 ? '+' : ''}¥{totalProfit.toLocaleString()}
+                  {formatSignedYen(totalProfit)}
                 </p>
               </div>
             </div>
@@ -176,7 +177,7 @@ export default function Reports() {
                       <p className="text-xs text-muted-foreground capitalize">{product.type}</p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-green-400">+¥{Number(product.profit).toLocaleString()}</span>
+                  <span className="text-sm font-bold text-green-400">{formatSignedYen(Number(product.profit))}</span>
                 </div>
               ))}
             </div>
@@ -186,4 +187,3 @@ export default function Reports() {
     </div>
   );
 }
-

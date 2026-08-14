@@ -13,6 +13,7 @@ import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRari
 import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCardSeries";
 import { RarityBadge } from "@/components/RarityBadge";
 import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
+import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -479,16 +480,16 @@ export default function Products() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Mua:</span>
-                    <span className="ml-1 font-medium">¥{Number(product.buyPrice).toLocaleString()}</span>
+                    <span className="ml-1 font-medium">{formatYen(Number(product.buyPrice))}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Giá TT:</span>
-                    <span className="ml-1 font-medium">¥{Number(product.marketPrice).toLocaleString()}</span>
+                    <span className="ml-1 font-medium">{formatYen(Number(product.marketPrice))}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Lãi:</span>
                     <span className={`ml-1 font-medium ${Number(product.marketPrice) - Number(product.buyPrice) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {Number(product.marketPrice) - Number(product.buyPrice) >= 0 ? '+' : ''}¥{(Number(product.marketPrice) - Number(product.buyPrice)).toLocaleString()}
+                      {formatSignedYen(Number(product.marketPrice) - Number(product.buyPrice))}
                     </span>
                   </div>
                 </div>
@@ -523,7 +524,7 @@ function ProductActionMenu({ product, onEdit, onUpload, onDelete }: { product: a
 function ProductListMetric({ product, column }: { product: any; column: ProductListColumnKey }) {
   const profit = Number(product.marketPrice) - Number(product.buyPrice);
   if (column === "quantity") return <span className="text-muted-foreground">SL <strong className="ml-1 text-foreground">{product.quantity}</strong></span>;
-  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">¥{Number(product.buyPrice).toLocaleString()}</strong></span>;
-  if (column === "marketPrice") return <span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">¥{Number(product.marketPrice).toLocaleString()}</strong></span>;
-  return <span className="text-muted-foreground">Lãi <strong className={profit >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{profit >= 0 ? "+" : ""}¥{profit.toLocaleString()}</strong></span>;
+  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">{formatYen(Number(product.buyPrice))}</strong></span>;
+  if (column === "marketPrice") return <span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">{formatYen(Number(product.marketPrice))}</strong></span>;
+  return <span className="text-muted-foreground">Lãi <strong className={profit >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{formatSignedYen(profit)}</strong></span>;
 }

@@ -783,3 +783,8 @@
 - [x] Áp dụng hiệu ứng RGB cho Tổng vốn, Giá trị hiện tại và Tổng sản phẩm trong kho
 - [x] Áp dụng số đỏ có animation cho Tổng sản phẩm đã bán
 - [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Định dạng tiền và vùng tài khoản
+- [x] Chuẩn hóa khoảng cách sau ký hiệu ¥ trước số tiền trên toàn ứng dụng
+- [x] Tăng vùng tài khoản thanh bên để tên người dùng không bị che
+- [x] Bổ sung kiểm thử giao diện desktop/mobile và lưu checkpoint

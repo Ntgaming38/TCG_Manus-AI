@@ -266,19 +266,19 @@ function DashboardLayoutContent({
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="p-3">
+          <SidebarFooter className="p-3 pt-4">
             <SidebarAIAssistant />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-sidebar-accent transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none">
-                  <Avatar className="h-9 w-9 border border-border shrink-0">
+                <button className="flex min-h-16 w-full items-center gap-3.5 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-sidebar-accent focus:outline-none group-data-[collapsible=icon]:justify-center">
+                  <Avatar className="h-11 w-11 shrink-0 border border-border">
                     <AvatarFallback className="text-xs font-medium bg-primary/20 text-primary">
                       {user?.name?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="rgb-user-name text-sm font-medium truncate leading-none">{user?.name || "-"}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">{user?.email || "-"}</p>
+                  <div className="min-w-0 flex-1 overflow-hidden group-data-[collapsible=icon]:hidden">
+                    <p title={user?.name || "-"} className="rgb-user-name truncate text-[15px] font-semibold leading-tight">{user?.name || "-"}</p>
+                    <p title={user?.email || "-"} className="text-xs text-muted-foreground truncate mt-1.5">{user?.email || "-"}</p>
                   </div>
                 </button>
               </DropdownMenuTrigger>

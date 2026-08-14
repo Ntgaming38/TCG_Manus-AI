@@ -13,6 +13,7 @@ import { AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { formatSignedYen, formatYen } from "@shared/formatYen";
 
 const PLATFORMS = [
   { value: "user", label: "Người Dùng" },
@@ -198,7 +199,7 @@ export default function Sales() {
                 </Select>
                 {selectedProduct && (
                   <div className="text-xs text-muted-foreground space-y-0.5">
-                    <p>Đang có: {selectedProduct.quantity} | Giá vốn: ¥{Number(selectedProduct.buyPrice).toLocaleString()}</p>
+                    <p>Đang có: {selectedProduct.quantity} | Giá vốn: {formatYen(Number(selectedProduct.buyPrice))}</p>
                     {selectedProduct.damagedQuantity > 0 && (
                       <p className="text-red-400 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />
@@ -263,16 +264,16 @@ export default function Sales() {
               </div>
             <div className="p-3 bg-secondary/50 rounded-lg space-y-1">
                 {newSale.quantity > 0 && newSale.salePrice > 0 && (
-                  <p className="text-xs text-muted-foreground">Giá bán/SP: ¥{Math.round(newSale.salePrice / newSale.quantity).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Giá bán/SP: {formatYen(Math.round(newSale.salePrice / newSale.quantity))}</p>
                 )}
-                <p className="text-sm text-muted-foreground">Doanh thu: <span className="font-medium text-foreground">¥{totalRevenue.toLocaleString()}</span></p>
-                <p className="text-sm text-muted-foreground">Phí: <span className="font-medium text-foreground">-¥{totalCost.toLocaleString()}</span></p>
-                <p className="text-sm text-muted-foreground">Thực nhận: <span className="font-medium text-foreground">¥{netRevenue.toLocaleString()}</span></p>
+                <p className="text-sm text-muted-foreground">Doanh thu: <span className="font-medium text-foreground">{formatYen(totalRevenue)}</span></p>
+                <p className="text-sm text-muted-foreground">Phí: <span className="font-medium text-foreground">{formatYen(-totalCost)}</span></p>
+                <p className="text-sm text-muted-foreground">Thực nhận: <span className="font-medium text-foreground">{formatYen(netRevenue)}</span></p>
                 {selectedProduct && (
-                  <p className="text-sm text-muted-foreground">Giá vốn: <span className="font-medium text-foreground">-¥{(Number(selectedProduct.buyPrice) * newSale.quantity).toLocaleString()}</span></p>
+                  <p className="text-sm text-muted-foreground">Giá vốn: <span className="font-medium text-foreground">{formatYen(-(Number(selectedProduct.buyPrice) * newSale.quantity))}</span></p>
                 )}
                 <p className={`text-sm font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  Lợi nhuận: {profit >= 0 ? '+' : ''}¥{profit.toLocaleString()}
+                  Lợi nhuận: {formatSignedYen(profit)}
                 </p>
               </div>
               <div className="space-y-2">
@@ -355,9 +356,9 @@ export default function Sales() {
                  </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-bold text-sm">¥{Number(sale.totalRevenue).toLocaleString()}</p>
+                      <p className="font-bold text-sm">{formatYen(Number(sale.totalRevenue))}</p>
                       <p className={`text-xs font-medium ${Number(sale.profit) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {Number(sale.profit) >= 0 ? '+' : ''}¥{Number(sale.profit).toLocaleString()}
+                        {formatSignedYen(Number(sale.profit))}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -390,10 +391,10 @@ export default function Sales() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-lg text-primary">¥{totals.totalRevenue.toLocaleString()}</p>
+                  <p className="font-bold text-lg text-primary">{formatYen(totals.totalRevenue)}</p>
                   <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
                   <p className={`text-sm font-bold mt-0.5 ${totals.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {totals.totalProfit >= 0 ? '+' : ''}¥{totals.totalProfit.toLocaleString()} lợi nhuận
+                    {formatSignedYen(totals.totalProfit)} lợi nhuận
                   </p>
                 </div>
               </div>
@@ -431,7 +432,7 @@ export default function Sales() {
               </div>
               {editForm.quantity > 0 && editForm.salePrice > 0 && (
                 <div className="p-2 bg-secondary/30 rounded text-xs text-muted-foreground">
-                  Giá bán/SP: ¥{Math.round(editForm.salePrice / editForm.quantity).toLocaleString()}
+                  Giá bán/SP: {formatYen(Math.round(editForm.salePrice / editForm.quantity))}
                 </div>
               )}
               <div className="space-y-2">
@@ -454,7 +455,7 @@ export default function Sales() {
             <AlertDialogDescription>
               {selectedSale && (
                 <span>
-                  Giao dịch bán <strong>{selectedSale.productName}</strong> ({selectedSale.quantity} SP - ¥{Number(selectedSale.totalRevenue).toLocaleString()}) sẽ bị xóa. Số lượng sẽ được hoàn lại vào kho.
+                  Giao dịch bán <strong>{selectedSale.productName}</strong> ({selectedSale.quantity} SP - {formatYen(Number(selectedSale.totalRevenue))}) sẽ bị xóa. Số lượng sẽ được hoàn lại vào kho.
                 </span>
               )}
             </AlertDialogDescription>

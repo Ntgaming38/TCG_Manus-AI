@@ -7,7 +7,7 @@ const root = process.cwd();
 describe("Dashboard profit RGB display", () => {
   it("tách ký hiệu trạng thái với số tiền RGB", () => {
     const source = readFileSync(join(root, "client/src/pages/Dashboard.tsx"), "utf8");
-    expect(source).toContain('totalProfit > 0 ? "+¥" : totalProfit < 0 ? "¥-" : "¥"');
+    expect(source).toContain('totalProfit > 0 ? "+¥ " : totalProfit < 0 ? "¥ -" : "¥ "');
     expect(source).toContain("text-green-400");
     expect(source).toContain("text-red-400");
     expect(source).toContain("rgb-profit-amount");

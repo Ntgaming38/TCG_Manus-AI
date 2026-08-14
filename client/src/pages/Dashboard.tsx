@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { RarityBadge } from "@/components/RarityBadge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatYen } from "@shared/formatYen";
 
 // Sample chart data - will be replaced with real data from API
 const monthlyData = [
@@ -18,8 +19,6 @@ const monthlyData = [
   { month: "T7", revenue: 0, profit: 0 },
   { month: "T8", revenue: 0, profit: 0 },
 ];
-
-const formatYen = (value: number) => `¥${value.toLocaleString()}`;
 
 function MetricInfo({ label, children }: { label: string; children: React.ReactNode }) {
   return <Popover><PopoverTrigger asChild><button type="button" aria-label={`Giải thích ${label}`} className="absolute right-2.5 top-2.5 z-10 rounded-full p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><Info className="h-5 w-5" /></button></PopoverTrigger><PopoverContent side="top" align="end" className="w-72 border-border bg-popover p-3 text-popover-foreground"><p className="font-semibold">{label}</p><div className="mt-2 space-y-1.5 text-xs leading-relaxed text-muted-foreground">{children}</div></PopoverContent></Popover>;
@@ -40,7 +39,7 @@ export default function Dashboard() {
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
   const totalProfit = stats?.totalProfit ?? 0;
-  const profitPrefix = totalProfit > 0 ? "+¥" : totalProfit < 0 ? "¥-" : "¥";
+  const profitPrefix = totalProfit > 0 ? "+¥ " : totalProfit < 0 ? "¥ -" : "¥ ";
   const profitPrefixTone = totalProfit > 0 ? "text-green-400" : totalProfit < 0 ? "text-red-400" : "text-muted-foreground";
   const profitAmount = Math.abs(totalProfit);
   const capitalByType = stats?.capitalByType ?? { card: 0, box: 0, pack: 0 };
@@ -79,7 +78,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng vốn</p><MetricInfo label="Tổng vốn"><p>Giá mua × số lượng còn trong kho.</p><p>Card {formatYen(capitalByType.card)} + Box {formatYen(capitalByType.box)} + Pack {formatYen(capitalByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalCapital)}</p></MetricInfo></div>
-                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">¥{totalCapital.toLocaleString()}</span></p>
+                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">{formatYen(totalCapital)}</span></p>
                 <MonthlyTrend trend={monthlyTrends.capital} label="Tổng vốn" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -94,7 +93,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Giá trị hiện tại</p><MetricInfo label="Giá trị hiện tại"><p>Giá thị trường × số lượng còn trong kho; nếu chưa có giá thị trường, hệ thống dùng giá mua.</p><p>Card {formatYen(currentValueByType.card)} + Box {formatYen(currentValueByType.box)} + Pack {formatYen(currentValueByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(currentValue)}</p></MetricInfo></div>
-                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">¥{currentValue.toLocaleString()}</span></p>
+                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">{formatYen(currentValue)}</span></p>
                 <MonthlyTrend trend={monthlyTrends.currentValue} label="Giá trị hiện tại" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">

@@ -11,6 +11,7 @@ import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
+import { formatYen } from "@shared/formatYen";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
 
@@ -244,7 +245,7 @@ export default function Purchases() {
                         <span className="capitalize text-xs text-muted-foreground">{s.type}</span>
                         <span>{s.name}</span>
                         {s.status === "sold" && <span className="rounded border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">Đã bán hết</span>}
-                        {s.buyPrice > 0 && <span className="ml-auto text-xs text-muted-foreground">¥{Number(s.buyPrice).toLocaleString()}/sp</span>}
+                        {s.buyPrice > 0 && <span className="ml-auto text-xs text-muted-foreground">{formatYen(Number(s.buyPrice))}/sp</span>}
                       </button>
                     ))}
                   </div>
@@ -272,9 +273,9 @@ export default function Purchases() {
                 </div>
               </div>
               <div className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Tổng tiền: <span className="font-bold text-foreground">¥{newPurchase.price.toLocaleString()}</span></p>
+                <p className="text-sm text-muted-foreground">Tổng tiền: <span className="font-bold text-foreground">{formatYen(newPurchase.price)}</span></p>
                 {newPurchase.quantity > 0 && newPurchase.price > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">Giá vốn/SP: <span className="font-medium text-foreground">¥{Math.round(newPurchase.price / newPurchase.quantity).toLocaleString()}</span></p>
+                  <p className="text-xs text-muted-foreground mt-1">Giá vốn/SP: <span className="font-medium text-foreground">{formatYen(Math.round(newPurchase.price / newPurchase.quantity))}</span></p>
                 )}
               </div>
               <div className="space-y-2">
@@ -342,8 +343,8 @@ export default function Purchases() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-bold text-sm">¥{Number(purchase.totalPrice).toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">{purchase.quantity} x ¥{Number(purchase.price).toLocaleString()}</p>
+                      <p className="font-bold text-sm">{formatYen(Number(purchase.totalPrice))}</p>
+                      <p className="text-xs text-muted-foreground">{purchase.quantity} x {formatYen(Number(purchase.price))}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-400" onClick={() => handleEditClick(purchase)}>
@@ -378,7 +379,7 @@ export default function Purchases() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-lg text-primary">¥{totals.totalAmount.toLocaleString()}</p>
+                  <p className="font-bold text-lg text-primary">{formatYen(totals.totalAmount)}</p>
                   <p className="text-xs text-muted-foreground">Tổng tiền mua</p>
                 </div>
               </div>
@@ -411,7 +412,7 @@ export default function Purchases() {
               </div>
               {editForm.quantity > 0 && editForm.price > 0 && (
                 <div className="p-2 bg-secondary/30 rounded text-xs text-muted-foreground">
-                  Giá vốn/SP: ¥{Math.round(editForm.price / editForm.quantity).toLocaleString()}
+                  Giá vốn/SP: {formatYen(Math.round(editForm.price / editForm.quantity))}
                 </div>
               )}
               <div className="space-y-2">
@@ -445,7 +446,7 @@ export default function Purchases() {
             <AlertDialogDescription>
               {selectedPurchase && (
                 <span>
-                  Giao dịch mua <strong>{selectedPurchase.productName}</strong> ({selectedPurchase.quantity} SP - ¥{Number(selectedPurchase.totalPrice).toLocaleString()}) sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
+                  Giao dịch mua <strong>{selectedPurchase.productName}</strong> ({selectedPurchase.quantity} SP - {formatYen(Number(selectedPurchase.totalPrice))}) sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
                 </span>
               )}
             </AlertDialogDescription>

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { RarityBadge } from "@/components/RarityBadge";
 import { getInventoryEmptyState, INVENTORY_HIDDEN_STATUS, isInventoryHiddenFilter } from "@shared/inventoryHiddenFilter";
+import { formatYen } from "@shared/formatYen";
 import { Search, Package, Warehouse, AlertTriangle, Pencil, Trash2, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -160,7 +161,7 @@ export default function Inventory() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Giá trị kho (hàng tốt)</p>
-              <p className="text-xl font-bold">¥{totalValue.toLocaleString()}</p>
+              <p className="text-xl font-bold">{formatYen(totalValue)}</p>
             </div>
           </CardContent>
         </Card>
@@ -275,11 +276,11 @@ export default function Inventory() {
                     )}
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Giá vốn:</span>
-                      <span className="font-medium">¥{(Number(product.buyPrice) * (product.quantity || 1)).toLocaleString()}</span>
+                      <span className="font-medium">{formatYen(Number(product.buyPrice) * (product.quantity || 1))}</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Giá TT:</span>
-                      <span className="font-medium">¥{(Number(product.marketPrice) * (product.quantity || 1)).toLocaleString()}</span>
+                      <span className="font-medium">{formatYen(Number(product.marketPrice) * (product.quantity || 1))}</span>
                     </div>
                   </div>
 
@@ -415,8 +416,8 @@ export default function Inventory() {
               </div>
 
               <div className="p-3 bg-secondary/50 rounded-lg text-xs text-muted-foreground space-y-1">
-                <p>Giá vốn/SP: <span className="font-medium text-foreground">¥{editForm.quantity > 0 ? (editForm.buyPrice / editForm.quantity).toLocaleString() : 0}</span></p>
-                <p>Giá TT/SP: <span className="font-medium text-foreground">¥{editForm.quantity > 0 ? (editForm.marketPrice / editForm.quantity).toLocaleString() : 0}</span></p>
+                <p>Giá vốn/SP: <span className="font-medium text-foreground">{formatYen(editForm.quantity > 0 ? editForm.buyPrice / editForm.quantity : 0)}</span></p>
+                <p>Giá TT/SP: <span className="font-medium text-foreground">{formatYen(editForm.quantity > 0 ? editForm.marketPrice / editForm.quantity : 0)}</span></p>
               </div>
 
               <Button
@@ -445,7 +446,7 @@ export default function Inventory() {
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="font-medium text-sm">{selectedProduct.name}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Loại: {selectedProduct.type} • SL: {selectedProduct.quantity} • Giá vốn: ¥{Number(selectedProduct.buyPrice).toLocaleString()}
+                  Loại: {selectedProduct.type} • SL: {selectedProduct.quantity} • Giá vốn: {formatYen(Number(selectedProduct.buyPrice))}
                 </p>
                 <p className="text-xs text-red-400 mt-2">
                   <strong>Cảnh báo:</strong> Xoá sản phẩm sẽ xoá luôn tất cả lịch sử mua/bán liên quan. Thao tác này không thể hoàn tác.
