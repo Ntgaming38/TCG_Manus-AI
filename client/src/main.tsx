@@ -6,7 +6,10 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
+import { initializeRgbEffects } from "./lib/rgbEffects";
 import "./index.css";
+
+initializeRgbEffects();
 
 const queryClient = new QueryClient();
 

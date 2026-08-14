@@ -256,6 +256,37 @@
     .tcg-logo-text { animation: none; background-position: 50% 50%; }
   }
 
+  :root[data-rgb-effects="disabled"] .tcg-logo-text {
+    color: #FFCB05;
+    background-image: none;
+    -webkit-text-fill-color: #FFCB05;
+    filter: drop-shadow(0 0 5px rgba(255, 203, 5, 0.48));
+    animation: none;
+  }
+
+  :root[data-rgb-effects="enabled"] main h1 {
+    background-image: linear-gradient(90deg, #FFCB05 0%, #FFE16A 14%, #FF4D6D 30%, #B66CFF 46%, #42B9FF 62%, #44E28D 78%, #FFCB05 94%);
+    background-size: 240% 100%;
+    background-position: 200% 50%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 3px rgba(255, 203, 5, 0.52));
+    animation: tcg-rgb-flow 5.8s linear infinite;
+  }
+
+  :root[data-rgb-effects="disabled"] main h1 {
+    background-image: none;
+    color: var(--foreground);
+    -webkit-text-fill-color: currentColor;
+    filter: none;
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-rgb-effects="enabled"] main h1 { animation: none; background-position: 50% 50%; }
+  }
+
   @keyframes yellow-pulse {
     0% {
       text-shadow:

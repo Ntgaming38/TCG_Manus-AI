@@ -17,4 +17,10 @@ describe("TCG Manager RGB logo", () => {
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain(".tcg-logo-text { animation: none; background-position: 50% 50%; }");
   });
+
+  it("áp dụng cùng hiệu ứng cho tiêu đề chính và có thể tắt theo cài đặt", () => {
+    expect(css).toContain(":root[data-rgb-effects=\"enabled\"] main h1");
+    expect(css).toContain(":root[data-rgb-effects=\"disabled\"] main h1");
+    expect(css).toContain(":root[data-rgb-effects=\"disabled\"] .tcg-logo-text");
+  });
 });
