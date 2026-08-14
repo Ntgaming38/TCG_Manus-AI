@@ -487,7 +487,7 @@ export default function Chyusen() {
           <div className="flex items-center gap-3"><Ticket className="h-7 w-7 text-red-600" /><h1 className="text-2xl font-bold text-foreground">抽選</h1></div>
           <p className="mt-1 text-sm text-muted-foreground">Lottery / Chūsen — dán link công khai, kiểm tra thông tin rồi lưu để theo dõi hạn đăng ký.</p>
         </div>
-        <Button className="bg-red-600 text-white hover:bg-red-700" onClick={openNew}><Plus className="mr-2 h-4 w-4" />Thêm 抽選</Button>
+        <Button className="bg-red-600 text-white hover:bg-red-700" onClick={openNew}><Plus className="mr-2 h-4 w-4" /><span className="rgb-action-label">Thêm 抽選</span></Button>
       </div>
 
       <Card className="border-red-500/70 bg-red-950/70 shadow-[0_0_0_1px_rgba(239,68,68,0.16)]">

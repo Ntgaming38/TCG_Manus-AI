@@ -761,3 +761,25 @@
 - [x] Giữ nền mặc định cho ô Chờ kết quả và Sắp hết hạn
 - [x] Chỉ đổi màu số Chờ kết quả xanh lá, Sắp hết hạn vàng
 - [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Chữ RGB cho nút hành động đỏ
+- [x] Áp dụng hiệu ứng RGB cho chữ các nút hành động nền đỏ
+- [x] Giữ nguyên nền đỏ, trạng thái hover và khả năng đọc nút
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Hiển thị Lợi nhuận theo trạng thái
+- [x] Tô ký hiệu ¥-/¥+ đỏ khi âm và xanh lá khi dương
+- [x] Áp dụng hiệu ứng RGB cho phần số tiền Lợi nhuận phía sau ký hiệu
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Hiệu ứng RGB cho tên người dùng
+- [x] Áp dụng hiệu ứng RGB đang chọn cho tên người dùng trong thanh bên
+- [x] Giữ email và thông tin phụ dễ đọc
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Màu rarity và số liệu Tổng quan
+- [x] Đổi nền MUR vàng, SAR tím và AR trắng xám
+- [x] Giữ hiệu ứng RGB cho chữ mọi rarity
+- [x] Áp dụng hiệu ứng RGB cho Tổng vốn, Giá trị hiện tại và Tổng sản phẩm trong kho
+- [x] Áp dụng số đỏ có animation cho Tổng sản phẩm đã bán
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint

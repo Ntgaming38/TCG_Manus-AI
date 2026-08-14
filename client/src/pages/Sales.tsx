@@ -176,7 +176,7 @@ export default function Sales() {
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
-              Tạo giao dịch bán
+              <span className="rgb-action-label">Tạo giao dịch bán</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">

@@ -132,7 +132,7 @@ export default function Marketplace() {
           {autoSyncStatus?.lastRunSummary && <p className="mt-1 text-xs text-muted-foreground">{autoSyncStatus.lastRunSummary}</p>}
         </div>
         <Button className="bg-primary text-primary-foreground shadow-md shadow-red-500/20 hover:bg-primary/90" onClick={startBulkSync} disabled={syncAll.isPending || linkedProducts.length === 0}>
-          {syncAll.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Đồng bộ tất cả giá
+          {syncAll.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} <span className="rgb-action-label">Đồng bộ tất cả giá</span>
         </Button>
       </section>
 

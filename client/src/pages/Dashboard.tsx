@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { RarityBadge } from "@/components/RarityBadge";
-import { getDashboardProfitTone } from "@shared/dashboardProfitTone";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Sample chart data - will be replaced with real data from API
@@ -41,7 +40,9 @@ export default function Dashboard() {
   const totalCapital = stats?.totalCapital ?? 0;
   const currentValue = stats?.currentValue ?? 0;
   const totalProfit = stats?.totalProfit ?? 0;
-  const profitTone = getDashboardProfitTone(totalProfit);
+  const profitPrefix = totalProfit > 0 ? "+¥" : totalProfit < 0 ? "¥-" : "¥";
+  const profitPrefixTone = totalProfit > 0 ? "text-green-400" : totalProfit < 0 ? "text-red-400" : "text-muted-foreground";
+  const profitAmount = Math.abs(totalProfit);
   const capitalByType = stats?.capitalByType ?? { card: 0, box: 0, pack: 0 };
   const currentValueByType = stats?.currentValueByType ?? { card: 0, box: 0, pack: 0 };
   const profitByType = stats?.profitByType ?? { card: 0, box: 0, pack: 0 };
@@ -78,7 +79,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng vốn</p><MetricInfo label="Tổng vốn"><p>Giá mua × số lượng còn trong kho.</p><p>Card {formatYen(capitalByType.card)} + Box {formatYen(capitalByType.box)} + Pack {formatYen(capitalByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalCapital)}</p></MetricInfo></div>
-                <p className="text-2xl font-bold text-foreground mt-1">¥{totalCapital.toLocaleString()}</p>
+                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">¥{totalCapital.toLocaleString()}</span></p>
                 <MonthlyTrend trend={monthlyTrends.capital} label="Tổng vốn" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -93,7 +94,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Giá trị hiện tại</p><MetricInfo label="Giá trị hiện tại"><p>Giá thị trường × số lượng còn trong kho; nếu chưa có giá thị trường, hệ thống dùng giá mua.</p><p>Card {formatYen(currentValueByType.card)} + Box {formatYen(currentValueByType.box)} + Pack {formatYen(currentValueByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(currentValue)}</p></MetricInfo></div>
-                <p className="text-2xl font-bold text-foreground mt-1">¥{currentValue.toLocaleString()}</p>
+                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">¥{currentValue.toLocaleString()}</span></p>
                 <MonthlyTrend trend={monthlyTrends.currentValue} label="Giá trị hiện tại" />
               </div>
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -108,8 +109,8 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Lợi nhuận</p><MetricInfo label="Lợi nhuận"><p>Tổng lợi nhuận của các giao dịch đã bán: doanh thu − giá vốn.</p><p>Card {formatYen(profitByType.card)} + Box {formatYen(profitByType.box)} + Pack {formatYen(profitByType.pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalProfit)}</p></MetricInfo></div>
-                <p className={`text-2xl font-bold mt-1 ${profitTone}`}>
-                  {totalProfit >= 0 ? '+' : ''}¥{totalProfit.toLocaleString()}
+                <p className="mt-1 text-2xl font-bold">
+                  <span className={profitPrefixTone}>{profitPrefix}</span><span className="rgb-profit-amount">{profitAmount.toLocaleString()}</span>
                 </p>
                 <MonthlyTrend trend={monthlyTrends.profit} label="Lợi nhuận tháng này" />
               </div>
@@ -125,7 +126,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng sản phẩm trong kho</p><MetricInfo label="Tổng sản phẩm trong kho"><p>Tổng số lượng sản phẩm có trạng thái Trong kho.</p><p>Card {inStockCards} + Box {inStockBoxes} + Pack {inStockPacks}.</p><p className="font-medium text-foreground">= {totalInStock} sản phẩm</p></MetricInfo></div>
-                <p className="text-2xl font-bold text-foreground mt-1">{totalInStock}</p>
+                <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">{totalInStock}</span></p>
                 <MonthlyTrend trend={monthlyTrends.inStock} label="Sản phẩm trong kho" />
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Card: {inStockCards} | Box: {inStockBoxes} | Pack: {inStockPacks}
@@ -143,7 +144,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng sản phẩm đã bán</p><MetricInfo label="Tổng sản phẩm đã bán"><p>Tổng số lượng trong các giao dịch Bán Hàng đã lưu.</p><p>Card {soldCards} + Box {soldBoxes} + Pack {soldPacks}.</p><p className="font-medium text-foreground">= {totalSold} sản phẩm</p></MetricInfo></div>
-                <p className="text-2xl font-bold text-foreground mt-1">{totalSold}</p>
+                <p className="mt-1 text-2xl font-bold"><span className="dashboard-sold-value">{totalSold}</span></p>
                 <MonthlyTrend trend={monthlyTrends.sold} label="Sản phẩm bán tháng này" />
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Card: {soldCards} | Box: {soldBoxes} | Pack: {soldPacks}

@@ -190,7 +190,7 @@ export default function Purchases() {
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
-              Thêm mua hàng
+              <span className="rgb-action-label">Thêm mua hàng</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
