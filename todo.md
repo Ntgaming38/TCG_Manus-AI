@@ -658,3 +658,8 @@
 - [x] Cho phép chọn hoặc loại trừ từng nền khỏi vòng quay hằng ngày
 - [x] Lưu lựa chọn ảnh theo thiết bị và có phương án dự phòng khi không còn ảnh hợp lệ
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Nhãn Mở/Thu gọn Cài đặt trên điện thoại
+- [x] Đặt nhãn Mở/Thu gọn sát góc phải mỗi mục Cài đặt
+- [x] Bảo đảm tiêu đề và mô tả không bị nhãn che trên màn hình hẹp
+- [x] Bổ sung kiểm thử, xác minh mobile và lưu checkpoint

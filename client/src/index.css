@@ -567,18 +567,20 @@
   .settings-collapsible-panel [data-settings-header] {
     cursor: pointer;
     position: relative;
-    padding-right: 5rem;
+    padding-right: 4.75rem;
     transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
   }
 
   .settings-collapsible-panel [data-settings-header]::after {
     content: "Thu gọn";
     position: absolute;
-    right: 1.5rem;
-    top: 1.4rem;
+    right: 1rem;
+    top: 0.95rem;
     color: hsl(var(--muted-foreground));
     font-size: 0.72rem;
     font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
   }
 
   .settings-collapsible-panel[data-collapsed="true"] > :not([data-settings-header]) {
@@ -600,4 +602,17 @@
   .settings-collapsible-panel [data-settings-header] button[aria-expanded] {
     display: none;
   }
- }
+
+  @media (max-width: 640px) {
+    .settings-collapsible-panel [data-settings-header] {
+      padding-top: 1rem;
+      padding-right: 4.5rem;
+      padding-bottom: 1rem;
+    }
+
+    .settings-collapsible-panel [data-settings-header]::after {
+      right: 0.9rem;
+      top: 1rem;
+    }
+  }
+}
