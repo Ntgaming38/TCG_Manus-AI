@@ -61,8 +61,8 @@ export default function Home() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-end py-8">
         {/* Bottom area - Logo is intentionally close to the version information */}
         <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
-          <div className="flex w-full flex-col items-center gap-2">
-            <h1 className="tcg-logo-text text-4xl sm:text-5xl md:text-6xl tracking-wider select-none text-center leading-none">
+          <div className="flex w-full flex-col items-center gap-1">
+            <h1 className="tcg-logo-text whitespace-nowrap -translate-y-3 sm:-translate-y-4 text-[clamp(1.75rem,8vw,3.75rem)] tracking-[0.08em] select-none text-center leading-none">
               TCG Manager
             </h1>
             {/* Server info bar */}

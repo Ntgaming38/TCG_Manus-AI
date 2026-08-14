@@ -15,7 +15,9 @@ describe("Login branding", () => {
 
   it("đặt logo gần ô phiên bản và dùng chuyển cảnh RGB khi bắt đầu", () => {
     expect(home).toContain('login-rgb-transition-overlay');
-    expect(home).toContain('text-4xl sm:text-5xl md:text-6xl');
+    expect(home).toContain('whitespace-nowrap');
+    expect(home).toContain('text-[clamp(1.75rem,8vw,3.75rem)]');
+    expect(home).toContain('-translate-y-3 sm:-translate-y-4');
     expect(home).toContain('setTimeout(() => {');
     expect(home).toContain('}, 520);');
   });

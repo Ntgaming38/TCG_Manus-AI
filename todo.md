@@ -617,3 +617,8 @@
 - [x] Thêm chuyển cảnh phát sáng theo bảng màu RGB khi bấm Bắt đầu
 - [x] Tôn trọng chế độ giảm chuyển động và kiểm thử desktop/mobile
 - [x] Lưu checkpoint sau khi xác minh
+
+## Tinh chỉnh logo đăng nhập responsive
+- [x] Nâng logo TCG Manager lên nhẹ phía trên ô phiên bản
+- [x] Giữ logo TCG Manager một dòng trên điện thoại và máy tính
+- [x] Kiểm thử desktop/mobile và lưu checkpoint
