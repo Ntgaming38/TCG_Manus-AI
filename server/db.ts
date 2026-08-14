@@ -12,6 +12,7 @@ import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
 import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../shared/marketplacePriceHistory';
+import { shouldDisplayProductInCatalog } from '../shared/productVisibility';
 import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -84,8 +85,10 @@ export async function listProducts(userId: number, opts?: { type?: string; statu
   const conditions = [eq(products.userId, userId)];
   if (opts?.type) conditions.push(eq(products.type, opts.type as any));
   if (opts?.status) conditions.push(eq(products.status, opts.status as any));
+  else conditions.push(ne(products.status, "sold"));
   if (opts?.search) conditions.push(like(products.name, `%${opts.search}%`));
-  return db.select().from(products).where(and(...conditions)).orderBy(desc(products.updatedAt));
+  const rows = await db.select().from(products).where(and(...conditions)).orderBy(desc(products.updatedAt));
+  return opts?.status ? rows : rows.filter(shouldDisplayProductInCatalog);
 }
 
 export async function getProductById(id: number) {
@@ -183,6 +186,7 @@ export async function getProductSuggestions(userId: number, search: string) {
     series: products.series,
     buyPrice: products.buyPrice,
     quantity: products.quantity,
+    status: products.status,
   }).from(products).where(and(eq(products.userId, userId), like(products.name, `%${search}%`))).limit(20);
 }
 
@@ -605,6 +609,7 @@ export async function createPurchase(userId: number, data: {
     await db.update(products).set({
       quantity: newQty,
       buyPrice: String(Math.round(newAvgPrice)),
+      status: newQty > 0 ? "in_stock" : "sold",
     }).where(eq(products.id, productId));
   } else {
     const result = await db.insert(products).values({

@@ -189,7 +189,7 @@ export default function Products() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{getTypeLabel()}</h1>
-          <p className="text-muted-foreground text-sm mt-1">Quản lý {getTypeLabel().toLowerCase()} của bạn</p>
+          <p className="text-muted-foreground text-sm mt-1">Quản lý {getTypeLabel().toLowerCase()} của bạn. Sản phẩm đã bán hết được ẩn và sẽ hiện lại khi nhập hàng.</p>
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>

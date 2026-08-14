@@ -243,6 +243,7 @@ export default function Purchases() {
                       >
                         <span className="capitalize text-xs text-muted-foreground">{s.type}</span>
                         <span>{s.name}</span>
+                        {s.status === "sold" && <span className="rounded border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">Đã ẩn · hết hàng</span>}
                         {s.buyPrice > 0 && <span className="ml-auto text-xs text-muted-foreground">¥{Number(s.buyPrice).toLocaleString()}/sp</span>}
                       </button>
                     ))}

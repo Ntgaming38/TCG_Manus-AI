@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   selectResponses: [] as any[][],
   insertValues: [] as any[],
+  updateValues: [] as any[],
   nextId: 1,
   db: {} as any,
 }));
@@ -29,7 +30,10 @@ state.db = {
     }),
   })),
   update: vi.fn(() => ({
-    set: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
+    set: vi.fn((value) => {
+      state.updateValues.push(value);
+      return { where: vi.fn(async () => undefined) };
+    }),
   })),
   delete: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
 };
@@ -38,7 +42,7 @@ vi.mock("drizzle-orm/mysql2", () => ({ drizzle: vi.fn(() => state.db) }));
 
 import {
   createProduct, createPurchase, createSale, deleteProduct, deletePurchase, deleteSale,
-  listActivityLogs, updateProduct, updatePurchase, updateSale,
+  getProductSuggestions, listActivityLogs, updateProduct, updatePurchase, updateSale,
 } from "./db";
 
 const product = {
@@ -70,6 +74,7 @@ describe("activity log writes", () => {
     process.env.DATABASE_URL = "mysql://mock";
     state.selectResponses = [];
     state.insertValues = [];
+    state.updateValues = [];
     state.nextId = 1;
     vi.clearAllMocks();
   });
@@ -99,6 +104,20 @@ describe("activity log writes", () => {
     state.selectResponses = [[product]];
     await createSale(1, { productId: product.id, quantity: 1, salePrice: 15000, platform: "mercari" });
     expect(JSON.parse(latestActivity("sale_created").newValue)).toMatchObject({ productName: "Pikachu ex", quantity: 1, totalRevenue: 15000, platform: "mercari" });
+  });
+
+  it("kích hoạt lại sản phẩm đã hết hàng khi mua thêm và vẫn giữ trong gợi ý", async () => {
+    const soldProduct = { ...product, quantity: 0, status: "sold" as const };
+    state.selectResponses = [[soldProduct]];
+
+    await createPurchase(1, { productName: soldProduct.name, productType: "card", quantity: 2, price: 18000 });
+
+    expect(state.updateValues).toContainEqual(expect.objectContaining({ quantity: 2, status: "in_stock" }));
+
+    state.selectResponses = [[soldProduct]];
+    await expect(getProductSuggestions(1, "Pikachu")).resolves.toEqual([
+      expect.objectContaining({ id: soldProduct.id, status: "sold", quantity: 0 }),
+    ]);
   });
 
   it("ghi snapshot cho thao tác sửa và xóa giao dịch mua", async () => {

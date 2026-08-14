@@ -558,3 +558,9 @@
 ## Vuốt làm mới biểu mẫu Chyusen
 - [x] Tắt vuốt xuống làm mới khi màn hình Thêm/Sửa Chyusen đang mở
 - [x] Kiểm thử thao tác biểu mẫu và lưu checkpoint
+
+## Ẩn tạm thời sản phẩm hết hàng
+- [x] Ẩn Card, Box và Pack có tồn kho bằng 0 khỏi danh sách sản phẩm chính
+- [x] Tự hiển thị lại sản phẩm khi giao dịch Mua Hàng làm tồn kho lớn hơn 0
+- [x] Giữ sản phẩm đã ẩn trong gợi ý khi tạo giao dịch Mua Hàng
+- [x] Bổ sung kiểm thử hồi quy và xác minh giao diện desktop/mobile
