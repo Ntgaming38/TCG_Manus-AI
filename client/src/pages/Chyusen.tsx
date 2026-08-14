@@ -182,7 +182,7 @@ export default function Chyusen() {
     onError: (error) => toast.error(error.message),
   });
   const setParticipation = trpc.chyusen.setParticipation.useMutation({
-    onSuccess: () => { setWinConfirmEntry(null); toast.success("Đã cập nhật trạng thái."); invalidate(); },
+    onSuccess: (data: any) => { setWinConfirmEntry(null); toast.success(data?.trashed ? "Đã trượt. Chyusen đã được chuyển vào Thùng rác." : "Đã cập nhật trạng thái."); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const undoWon = trpc.chyusen.undoWon.useMutation({

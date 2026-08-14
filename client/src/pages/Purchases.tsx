@@ -53,7 +53,11 @@ export default function Purchases() {
     onSuccess: () => {
       setPendingChyusenEntryId(null);
       utils.chyusen.list.invalidate();
+      utils.trash.list.invalidate();
+      utils.dashboard.stats.invalidate();
+      toast.success("Chyusen đã hoàn tất mua và được chuyển vào Thùng rác.");
     },
+    onError: (error) => toast.error(error.message),
   });
 
   useEffect(() => {

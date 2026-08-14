@@ -276,6 +276,16 @@ describe("appRouter", () => {
       expect(chyusenDb.markChyusenPurchaseCreated).not.toHaveBeenCalled();
       await caller.chyusen.markPurchaseCreated({ id: 31 });
       expect(chyusenDb.markChyusenPurchaseCreated).toHaveBeenCalledWith(1, 31);
+      expect(chyusenDb.deleteChyusenEntry).toHaveBeenCalledWith(1, 31);
+    });
+
+    it("chuyển Chyusen Đã trượt vào Thùng rác ngay sau khi cập nhật", async () => {
+      vi.mocked(chyusenDb.updateChyusenEntry).mockResolvedValue({ id: 43, applicationStatus: "lost", resultStatus: "lost" } as any);
+      vi.mocked(chyusenDb.deleteChyusenEntry).mockResolvedValue({ id: 43, title: "Starter Deck", deletedAt: new Date() });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.chyusen.setParticipation({ id: 43, applicationStatus: "lost" })).resolves.toMatchObject({ id: 43, trashed: true });
+      expect(chyusenDb.deleteChyusenEntry).toHaveBeenCalledWith(1, 43);
     });
 
     it("hoàn tác Đã trúng về Đã đăng ký khi chưa tạo Mua Hàng", async () => {

@@ -530,3 +530,8 @@
 ## Nhắc ngày công bố Chyusen
 - [x] Hiển thị nhắc nhở khi Chyusen đến ngày công bố kết quả
 - [x] Kiểm thử nhận diện ngày công bố và lưu checkpoint
+
+## Tự chuyển Chyusen hoàn tất vào Thùng rác
+- [x] Chuyển Chyusen Đã trượt vào Thùng rác tự động
+- [x] Chuyển Chyusen đã xác nhận mua vào Thùng rác tự động
+- [x] Kiểm thử luồng, Thùng rác và thống kê rồi lưu checkpoint

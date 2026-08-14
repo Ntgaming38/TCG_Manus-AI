@@ -495,10 +495,15 @@ export const appRouter = router({
             throw new Error(`Chỉ có thể đánh dấu Đã trúng từ ngày công bố kết quả (${formatChyusenDayMonth(entry.resultDate)}).`);
           }
         }
-        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
+        const updated = await chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
           applicationStatus: input.applicationStatus,
           resultStatus: input.applicationStatus === "won" ? "won" : input.applicationStatus === "lost" ? "lost" : "pending",
         });
+        if (input.applicationStatus === "lost") {
+          const trashed = await chyusenDb.deleteChyusenEntry(ctx.user.id, input.id);
+          return { ...updated, trashed: true, deletedAt: trashed.deletedAt };
+        }
+        return updated;
       }),
 
     undoWon: protectedProcedure
@@ -532,7 +537,10 @@ export const appRouter = router({
 
     markPurchaseCreated: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(({ ctx, input }) => chyusenDb.markChyusenPurchaseCreated(ctx.user.id, input.id)),
+      .mutation(async ({ ctx, input }) => {
+        await chyusenDb.markChyusenPurchaseCreated(ctx.user.id, input.id);
+        return chyusenDb.deleteChyusenEntry(ctx.user.id, input.id);
+      }),
 
     notifications: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenNotifications(ctx.user.id)),
 
