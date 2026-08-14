@@ -479,3 +479,9 @@
 - [x] Hiển thị nhãn Ngày xóa khi chưa chọn ngày
 - [x] Thêm lọc nhanh mục đã xóa trong tuần và tháng này
 - [x] Kiểm thử giao diện và lưu checkpoint
+
+## Hoàn thiện bộ lọc Thùng rác
+- [x] Lưu và khôi phục bộ lọc Thùng rác gần nhất theo thiết bị
+- [x] Thêm badge lọc nhanh theo loại dữ liệu
+- [x] Hiển thị số lượng mục theo Tuần này và Tháng này
+- [x] Kiểm thử desktop/mobile và lưu checkpoint
