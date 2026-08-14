@@ -35,7 +35,7 @@ export function RarityBadge({ rarity }: RarityBadgeProps) {
       className={`shrink-0 border px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide ${RARITY_BADGE_STYLES[label] || "border-border bg-muted text-muted-foreground"}`}
       aria-label={`Rarity: ${label}`}
     >
-      {label}
+      <span className="rarity-rgb-text">{label}</span>
     </Badge>
   );
 }

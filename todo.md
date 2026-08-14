@@ -732,3 +732,32 @@
 - [x] Hiển thị chỉ báo tăng/giảm bên dưới từng số liệu, kèm trạng thái khi chưa đủ dữ liệu
 - [x] Đưa biểu tượng i sát góc phải từng ô chỉ số Tổng quan
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Tinh gọn chỉ số Tổng quan
+- [x] Giữ phần trăm thay đổi theo tháng dưới các chỉ số Tổng quan
+- [x] Đưa biểu tượng i sát góc phải từng ô chỉ số
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Nhãn menu Chyusen
+- [x] Đổi nhãn menu bên trái thành 抽選 / Chūsen
+- [x] Giữ nguyên các hiệu ứng và hành vi điều hướng hiện có
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Màu tóm tắt Chyusen
+- [x] Đổi ô Chờ kết quả sang màu xanh lá
+- [x] Đổi ô Sắp hết hạn sang màu vàng
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Hiệu ứng RGB cho rarity Card
+- [x] Áp dụng hiệu ứng RGB đang chọn cho toàn bộ badge rarity trên Card
+- [x] Giữ khả năng đọc và chế độ giảm chuyển động
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Độ rõ ô Đã trượt Chyusen
+- [x] Đổi số liệu Đã trượt sang màu trắng trên nền tối
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Nền nguyên bản tóm tắt Chyusen
+- [x] Giữ nền mặc định cho ô Chờ kết quả và Sắp hết hạn
+- [x] Chỉ đổi màu số Chờ kết quả xanh lá, Sắp hết hạn vàng
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint

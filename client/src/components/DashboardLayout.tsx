@@ -45,7 +45,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Mua Hàng", path: "/mua-hang" },
   { icon: DollarSign, label: "Bán Hàng", path: "/ban-hang" },
   { icon: TrendingUp, label: "Marketplace", path: "/marketplace" },
-  { icon: Ticket, label: "抽選", path: "/chyusen" },
+  { icon: Ticket, label: "抽選 / Chūsen", path: "/chyusen" },
   { icon: History, label: "Lịch Sử", path: "/lich-su" },
   { icon: FileText, label: "Báo Cáo", path: "/bao-cao" },
   { icon: Settings, label: "Cài đặt", path: "/cai-dat" },

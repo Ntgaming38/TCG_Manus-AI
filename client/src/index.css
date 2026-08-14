@@ -636,3 +636,23 @@
     animation: none !important;
   }
 }
+
+:root[data-rgb-effects="enabled"] .rarity-rgb-text {
+  display: inline-block;
+  background-image: var(--tcg-rgb-gradient, linear-gradient(90deg, #ffcb05, #fb7185, #a855f7, #38bdf8, #22c55e, #ffcb05));
+  background-size: 240% 100%;
+  background-position: 200% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.38));
+  animation: tcg-rgb-flow var(--tcg-rgb-duration, 5.8s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-rgb-effects="enabled"] .rarity-rgb-text {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
