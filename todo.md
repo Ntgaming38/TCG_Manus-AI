@@ -683,3 +683,8 @@
 - [x] Tối ưu nén ảnh thích ứng để gửi AI nhanh hơn trên điện thoại
 - [x] Tự phát hiện, cắt vùng QR và gửi thêm vùng QR cho AI cùng ảnh đầy đủ
 - [x] Bổ sung kiểm thử, xác minh mobile và lưu checkpoint
+
+## Xem trước vùng QR cắt tự động
+- [x] Hiển thị ảnh xem trước nhỏ của vùng QR nhận diện được
+- [x] Giữ liên kết QR và ảnh đầy đủ trong luồng phân tích AI hiện tại
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint

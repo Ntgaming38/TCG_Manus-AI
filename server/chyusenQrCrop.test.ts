@@ -14,4 +14,10 @@ describe("cắt vùng QR Chyusen", () => {
     expect(chyusenPage).toContain("imageDataUrlsForAi = [...imageDataUrls, ...qrCrops].slice(0, 8)");
     expect(chyusenPage).toContain("AI vẫn đang đọc đầy đủ nội dung ảnh");
   });
+
+  it("hiển thị vùng QR cắt để người dùng xác nhận trước khi gửi AI", () => {
+    expect(chyusenPage).toContain("Xem trước vùng QR tự cắt");
+    expect(chyusenPage).toContain("Gửi đầy đủ ảnh cho AI");
+    expect(chyusenPage).toContain("pendingQrAnalysis");
+  });
 });
