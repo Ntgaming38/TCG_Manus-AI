@@ -652,3 +652,9 @@
 - [x] Thêm tùy chọn đổi nền đăng nhập ngẫu nhiên theo ngày từ danh sách đã tải
 - [x] Lưu tùy chọn theo thiết bị và xử lý khi chưa có nền tùy chỉnh
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Fade nền và vòng quay ảnh hằng ngày
+- [x] Thêm hiệu ứng fade mượt khi nền đăng nhập được áp dụng
+- [x] Cho phép chọn hoặc loại trừ từng nền khỏi vòng quay hằng ngày
+- [x] Lưu lựa chọn ảnh theo thiết bị và có phương án dự phòng khi không còn ảnh hợp lệ
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

@@ -27,5 +27,6 @@ describe("Login branding", () => {
   it("có lớp tương tác logo và chỉ báo xử lý trên nút Bắt đầu", () => {
     expect(home).toContain('login-tcg-logo');
     expect(home).toContain('Đang xử lý...');
+    expect(home).toContain('login-background-image');
   });
 });

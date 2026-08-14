@@ -2,6 +2,7 @@ export const DEFAULT_LOGIN_BACKGROUND_URL = "/manus-storage/tcg-manager-login-ba
 export const LOGIN_BACKGROUND_STORAGE_KEY = "tcg-login-background-url";
 export const LOGIN_BACKGROUND_HISTORY_STORAGE_KEY = "tcg-login-background-history";
 export const LOGIN_BACKGROUND_DAILY_RANDOM_STORAGE_KEY = "tcg-login-background-daily-random";
+export const LOGIN_BACKGROUND_DAILY_ELIGIBLE_STORAGE_KEY = "tcg-login-background-daily-eligible";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
@@ -56,6 +57,25 @@ export function saveLoginBackgroundDailyRandom(enabled: boolean, storage?: Stora
   return enabled;
 }
 
+export function readLoginBackgroundDailyEligibleUrls(history: LoginBackgroundHistoryItem[], storage?: StorageLike) {
+  try {
+    const stored = storage?.getItem(LOGIN_BACKGROUND_DAILY_ELIGIBLE_STORAGE_KEY);
+    if (stored === null || stored === undefined) return history.map((item) => item.url);
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return history.map((item) => item.url);
+    const existingUrls = new Set(history.map((item) => item.url));
+    return parsed.filter((url): url is string => isSafeLoginBackgroundUrl(url) && existingUrls.has(url));
+  } catch {
+    return history.map((item) => item.url);
+  }
+}
+
+export function saveLoginBackgroundDailyEligibleUrls(urls: string[], storage?: StorageLike) {
+  const next = Array.from(new Set(urls.filter(isSafeLoginBackgroundUrl)));
+  storage?.setItem(LOGIN_BACKGROUND_DAILY_ELIGIBLE_STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
+
 export function pickDailyLoginBackground(history: LoginBackgroundHistoryItem[], date = new Date()) {
   if (history.length === 0) return DEFAULT_LOGIN_BACKGROUND_URL;
   const input = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}${history.map((item) => item.url).join("")}`;
@@ -67,5 +87,7 @@ export function pickDailyLoginBackground(history: LoginBackgroundHistoryItem[], 
 export function resolveLoginBackgroundUrl(storage?: StorageLike, date = new Date()) {
   if (!readLoginBackgroundDailyRandom(storage)) return readLoginBackgroundUrl(storage);
   const history = readLoginBackgroundHistory(storage);
-  return history.length > 0 ? pickDailyLoginBackground(history, date) : readLoginBackgroundUrl(storage);
+  const eligibleUrls = new Set(readLoginBackgroundDailyEligibleUrls(history, storage));
+  const eligibleHistory = history.filter((item) => eligibleUrls.has(item.url));
+  return eligibleHistory.length > 0 ? pickDailyLoginBackground(eligibleHistory, date) : DEFAULT_LOGIN_BACKGROUND_URL;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_LOGIN_BACKGROUND_URL, LOGIN_BACKGROUND_STORAGE_KEY, pickDailyLoginBackground, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, resolveLoginBackgroundUrl, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl } from "../client/src/lib/loginBackground";
+import { DEFAULT_LOGIN_BACKGROUND_URL, LOGIN_BACKGROUND_STORAGE_KEY, pickDailyLoginBackground, readLoginBackgroundDailyEligibleUrls, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, resolveLoginBackgroundUrl, saveLoginBackgroundDailyEligibleUrls, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl } from "../client/src/lib/loginBackground";
 
 function createStorage(initial?: string) {
   const values = new Map<string, string>();
@@ -48,5 +48,18 @@ describe("login background setting", () => {
     const date = new Date(2026, 7, 14);
     expect(readLoginBackgroundDailyRandom(storage)).toBe(true);
     expect(resolveLoginBackgroundUrl(storage, date)).toBe(pickDailyLoginBackground(readLoginBackgroundHistory(storage), date));
+  });
+
+  it("chỉ chọn nền được phép trong vòng quay hằng ngày", () => {
+    const storage = createStorage();
+    const first = "/manus-storage/login-backgrounds/1/first.png";
+    const second = "/manus-storage/login-backgrounds/1/second.png";
+    rememberLoginBackgroundUrl(first, storage);
+    rememberLoginBackgroundUrl(second, storage);
+    const history = readLoginBackgroundHistory(storage);
+    saveLoginBackgroundDailyEligibleUrls([first], storage);
+    saveLoginBackgroundDailyRandom(true, storage);
+    expect(readLoginBackgroundDailyEligibleUrls(history, storage)).toEqual([first]);
+    expect(resolveLoginBackgroundUrl(storage, new Date(2026, 7, 14))).toBe(first);
   });
 });

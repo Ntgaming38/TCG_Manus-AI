@@ -42,7 +42,7 @@ export default function Home() {
         <img
           src={backgroundUrl}
           alt="Pikachu và Lucario trên nền đăng nhập TCG Manager"
-          className="w-full h-full object-cover"
+          className="login-background-image w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/10 to-slate-950/70" />
       </div>

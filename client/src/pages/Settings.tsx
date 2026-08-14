@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { createChyusenSourceUpdatePayload } from "@shared/chyusenSourceUpdate";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsColors, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsColors, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectColors, type RgbEffectSpeed } from "@/lib/rgbEffects";
-import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
+import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyEligibleUrls, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyEligibleUrls, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
@@ -45,6 +45,7 @@ export default function Settings() {
   const [loginBackgroundUrl, setLoginBackgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundHistory, setLoginBackgroundHistory] = useState<LoginBackgroundHistoryItem[]>(() => readLoginBackgroundHistory(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundDailyRandom, setLoginBackgroundDailyRandom] = useState(() => readLoginBackgroundDailyRandom(typeof window === "undefined" ? undefined : window.localStorage));
+  const [loginBackgroundDailyEligibleUrls, setLoginBackgroundDailyEligibleUrls] = useState<string[]>(() => { const storage = typeof window === "undefined" ? undefined : window.localStorage; const history = readLoginBackgroundHistory(storage); return readLoginBackgroundDailyEligibleUrls(history, storage); });
   const [loginBackgroundDraft, setLoginBackgroundDraft] = useState<{ source: string; edit: LoginBackgroundEdit } | null>(null);
   const [pendingBackgroundRemoval, setPendingBackgroundRemoval] = useState<string | null>(null);
   const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
@@ -79,7 +80,9 @@ export default function Settings() {
     onSuccess: (result) => {
       const url = saveLoginBackgroundUrl(result.url, window.localStorage);
       setLoginBackgroundUrl(url);
-      setLoginBackgroundHistory(rememberLoginBackgroundUrl(url, window.localStorage));
+      const history = rememberLoginBackgroundUrl(url, window.localStorage);
+      setLoginBackgroundHistory(history);
+      setLoginBackgroundDailyEligibleUrls((current) => saveLoginBackgroundDailyEligibleUrls([...current, url], window.localStorage));
       setLoginBackgroundDraft(null);
       toast.success("Đã cập nhật nền đăng nhập trên thiết bị này.");
     },
@@ -143,6 +146,7 @@ export default function Settings() {
   const removeRecentLoginBackground = (url: string) => {
     const next = removeLoginBackgroundUrl(url, window.localStorage);
     setLoginBackgroundHistory(next);
+    setLoginBackgroundDailyEligibleUrls((current) => saveLoginBackgroundDailyEligibleUrls(current.filter((currentUrl) => currentUrl !== url), window.localStorage));
     if (loginBackgroundUrl === url) setLoginBackgroundUrl(saveLoginBackgroundUrl(DEFAULT_LOGIN_BACKGROUND_URL, window.localStorage));
     toast.success("Đã xóa nền khỏi danh sách gần đây.");
   };
@@ -150,6 +154,13 @@ export default function Settings() {
     saveLoginBackgroundDailyRandom(enabled, window.localStorage);
     setLoginBackgroundDailyRandom(enabled);
     toast.success(enabled ? "Đã bật đổi nền ngẫu nhiên mỗi ngày." : "Đã tắt đổi nền ngẫu nhiên mỗi ngày.");
+  };
+  const toggleLoginBackgroundDailyEligible = (url: string) => {
+    setLoginBackgroundDailyEligibleUrls((current) => {
+      const next = current.includes(url) ? current.filter((currentUrl) => currentUrl !== url) : [...current, url];
+      saveLoginBackgroundDailyEligibleUrls(next, window.localStorage);
+      return next;
+    });
   };
   const toggleSettingsSection = (section: SettingsSection, event: React.MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button, input, [role=switch], [role=combobox]")) return;
@@ -207,7 +218,7 @@ export default function Settings() {
 
     <Card className="settings-login-background-card settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backgroundDaily}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backgroundDaily", event)}><CardTitle className="text-base">Nền ngẫu nhiên mỗi ngày</CardTitle><CardDescription>Tự chọn một ảnh khác mỗi ngày từ các nền bạn đã tải lên.</CardDescription></CardHeader>
-      <CardContent><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Đổi nền tự động mỗi ngày</p><p className="mt-1 text-xs text-muted-foreground">{loginBackgroundHistory.length > 0 ? "Ảnh được chọn theo ngày trên thiết bị này khi mở màn hình đăng nhập." : "Tải ít nhất một nền tùy chỉnh để bật tính năng này."}</p></div><Switch checked={loginBackgroundDailyRandom} disabled={loginBackgroundHistory.length === 0} onCheckedChange={updateLoginBackgroundDailyRandom} aria-label="Bật đổi nền ngẫu nhiên mỗi ngày" /></div></CardContent>
+      <CardContent className="space-y-3"><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Đổi nền tự động mỗi ngày</p><p className="mt-1 text-xs text-muted-foreground">{loginBackgroundDailyEligibleUrls.length > 0 ? "Ảnh được chọn theo ngày trên thiết bị này khi mở màn hình đăng nhập." : "Hãy chọn ít nhất một ảnh bên dưới để bật tính năng này."}</p></div><Switch checked={loginBackgroundDailyRandom} disabled={loginBackgroundDailyEligibleUrls.length === 0} onCheckedChange={updateLoginBackgroundDailyRandom} aria-label="Bật đổi nền ngẫu nhiên mỗi ngày" /></div>{loginBackgroundHistory.length > 0 && <div><p className="mb-2 text-xs font-semibold text-muted-foreground">Ảnh tham gia vòng quay</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{loginBackgroundHistory.map((item) => { const isEligible = loginBackgroundDailyEligibleUrls.includes(item.url); return <button key={item.url} type="button" aria-pressed={isEligible} onClick={() => toggleLoginBackgroundDailyEligible(item.url)} className={`relative aspect-video overflow-hidden rounded-md border text-left transition ${isEligible ? "ring-2 ring-emerald-500" : "opacity-45 hover:opacity-75"}`}><img src={item.url} alt="Ảnh nền trong vòng quay hằng ngày" className="h-full w-full object-cover" /><span className={`absolute inset-x-0 bottom-0 px-1.5 py-1 text-center text-[10px] font-semibold text-white ${isEligible ? "bg-emerald-600/90" : "bg-black/70"}`}>{isEligible ? "Đang dùng" : "Đã loại trừ"}</span></button>; })}</div></div>}</CardContent>
     </Card>
 
     <AlertDialog open={deleteSourceId !== null} onOpenChange={(open) => !open && setDeleteSourceId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nguồn theo dõi?</AlertDialogTitle><AlertDialogDescription>Nguồn sẽ không còn được kiểm tra tự động. Các Chyusen và audit log hiện có vẫn được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteSourceId && deleteSource.mutate({ id: deleteSourceId })}>Xóa nguồn</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
