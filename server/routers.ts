@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
+import { parse as parseCookieHeader } from "cookie";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { extractAssistantText } from "./aiResponse";
@@ -12,8 +13,9 @@ import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
 import { checkChyusenSourceNow } from "./chyusenMonitor";
 import { analyzeChyusenImage } from "./chyusenImageAnalysis";
-import { emptyTrashItems, listTrashItems } from "./trashDb";
+import { emptyTrashItems, getTrashAutoCleanupSettings, listTrashItems, saveTrashAutoCleanupSettings, setTrashAutoCleanupTask, TRASH_AUTO_CLEANUP_CRON } from "./trashDb";
 import { restoreTrashItem } from "./trashRestore";
+import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -386,6 +388,36 @@ export const appRouter = router({
     purgeMany: protectedProcedure
       .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100), confirmed: z.literal(true) }))
       .mutation(({ ctx, input }) => emptyTrashItems(ctx.user.id, input.ids)),
+    autoCleanupStatus: protectedProcedure
+      .query(async ({ ctx }) => {
+        const settings = await getTrashAutoCleanupSettings(ctx.user.id);
+        return settings ?? { isEnabled: 0, retentionDays: 30, cronExpression: TRASH_AUTO_CLEANUP_CRON, lastRunAt: null, lastRunStatus: null, lastRunSummary: null };
+      }),
+    updateAutoCleanupSettings: protectedProcedure
+      .input(z.object({ isEnabled: z.boolean().optional(), retentionDays: z.number().int().min(1).max(365).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const current = await getTrashAutoCleanupSettings(ctx.user.id);
+        const shouldEnable = input.isEnabled ?? Boolean(current?.isEnabled);
+        const updated = await saveTrashAutoCleanupSettings(ctx.user.id, { ...input, isEnabled: false });
+        if (!updated) throw new Error("Không thể lưu cấu hình tự động dọn Thùng rác.");
+
+        if (shouldEnable) {
+          const sessionToken = parseCookieHeader(ctx.req.headers.cookie ?? "")[COOKIE_NAME];
+          if (!sessionToken) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để bật tự động dọn.");
+          if (updated.scheduleCronTaskUid) {
+            await updateHeartbeatJob(updated.scheduleCronTaskUid, { cron: TRASH_AUTO_CLEANUP_CRON, path: "/api/scheduled/trash-auto-cleanup", enable: true }, sessionToken);
+          } else {
+            const job = await createHeartbeatJob({ name: `trash-auto-cleanup-${ctx.user.id}`, cron: TRASH_AUTO_CLEANUP_CRON, path: "/api/scheduled/trash-auto-cleanup", description: `Tự động dọn Thùng rác cho tài khoản ${ctx.user.id}` }, sessionToken);
+            await setTrashAutoCleanupTask(ctx.user.id, job.taskUid);
+          }
+          await saveTrashAutoCleanupSettings(ctx.user.id, { isEnabled: true, retentionDays: input.retentionDays });
+        } else if (updated.scheduleCronTaskUid) {
+          const sessionToken = parseCookieHeader(ctx.req.headers.cookie ?? "")[COOKIE_NAME];
+          if (sessionToken) await updateHeartbeatJob(updated.scheduleCronTaskUid, { enable: false }, sessionToken);
+        }
+
+        return (await getTrashAutoCleanupSettings(ctx.user.id)) ?? updated;
+      }),
   }),
 
   activities: router({

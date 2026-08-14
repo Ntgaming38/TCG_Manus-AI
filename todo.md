@@ -485,3 +485,9 @@
 - [x] Thêm badge lọc nhanh theo loại dữ liệu
 - [x] Hiển thị số lượng mục theo Tuần này và Tháng này
 - [x] Kiểm thử desktop/mobile và lưu checkpoint
+
+## Tự động dọn Thùng rác
+- [x] Thêm cấu hình số ngày lưu giữ và bật/tắt tự động dọn theo tài khoản
+- [x] Thêm tác vụ nền dọn dữ liệu quá hạn với kiểm soát quyền truy cập
+- [x] Thêm giao diện cấu hình trong Cài đặt
+- [x] Kiểm thử tác vụ, cấu hình và lưu checkpoint

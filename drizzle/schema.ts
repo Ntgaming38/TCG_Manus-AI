@@ -185,6 +185,24 @@ export const trashItems = mysqlTable("trash_items", {
 
 export type TrashItem = typeof trashItems.$inferSelect;
 
+/** Per-user retention policy and scheduled task for automatic trash cleanup. */
+export const trashAutoCleanupSettings = mysqlTable("trash_auto_cleanup_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }).unique(),
+  cronExpression: varchar("cronExpression", { length: 100 }).notNull().default("0 0 18 * * *"),
+  isEnabled: int("isEnabled").notNull().default(0),
+  retentionDays: int("retentionDays").notNull().default(30),
+  lastRunAt: timestamp("lastRunAt"),
+  lastRunStatus: varchar("lastRunStatus", { length: 30 }),
+  lastRunSummary: varchar("lastRunSummary", { length: 1000 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("trash_auto_cleanup_user_unique").on(table.userId),
+  index("trash_auto_cleanup_task_idx").on(table.scheduleCronTaskUid),
+]);
+
 /**
  * Chyusen entries are always private to one user. Source information is retained
  * separately so a later public-page refresh never overwrites the saved entry

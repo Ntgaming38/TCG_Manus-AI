@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, PackageSearch, Radio, RefreshCw, Save, Trash2 } from "lucide-react";
+import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, PackageSearch, Radio, RefreshCw, Save, TimerReset, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
+const TRASH_RETENTION_DAYS = [7, 14, 30, 60, 90, 180] as const;
 type SourceDraft = { label: string; sourceUrl: string; checkIntervalMinutes: string; isActive: boolean };
 type SourceFilter = "all" | "errors";
 
@@ -28,6 +29,7 @@ export default function Settings() {
   const { data: notificationSettings } = trpc.chyusen.notificationSettings.useQuery();
   const { data: sources = [] } = trpc.chyusen.sources.useQuery();
   const { data: autoSyncStatus } = trpc.products.autoSyncStatus.useQuery();
+  const { data: trashAutoCleanup } = trpc.trash.autoCleanupStatus.useQuery();
   const [sourceDrafts, setSourceDrafts] = useState<Record<number, SourceDraft>>({});
   const [deleteSourceId, setDeleteSourceId] = useState<number | null>(null);
   const [newSource, setNewSource] = useState({ label: "", sourceUrl: "", checkIntervalMinutes: "360" });
@@ -52,6 +54,13 @@ export default function Settings() {
       toast.success(`Đã đồng bộ ${result.updatedCount} sản phẩm${result.errors.length ? `; ${result.errors.length} sản phẩm chưa cập nhật được` : ""}.`);
     },
     onError: (error) => toast.error(error.message || "Không thể đồng bộ Marketplace ngay bây giờ."),
+  });
+  const updateTrashAutoCleanup = trpc.trash.updateAutoCleanupSettings.useMutation({
+    onSuccess: (settings) => {
+      utils.trash.autoCleanupStatus.invalidate();
+      toast.success(settings.isEnabled ? "Đã bật tự động dọn Thùng rác." : "Đã lưu cấu hình dọn Thùng rác.");
+    },
+    onError: (error) => toast.error(error.message || "Không thể lưu cấu hình tự động dọn Thùng rác."),
   });
 
   const deadlineHours = notificationSettings?.deadlineHours || [168, 72, 24, 12, 3, 1];
@@ -83,6 +92,11 @@ export default function Settings() {
     <Card>
       <CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><PackageSearch className="h-5 w-5 text-red-600" />Đồng bộ giá Marketplace</CardTitle><CardDescription className="mt-1">Tự động đồng bộ SNKRDUNK mỗi 6 giờ. Bạn có thể chạy thủ công theo yêu cầu bất cứ lúc nào.</CardDescription></div><Button className="bg-red-600 hover:bg-red-700" disabled={syncMarketplaceNow.isPending} onClick={() => syncMarketplaceNow.mutate()}><RefreshCw className={`mr-1.5 h-4 w-4 ${syncMarketplaceNow.isPending ? "animate-spin" : ""}`} />{syncMarketplaceNow.isPending ? "Đang đồng bộ" : "Đồng bộ ngay"}</Button></div></CardHeader>
       <CardContent className="space-y-4"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_auto]"><div><p className="text-sm font-semibold">Đồng bộ tự động</p><p className="text-xs text-muted-foreground">Tối đa {autoSyncStatus?.batchSize || 12} sản phẩm/lần, giữ nguyên giá cũ nếu nguồn không trả giá hợp lệ.</p></div><div className="flex items-center gap-2"><Switch checked={Boolean(autoSyncStatus?.isEnabled)} disabled={!autoSyncStatus || updateAutoSync.isPending} onCheckedChange={(isEnabled) => updateAutoSync.mutate({ isEnabled })} /><span className="text-xs font-medium">{autoSyncStatus?.isEnabled ? "Đang bật" : "Đang tắt"}</span></div></div><div className="grid gap-3 sm:grid-cols-2"><div><p className="mb-2 text-xs font-semibold text-muted-foreground">Kích thước lô tự động</p><Select value={String(autoSyncStatus?.batchSize || 12)} onValueChange={(value) => updateAutoSync.mutate({ batchSize: Number(value) })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{BATCH_SIZES.map((size) => <SelectItem key={size} value={String(size)}>{size} sản phẩm / lần</SelectItem>)}</SelectContent></Select></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Lần chạy tự động gần nhất</p><p className="mt-1 flex items-center gap-1 text-sm font-semibold"><CircleCheck className="h-4 w-4 text-emerald-600" />{autoSyncStatus?.lastRunStatus ? marketplaceAutoSyncStatusLabel(autoSyncStatus.lastRunStatus) : "Chưa chạy"}</p><p className="mt-1 text-xs text-muted-foreground">{autoSyncStatus?.lastRunAt ? new Date(autoSyncStatus.lastRunAt).toLocaleString("vi-VN") : "Lịch nền đã sẵn sàng"}</p></div></div>{autoSyncStatus?.lastRunSummary && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">{autoSyncStatus.lastRunSummary}</p>}</CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader><CardTitle className="flex items-center gap-2"><TimerReset className="h-5 w-5 text-red-600" />Tự động dọn Thùng rác</CardTitle><CardDescription>Tự động xóa vĩnh viễn các mục đã nằm trong Thùng rác quá số ngày bạn chọn. Lịch này chỉ áp dụng cho dữ liệu của tài khoản bạn.</CardDescription></CardHeader>
+      <CardContent className="space-y-4"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_auto]"><div><p className="text-sm font-semibold">Dọn dẹp tự động mỗi ngày</p><p className="text-xs text-muted-foreground">Mục đã khôi phục sẽ không bị dọn. Bạn vẫn có thể dọn thủ công trong Thùng rác bất cứ lúc nào.</p></div><div className="flex items-center gap-2"><Switch checked={Boolean(trashAutoCleanup?.isEnabled)} disabled={!trashAutoCleanup || updateTrashAutoCleanup.isPending} onCheckedChange={(isEnabled) => updateTrashAutoCleanup.mutate({ isEnabled })} /><span className="text-xs font-medium">{trashAutoCleanup?.isEnabled ? "Đang bật" : "Đang tắt"}</span></div></div><div className="grid gap-3 sm:grid-cols-2"><div><p className="mb-2 text-xs font-semibold text-muted-foreground">Giữ mục đã xóa trong</p><Select value={String(trashAutoCleanup?.retentionDays || 30)} disabled={!trashAutoCleanup || updateTrashAutoCleanup.isPending} onValueChange={(value) => updateTrashAutoCleanup.mutate({ retentionDays: Number(value) })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TRASH_RETENTION_DAYS.map((days) => <SelectItem key={days} value={String(days)}>{days} ngày</SelectItem>)}</SelectContent></Select></div><div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Lần dọn tự động gần nhất</p><p className="mt-1 flex items-center gap-1 text-sm font-semibold"><CircleCheck className={`h-4 w-4 ${trashAutoCleanup?.lastRunStatus === "failed" ? "text-red-600" : "text-emerald-600"}`} />{trashAutoCleanup?.lastRunStatus === "success" ? "Hoàn tất" : trashAutoCleanup?.lastRunStatus === "failed" ? "Không thành công" : trashAutoCleanup?.lastRunStatus === "skipped" ? "Đã bỏ qua" : "Chưa chạy"}</p><p className="mt-1 text-xs text-muted-foreground">{trashAutoCleanup?.lastRunAt ? new Date(trashAutoCleanup.lastRunAt).toLocaleString("vi-VN") : "Chạy hằng ngày khi bạn bật cấu hình"}</p></div></div>{trashAutoCleanup?.lastRunSummary && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">{trashAutoCleanup.lastRunSummary}</p>}</CardContent>
     </Card>
 
     <AlertDialog open={deleteSourceId !== null} onOpenChange={(open) => !open && setDeleteSourceId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nguồn theo dõi?</AlertDialogTitle><AlertDialogDescription>Nguồn sẽ không còn được kiểm tra tự động. Các Chyusen và audit log hiện có vẫn được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteSourceId && deleteSource.mutate({ id: deleteSourceId })}>Xóa nguồn</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
