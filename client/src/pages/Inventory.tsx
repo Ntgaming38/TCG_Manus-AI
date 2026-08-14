@@ -41,6 +41,7 @@ export default function Inventory() {
     status: statusFilter !== "all" ? statusFilter : undefined,
     search: search || undefined,
   });
+  const { data: soldProducts } = trpc.products.list.useQuery({ status: INVENTORY_HIDDEN_STATUS });
 
   const markDamaged = trpc.products.markDamaged.useMutation({
     onSuccess: () => {
@@ -77,6 +78,7 @@ export default function Inventory() {
   const totalItems = products?.reduce((sum: number, p: any) => sum + p.quantity, 0) ?? 0;
   const totalDamaged = products?.reduce((sum: number, p: any) => sum + (p.damagedQuantity || 0), 0) ?? 0;
   const totalValue = products?.reduce((sum: number, p: any) => sum + (Number(p.marketPrice || p.buyPrice || 0) * (p.quantity - (p.damagedQuantity || 0))), 0) ?? 0;
+  const soldProductCount = soldProducts?.length ?? 0;
   const emptyState = getInventoryEmptyState(statusFilter);
 
   const openDamageDialog = (product: any) => {
@@ -199,7 +201,7 @@ export default function Inventory() {
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
             <SelectItem value="in_stock">Trong kho</SelectItem>
-            <SelectItem value={INVENTORY_HIDDEN_STATUS}>Đã ẩn</SelectItem>
+            <SelectItem value={INVENTORY_HIDDEN_STATUS}>Đã bán ({soldProductCount})</SelectItem>
             <SelectItem value="reserved">Đang giữ</SelectItem>
             <SelectItem value="damaged">Hỏng/Rác</SelectItem>
           </SelectContent>
@@ -209,7 +211,7 @@ export default function Inventory() {
       {isInventoryHiddenFilter(statusFilter) && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
           <EyeOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-          <p>Đang xem sản phẩm tạm ẩn vì hết hàng. Hãy tạo giao dịch Mua Hàng để sản phẩm tự hiện lại trong danh sách Card, Box hoặc Pack.</p>
+          <p>Đang xem sản phẩm đã bán hết. Hãy tạo giao dịch Mua Hàng để sản phẩm tự hiện lại trong danh sách Card, Box hoặc Pack.</p>
         </div>
       )}
 
@@ -238,7 +240,7 @@ export default function Inventory() {
                         </Badge>
                       )}
                       <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
-                        {product.status === 'in_stock' ? 'Trong kho' : product.status === INVENTORY_HIDDEN_STATUS ? <><EyeOff className="mr-1 h-3 w-3" />Đã ẩn</> : product.status === 'damaged' ? 'Hỏng' : product.status}
+                        {product.status === 'in_stock' ? 'Trong kho' : product.status === INVENTORY_HIDDEN_STATUS ? <><EyeOff className="mr-1 h-3 w-3" />Đã bán</> : product.status === 'damaged' ? 'Hỏng' : product.status}
                       </Badge>
                     </div>
                   </div>

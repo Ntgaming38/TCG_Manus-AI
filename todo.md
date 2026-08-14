@@ -569,3 +569,8 @@
 - [x] Thêm lựa chọn Đã ẩn để xem sản phẩm hết hàng trong trang Kho Hàng
 - [x] Hiển thị trạng thái và thông điệp trống phù hợp cho bộ lọc Đã ẩn
 - [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và lưu checkpoint
+
+## Nhãn và số lượng sản phẩm đã bán
+- [x] Đổi toàn bộ nhãn Đã ẩn trong Kho Hàng thành Đã bán
+- [x] Hiển thị số lượng sản phẩm hết hàng trong nhãn bộ lọc Đã bán
+- [x] Bổ sung kiểm thử, xác minh giao diện và lưu checkpoint
