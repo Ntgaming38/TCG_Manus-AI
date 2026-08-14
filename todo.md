@@ -455,3 +455,8 @@
 - [x] Thêm khôi phục hàng loạt các mục đã chọn
 - [x] Thêm xóa vĩnh viễn hàng loạt với xác nhận an toàn
 - [x] Kiểm thử thao tác hàng loạt và lưu checkpoint
+
+## Sửa giao diện di động Thùng rác và Marketplace
+- [x] Thu gọn và sửa hiển thị ô lọc ngày Thùng rác trên điện thoại
+- [x] Sửa hiển thị hộp thoại Lịch sử giá Marketplace trên điện thoại
+- [x] Kiểm thử desktop/mobile và lưu checkpoint
