@@ -14,4 +14,15 @@ describe("parseChyusenImageAnalysis", () => {
     expect(parsed.fieldConfidence.applicationStart).toBe("medium");
     expect(parsed.note).toContain("năm hiện tại");
   });
+
+  it("chịu được JSON có markdown fence và dữ liệu AI trả về thiếu trường", () => {
+    const parsed = parseChyusenImageAnalysis("```json\n{\"title\":\"抽選\",\"price\":\"5,500円\",\"productType\":\"box\",\"fieldEvidence\":null}\n```");
+    expect(parsed).toMatchObject({ title: "抽選", productType: "box", price: 5500, fieldEvidence: {} });
+    expect(parsed.applicationEnd).toBeNull();
+  });
+
+  it("chuẩn hóa ngày Nhật có thứ trong tuần do AI trả về", () => {
+    const raw = JSON.stringify({ title: "抽選", productName: null, series: "Pokemon", productType: "set", shop: null, price: null, quantityLimit: null, applicationStart: "2026年8月13日（木）", applicationEnd: "2026年8月16日(日)", resultDate: null, pickupStart: null, pickupNote: null, requirements: null, fieldConfidence: {}, fieldEvidence: {}, note: "Đọc từ ảnh" });
+    expect(parseChyusenImageAnalysis(raw).applicationEnd).toBe("2026-08-16T00:00:00+09:00");
+  });
 });

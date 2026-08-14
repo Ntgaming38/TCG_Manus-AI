@@ -34,9 +34,9 @@ function currentTokyoYear(now = new Date()) {
 
 function normalizeVisibleJapaneseDate(value: string | null) {
   if (!value) return { value, inferredYear: false };
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime()) && /20\d{2}/.test(value)) return { value, inferredYear: false };
-  const match = value.match(/^(?:(20\d{2})\s*(?:年|[-/.]))?\s*(\d{1,2})\s*(?:月|[-/.])\s*(\d{1,2})\s*(?:日)?$/);
+  if (/^20\d{2}-\d{2}-\d{2}T/.test(value)) return { value, inferredYear: false };
+  const visibleValue = value.replace(/[（(][月火水木金土日][）)]/g, "").trim();
+  const match = visibleValue.match(/(?:(20\d{2})\s*(?:年|[-/.]))?\s*(\d{1,2})\s*(?:月|[-/.])\s*(\d{1,2})\s*(?:日)?(?:\s+\d{1,2}[:：]\d{2}(?::\d{2})?)?/);
   if (!match) return { value: null, inferredYear: false };
   const year = match[1] || currentTokyoYear();
   const month = Number(match[2]);
@@ -78,15 +78,46 @@ function validateImageDataUrls(imageDataUrls: string[]) {
   }
 }
 
+function extractJsonObject(raw: string): unknown {
+  const trimmed = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("Không tìm thấy JSON");
+    return JSON.parse(trimmed.slice(start, end + 1));
+  }
+}
+
+function normalizeAnalysisPayload(value: unknown) {
+  const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const textOrNull = (key: string) => typeof record[key] === "string" && record[key].trim() ? record[key].trim() : null;
+  const validConfidence = new Set(confidenceLevels);
+  const fieldConfidence = Object.fromEntries(Object.entries(record.fieldConfidence && typeof record.fieldConfidence === "object" ? record.fieldConfidence as Record<string, unknown> : {}).filter(([, confidence]) => typeof confidence === "string" && validConfidence.has(confidence as (typeof confidenceLevels)[number]))) as Record<string, "high" | "medium" | "low">;
+  const sourceExcerpt = textOrNull("sourceExcerpt");
+  const suppliedEvidence = Object.fromEntries(Object.entries(record.fieldEvidence && typeof record.fieldEvidence === "object" ? record.fieldEvidence as Record<string, unknown> : {}).filter(([, evidence]) => typeof evidence === "string" && evidence.trim()).map(([field, evidence]) => [field, (evidence as string).trim().slice(0, 160)]));
+  const fallbackEvidence = sourceExcerpt ? Object.fromEntries(["title", "productName", "shop", "applicationStart", "applicationEnd", "resultDate", "pickupStart"].filter((field) => textOrNull(field)).map((field) => [field, sourceExcerpt])) : {};
+  const numericPrice = typeof record.price === "number" ? record.price : typeof record.price === "string" ? Number(record.price.replace(/[^0-9.-]/g, "")) : null;
+  const sourceSeries = textOrNull("series");
+  const series = sourceSeries && /pokemon|ポケモン/i.test(sourceSeries) ? "Pokemon" : sourceSeries && /one\s*piece|ワンピース/i.test(sourceSeries) ? "One Piece" : sourceSeries && /dragon\s*ball|ドラゴンボール/i.test(sourceSeries) ? "Dragon Ball" : sourceSeries && /yu-?gi-?oh|遊戯王/i.test(sourceSeries) ? "Yu-Gi-Oh!" : sourceSeries || "Other";
+  return {
+    title: textOrNull("title"), productName: textOrNull("productName"), series,
+    productType: productTypes.includes(record.productType as (typeof productTypes)[number]) ? record.productType : "other",
+    shop: textOrNull("shop"), price: numericPrice !== null && Number.isFinite(numericPrice) ? numericPrice : null,
+    quantityLimit: textOrNull("quantityLimit"), applicationStart: textOrNull("applicationStart"), applicationEnd: textOrNull("applicationEnd"), resultDate: textOrNull("resultDate"), pickupStart: textOrNull("pickupStart"), pickupNote: textOrNull("pickupNote"), requirements: textOrNull("requirements"), fieldConfidence, fieldEvidence: { ...fallbackEvidence, ...suppliedEvidence }, note: textOrNull("note") || sourceExcerpt || "AI đã đọc ảnh. Hãy kiểm tra các trường trước khi lưu.",
+  };
+}
+
 export function parseChyusenImageAnalysis(raw: string): ChyusenImageAnalysis {
-  return normalizeImageAnalysisDates(chyusenImageAnalysisSchema.parse(JSON.parse(raw)));
+  return normalizeImageAnalysisDates(chyusenImageAnalysisSchema.parse(normalizeAnalysisPayload(extractJsonObject(raw))));
 }
 
 export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<ChyusenImageAnalysis> {
   validateImageDataUrls(imageDataUrls);
   const response = await invokeLLM({
     model: "gemini-3-flash-preview",
-    maxTokens: 1600,
+    maxTokens: 3200,
     responseFormat: {
       type: "json_schema",
       json_schema: {
@@ -108,11 +139,10 @@ export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<Chy
             pickupStart: { type: ["string", "null"] },
             pickupNote: { type: ["string", "null"] },
             requirements: { type: ["string", "null"] },
-            fieldConfidence: { type: "object", additionalProperties: { type: "string", enum: [...confidenceLevels] } },
-            fieldEvidence: { type: "object", additionalProperties: { type: "string" } },
+            sourceExcerpt: { type: ["string", "null"] },
             note: { type: "string" },
           },
-          required: ["title", "productName", "series", "productType", "shop", "price", "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupNote", "requirements", "fieldConfidence", "fieldEvidence", "note"],
+          required: ["title", "productName", "series", "productType", "shop", "price", "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupNote", "requirements", "sourceExcerpt", "note"],
           additionalProperties: false,
         },
       },
@@ -120,17 +150,31 @@ export async function analyzeChyusenImages(imageDataUrls: string[]): Promise<Chy
     messages: [
       {
         role: "system",
-        content: "Extract only facts visibly written across these Japanese Chyusen announcement images. Treat the images as one source; a later image may clarify or continue an earlier image. Never invent missing facts. First distinguish labels: application start (応募開始/受付開始), deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup (受取). For dates with explicit year/month/day, return ISO 8601 with +09:00. If an image visibly has month/day but omits year or time, return exactly MM/DD, never guess a year or time; the application will flag it for review. Use null for unreadable or conflicting values. Keep Japanese product names exactly as shown. Use only these series: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. For every non-null value, return fieldEvidence with a short exact visible excerpt from the image (max 120 characters), keyed by the field name. For each non-null field, provide high confidence only if clearly legible and linked to the right label; use medium for visible values needing verification and low for partly obscured values. Omit confidence and evidence for null fields. Return JSON only.",
+        content: "Extract only facts visibly written across these Japanese Chyusen announcement images. Treat the images as one source; a later image may clarify or continue an earlier image. Never invent missing facts. First distinguish labels: application start (応募開始/受付開始), deadline (応募締切/受付締切), result announcement (当選発表/結果発表), and pickup (受取). For dates with explicit year/month/day, return ISO 8601 with +09:00. If an image visibly has month/day but omits year or time, return exactly MM/DD, never guess a year or time; the application will flag it for review. Use null for unreadable or conflicting values. Keep Japanese product names exactly as shown. Use only these series: Pokemon, One Piece, Dragon Ball, Yu-Gi-Oh!, Other. Return one short exact sourceExcerpt from the visible image (max 180 characters) that supports the key dates and product. Keep note to one concise sentence. Do not return field-by-field evidence or confidence objects. Return JSON only.",
       },
       { role: "user", content: [{ type: "text", text: `Read ${imageDataUrls.length} image(s) in order and extract one Chyusen record.` }, ...imageDataUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "high" as const } }))] },
     ],
   });
   const raw = extractAssistantText(response);
-  if (!raw) throw new Error("AI chưa đọc được nội dung từ ảnh này. Hãy thử ảnh rõ hơn hoặc nhập thủ công.");
   try {
+    if (!raw) throw new Error("Phản hồi AI trống");
     return parseChyusenImageAnalysis(raw);
   } catch {
-    throw new Error("AI trả về dữ liệu ảnh không hợp lệ. Hãy thử lại hoặc nhập thủ công.");
+    const retry = await invokeLLM({
+      model: "gemini-3-flash-preview",
+      maxTokens: 2200,
+      messages: [
+        { role: "system", content: "Read the Japanese Chyusen image precisely. Return one compact JSON object only. Include visible title, productName, series, productType, shop, price, quantityLimit, applicationStart, applicationEnd, resultDate, pickupStart, pickupNote, requirements, sourceExcerpt, and note. Use null for missing values. Dates may be ISO or Japanese year/month/day. Do not add explanations or markdown." },
+        { role: "user", content: [{ type: "text", text: `Retry reading ${imageDataUrls.length} image(s) in order. Keep the JSON concise.` }, ...imageDataUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "high" as const } }))] },
+      ],
+    });
+    const retryRaw = extractAssistantText(retry);
+    try {
+      if (!retryRaw) throw new Error("Phản hồi AI trống");
+      return parseChyusenImageAnalysis(retryRaw);
+    } catch {
+      throw new Error("AI trả về dữ liệu ảnh không hợp lệ. Hãy thử lại hoặc nhập thủ công.");
+    }
   }
 }
 

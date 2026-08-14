@@ -511,3 +511,8 @@
 - [x] Hỗ trợ tải và hợp nhất nhiều ảnh thông báo Chyusen
 - [x] Thêm hiệu ứng RGB tinh tế cho logo TCG Manager
 - [x] Kiểm thử AI Chyusen, logo desktop/mobile và lưu checkpoint
+
+## Sửa lỗi đọc ảnh AI Chyusen
+- [x] Tái hiện lỗi với ảnh thông báo Chyusen rõ nét người dùng cung cấp
+- [x] Sửa lỗi tải/đọc ảnh và thêm hồi quy cho ảnh rõ nét
+- [x] Kiểm thử lại biểu mẫu Chyusen và lưu checkpoint
