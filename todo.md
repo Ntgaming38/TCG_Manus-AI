@@ -688,3 +688,8 @@
 - [x] Hiển thị ảnh xem trước nhỏ của vùng QR nhận diện được
 - [x] Giữ liên kết QR và ảnh đầy đủ trong luồng phân tích AI hiện tại
 - [x] Bổ sung kiểm thử giao diện và lưu checkpoint
+
+## Không tự bật bàn phím khi mở Thêm Chyusen
+- [x] Bỏ autofocus khỏi ô nhập link khi mở form Thêm Chyusen
+- [x] Giữ khả năng focus và nhập link khi người dùng chủ động chạm vào ô
+- [x] Bổ sung kiểm thử mobile và lưu checkpoint
