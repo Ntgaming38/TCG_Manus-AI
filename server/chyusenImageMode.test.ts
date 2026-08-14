@@ -11,7 +11,7 @@ describe("lựa chọn phân tích ảnh Chyusen", () => {
 
   it("vẫn luôn gửi toàn bộ ảnh vào AI sau khi quét QR", () => {
     expect(chyusenPage).toContain('if (imageAnalysisMode === "qr")');
-    expect(chyusenPage).toContain("analyzeImages.mutate({ imageDataUrls }");
+    expect(chyusenPage).toContain("analyzeImages.mutate({ imageDataUrls: imageDataUrlsForAi }");
     expect(chyusenPage).toContain("AI vẫn đang đọc đầy đủ nội dung ảnh");
   });
 });

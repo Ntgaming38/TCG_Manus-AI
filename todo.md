@@ -677,3 +677,9 @@
 - [x] Thông báo rõ khi quyền camera bị từ chối hoặc thiết bị không hỗ trợ
 - [x] Dừng camera an toàn khi đóng form hoặc dialog quét
 - [x] Bổ sung kiểm thử, xác minh mobile và lưu checkpoint
+
+## Tối ưu ảnh và vùng QR Chyusen
+- [x] Nâng giới hạn lên 10 MB mỗi ảnh và điều chỉnh giới hạn tổng an toàn
+- [x] Tối ưu nén ảnh thích ứng để gửi AI nhanh hơn trên điện thoại
+- [x] Tự phát hiện, cắt vùng QR và gửi thêm vùng QR cho AI cùng ảnh đầy đủ
+- [x] Bổ sung kiểm thử, xác minh mobile và lưu checkpoint

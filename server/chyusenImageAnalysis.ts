@@ -71,10 +71,10 @@ function validateImageDataUrl(imageDataUrl: string) {
 }
 
 function validateImageDataUrls(imageDataUrls: string[]) {
-  if (!imageDataUrls.length || imageDataUrls.length > 4) throw new Error("Hãy tải từ 1 đến 4 ảnh thông báo.");
+  if (!imageDataUrls.length || imageDataUrls.length > 8) throw new Error("Hãy tải từ 1 đến 4 ảnh thông báo.");
   imageDataUrls.forEach(validateImageDataUrl);
-  if (imageDataUrls.reduce((total, image) => total + image.length, 0) > 12_000_000) {
-    throw new Error("Tổng dung lượng ảnh quá lớn. Hãy dùng tối đa 12 MB ảnh PNG, JPEG hoặc WEBP.");
+  if (imageDataUrls.reduce((total, image) => total + image.length, 0) > 20_000_000) {
+    throw new Error("Tổng dung lượng ảnh đã nén quá lớn. Hãy dùng tối đa 4 ảnh PNG, JPEG hoặc WEBP.");
   }
 }
 

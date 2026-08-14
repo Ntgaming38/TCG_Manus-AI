@@ -60,18 +60,28 @@ async function prepareChyusenImage(file: File): Promise<string> {
   }
   const bitmap = await window.createImageBitmap(file);
   const longestSide = Math.max(bitmap.width, bitmap.height);
-  const scale = Math.min(1, 1600 / longestSide);
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Không thể chuẩn bị ảnh");
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const compressionProfiles = file.size > 6 * 1024 * 1024
+    ? [{ longestSide: 1800, quality: 0.8 }, { longestSide: 1500, quality: 0.74 }, { longestSide: 1280, quality: 0.7 }]
+    : [{ longestSide: 1600, quality: 0.84 }, { longestSide: 1400, quality: 0.78 }, { longestSide: 1200, quality: 0.72 }];
+  let preparedImage = "";
+  for (const profile of compressionProfiles) {
+    const scale = Math.min(1, profile.longestSide / longestSide);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Không thể chuẩn bị ảnh");
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    preparedImage = canvas.toDataURL("image/jpeg", profile.quality);
+    if (preparedImage.length <= 2_600_000) break;
+  }
   bitmap.close();
-  return canvas.toDataURL("image/jpeg", 0.88);
+  return preparedImage;
 }
 
-async function scanQrFromImageDataUrl(imageDataUrl: string) {
+type ChyusenQrScan = { url: string; cropDataUrl: string };
+
+async function scanQrFromImageDataUrl(imageDataUrl: string): Promise<ChyusenQrScan | null> {
   const image = new Image();
   image.src = imageDataUrl;
   await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error("Không thể quét QR")); });
@@ -82,7 +92,25 @@ async function scanQrFromImageDataUrl(imageDataUrl: string) {
   if (!context) return null;
   context.drawImage(image, 0, 0);
   const qr = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height, { inversionAttempts: "attemptBoth" });
-  return normalizeChyusenQrUrl(qr?.data);
+  const url = normalizeChyusenQrUrl(qr?.data);
+  if (!url || !qr?.location) return null;
+  const corners = [qr.location.topLeftCorner, qr.location.topRightCorner, qr.location.bottomRightCorner, qr.location.bottomLeftCorner];
+  const minX = Math.min(...corners.map((corner) => corner.x));
+  const maxX = Math.max(...corners.map((corner) => corner.x));
+  const minY = Math.min(...corners.map((corner) => corner.y));
+  const maxY = Math.max(...corners.map((corner) => corner.y));
+  const padding = Math.max(24, Math.round(Math.max(maxX - minX, maxY - minY) * 0.22));
+  const sourceX = Math.max(0, Math.floor(minX - padding));
+  const sourceY = Math.max(0, Math.floor(minY - padding));
+  const sourceWidth = Math.min(canvas.width - sourceX, Math.ceil(maxX - minX + padding * 2));
+  const sourceHeight = Math.min(canvas.height - sourceY, Math.ceil(maxY - minY + padding * 2));
+  const cropCanvas = document.createElement("canvas");
+  cropCanvas.width = sourceWidth;
+  cropCanvas.height = sourceHeight;
+  const cropContext = cropCanvas.getContext("2d");
+  if (!cropContext) return { url, cropDataUrl: imageDataUrl };
+  cropContext.drawImage(canvas, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+  return { url, cropDataUrl: cropCanvas.toDataURL("image/jpeg", 0.9) };
 }
 
 function timeBadge(timeState: string) {
@@ -315,24 +343,28 @@ export default function Chyusen() {
     const files = Array.from(event.target.files || []);
     event.target.value = "";
     if (!files.length) return;
-    if (files.length > 4 || files.some((file) => !/image\/(png|jpeg|webp)/.test(file.type) || file.size > 4 * 1024 * 1024) || files.reduce((total, file) => total + file.size, 0) > 12 * 1024 * 1024) { toast.error("Chỉ tải 1–4 ảnh PNG, JPEG hoặc WEBP, tối đa 4 MB/ảnh và 12 MB tổng."); return; }
+    if (files.length > 4 || files.some((file) => !/image\/(png|jpeg|webp)/.test(file.type) || file.size > 10 * 1024 * 1024) || files.reduce((total, file) => total + file.size, 0) > 40 * 1024 * 1024) { toast.error("Chỉ tải 1–4 ảnh PNG, JPEG hoặc WEBP, tối đa 10 MB/ảnh và 40 MB tổng."); return; }
     try {
       const imageDataUrls = await Promise.all(files.map(prepareChyusenImage));
+      let imageDataUrlsForAi = imageDataUrls;
       if (imageAnalysisMode === "qr") {
-        const qrUrls = await Promise.all(imageDataUrls.map((imageDataUrl) => scanQrFromImageDataUrl(imageDataUrl).catch(() => null)));
-        const firstQrUrl = qrUrls.find((url): url is string => Boolean(url));
+        const qrScans = await Promise.all(imageDataUrls.map((imageDataUrl) => scanQrFromImageDataUrl(imageDataUrl).catch(() => null)));
+        const firstQrScan = qrScans.find((scan): scan is ChyusenQrScan => Boolean(scan));
+        const firstQrUrl = firstQrScan?.url;
         setQrRegistrationUrl(firstQrUrl || null);
         const detectedShop = detectChyusenShopFromQrUrl(firstQrUrl);
         setQrDetectedShop(detectedShop);
         if (detectedShop) updateDraft("shop", detectedShop);
-        if (firstQrUrl) toast.success("Đã tìm thấy mã QR. AI vẫn đang đọc đầy đủ nội dung ảnh.");
+        const qrCrops = qrScans.filter((scan): scan is ChyusenQrScan => Boolean(scan)).map((scan) => scan.cropDataUrl);
+        imageDataUrlsForAi = [...imageDataUrls, ...qrCrops].slice(0, 8);
+        if (firstQrUrl) toast.success("Đã tìm thấy QR và cắt vùng mã. AI vẫn đang đọc đầy đủ nội dung ảnh.");
         else toast.info("Không tìm thấy QR rõ ràng. AI vẫn đang đọc đầy đủ nội dung ảnh.");
       } else {
         setQrRegistrationUrl(null);
         setQrDetectedShop(null);
       }
       const retryHintTimer = window.setTimeout(() => setAiRetryHint(true), 1_800);
-      analyzeImages.mutate({ imageDataUrls }, { onSettled: () => { window.clearTimeout(retryHintTimer); setAiRetryHint(false); } });
+      analyzeImages.mutate({ imageDataUrls: imageDataUrlsForAi }, { onSettled: () => { window.clearTimeout(retryHintTimer); setAiRetryHint(false); } });
     } catch { toast.error("Không thể đọc tệp ảnh này."); }
   };
   const startCameraQrScanner = async () => {

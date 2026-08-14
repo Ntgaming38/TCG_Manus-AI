@@ -457,7 +457,7 @@ export const appRouter = router({
       .mutation(({ input }) => analyzeChyusenImage(input.imageDataUrl)),
 
     analyzeImages: protectedProcedure
-      .input(z.object({ imageDataUrls: z.array(z.string().trim().min(64).max(7_000_000)).min(1).max(4) }))
+      .input(z.object({ imageDataUrls: z.array(z.string().trim().min(64).max(3_500_000)).min(1).max(8) }))
       .mutation(({ input }) => analyzeChyusenImages(input.imageDataUrls)),
 
     refreshPreview: protectedProcedure
