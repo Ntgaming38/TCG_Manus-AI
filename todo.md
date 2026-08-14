@@ -629,3 +629,9 @@
 - [x] Thêm tải ảnh nền đăng nhập tùy chỉnh từ trang Cài đặt
 - [x] Lưu nền tùy chỉnh theo thiết bị và cho phép khôi phục nền mặc định
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Chỉnh nền và thu gọn Cài đặt
+- [x] Thêm xem trước, cắt ảnh tỷ lệ nền và điều chỉnh độ tối trước khi tải nền
+- [x] Lưu danh sách hình nền gần đây để chuyển đổi nhanh
+- [x] Thu gọn/mở rộng riêng từng mục Cài đặt và lưu trạng thái theo thiết bị
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

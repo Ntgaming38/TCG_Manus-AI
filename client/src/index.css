@@ -553,4 +553,41 @@
   .settings-stack > :nth-child(3) { order: 3; }
   .settings-stack > :nth-child(4) { order: 1; }
   .settings-login-background-card { order: 2.5; }
+
+  .settings-collapsible-panel [data-settings-header] {
+    cursor: pointer;
+    position: relative;
+    padding-right: 5rem;
+    transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .settings-collapsible-panel [data-settings-header]::after {
+    content: "Thu gọn";
+    position: absolute;
+    right: 1.5rem;
+    top: 1.4rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .settings-collapsible-panel[data-collapsed="true"] > :not([data-settings-header]) {
+    display: none;
+  }
+
+  .settings-collapsible-panel[data-collapsed="true"] [data-settings-header]::after {
+    content: "Mở";
+  }
+
+  .settings-collapsible-panel[data-collapsed="true"] [data-settings-header] {
+    min-height: 5.5rem;
+  }
+
+  .settings-collapsible-panel [data-settings-header]:has(button)::after {
+    display: none;
+  }
+
+  .settings-collapsible-panel [data-settings-header] button[aria-expanded] {
+    display: none;
+  }
  }
