@@ -1,0 +1,20 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+
+const css = readFileSync(fileURLToPath(new URL("../client/src/index.css", import.meta.url)), "utf8");
+
+describe("TCG Manager RGB logo", () => {
+  it("dùng gradient RGB chạy ngang cho logo TCG Manager", () => {
+    expect(css).toContain(".tcg-logo-text");
+    expect(css).toContain("linear-gradient(90deg");
+    expect(css).toContain("animation: tcg-rgb-flow 5.8s linear infinite");
+    expect(css).toContain("from { background-position: 200% 50%; }");
+    expect(css).toContain("to { background-position: 0% 50%; }");
+  });
+
+  it("tắt chuyển động khi người dùng yêu cầu giảm chuyển động", () => {
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(css).toContain(".tcg-logo-text { animation: none; background-position: 50% 50%; }");
+  });
+});

@@ -574,3 +574,8 @@
 - [x] Đổi toàn bộ nhãn Đã ẩn trong Kho Hàng thành Đã bán
 - [x] Hiển thị số lượng sản phẩm hết hàng trong nhãn bộ lọc Đã bán
 - [x] Bổ sung kiểm thử, xác minh giao diện và lưu checkpoint
+
+## Hiệu ứng RGB chạy ngang cho logo
+- [x] Cập nhật logo TCG Manager với gradient RGB chạy từ trái sang phải
+- [x] Giữ khả năng đọc và tôn trọng chế độ giảm chuyển động
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
