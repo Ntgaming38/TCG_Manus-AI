@@ -60,19 +60,12 @@ export default function Home() {
       )}
 
       {/* Overlay content - positioned over the image */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-end py-8">
-        {/* Bottom area - Logo is intentionally close to the version information */}
-        <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
-          <div className="flex w-full flex-col items-center gap-1">
-            <h1 className="tcg-logo-text login-tcg-logo whitespace-nowrap -translate-y-3 sm:-translate-y-4 text-[clamp(1.75rem,8vw,3.75rem)] tracking-[0.08em] select-none text-center leading-none">
-              TCG Manager
-            </h1>
-            {/* Server info bar */}
-          <div className="w-full bg-black/60 backdrop-blur-sm border border-yellow-500/30 rounded-lg px-4 py-3 flex items-center justify-between shadow-[0_0_10px_rgba(255,203,5,0.1)]">
-            <span className="text-white/80 text-sm">TCG Manager</span>
-            <span className="text-yellow-400 text-sm font-semibold">v1.0</span>
-          </div>
-          </div>
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-end pb-[clamp(9rem,20vh,15.5rem)] pt-8">
+        {/* Login controls are lifted above the lower edge on all screen sizes. */}
+        <div className="w-full max-w-md px-6 flex flex-col items-center gap-3 animate-slide-up">
+          <h1 className="tcg-logo-text login-tcg-logo whitespace-nowrap text-[clamp(1.75rem,8vw,3.75rem)] tracking-[0.08em] select-none text-center leading-none">
+            TCG MANAGER
+          </h1>
 
           {/* Login button with pulse animation */}
           <Button
@@ -89,8 +82,8 @@ export default function Home() {
           </Button>
 
           {/* Version text */}
-          <p className="text-white/40 text-xs">
-            Phiên bản: 1.0.0
+          <p className="text-white/55 text-xs font-medium">
+            Phiên bản v1.1
           </p>
         </div>
       </div>

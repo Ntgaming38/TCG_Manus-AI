@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_LOGIN_BACKGROUND_URL, LOGIN_BACKGROUND_STORAGE_KEY, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, saveLoginBackgroundUrl } from "../client/src/lib/loginBackground";
+import { DEFAULT_LOGIN_BACKGROUND_URL, LOGIN_BACKGROUND_STORAGE_KEY, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundUrl } from "../client/src/lib/loginBackground";
 
 function createStorage(initial?: string) {
   const values = new Map<string, string>();
@@ -27,5 +27,14 @@ describe("login background setting", () => {
     expect(history).toHaveLength(6);
     expect(history[0].url).toContain("background_4.png");
     expect(readLoginBackgroundHistory(storage)).toHaveLength(6);
+  });
+
+  it("xóa riêng một nền khỏi danh sách gần đây", () => {
+    const storage = createStorage();
+    const first = "/manus-storage/login-backgrounds/1/first.png";
+    const second = "/manus-storage/login-backgrounds/1/second.png";
+    rememberLoginBackgroundUrl(first, storage);
+    rememberLoginBackgroundUrl(second, storage);
+    expect(removeLoginBackgroundUrl(first, storage).map((item) => item.url)).toEqual([second]);
   });
 });

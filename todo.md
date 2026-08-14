@@ -635,3 +635,9 @@
 - [x] Lưu danh sách hình nền gần đây để chuyển đổi nhanh
 - [x] Thu gọn/mở rộng riêng từng mục Cài đặt và lưu trạng thái theo thiết bị
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Cụm đăng nhập v1.1 và quản lý nền gần đây
+- [x] Đổi logo đăng nhập thành TCG MANAGER và nâng cụm nội dung lên cao hơn
+- [x] Bỏ ô TCG Manager v1.0, đưa nút Bắt đầu lên và hiển thị Phiên bản v1.1
+- [x] Thêm nút xóa riêng cho từng nền gần đây và xử lý nền đang được chọn
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint

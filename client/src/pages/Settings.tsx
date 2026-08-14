@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { createChyusenSourceUpdatePayload } from "@shared/chyusenSourceUpdate";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsColors, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsColors, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectColors, type RgbEffectSpeed } from "@/lib/rgbEffects";
-import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
+import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
@@ -138,6 +138,12 @@ export default function Settings() {
     setLoginBackgroundUrl(saveLoginBackgroundUrl(url, window.localStorage));
     toast.success("Đã đổi nền đăng nhập.");
   };
+  const removeRecentLoginBackground = (url: string) => {
+    const next = removeLoginBackgroundUrl(url, window.localStorage);
+    setLoginBackgroundHistory(next);
+    if (loginBackgroundUrl === url) setLoginBackgroundUrl(saveLoginBackgroundUrl(DEFAULT_LOGIN_BACKGROUND_URL, window.localStorage));
+    toast.success("Đã xóa nền khỏi danh sách gần đây.");
+  };
   const toggleSettingsSection = (section: SettingsSection, event: React.MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button, input, [role=switch], [role=combobox]")) return;
     setCollapsedSettingsSections((current) => ({ ...current, [section]: !current[section] }));
@@ -189,7 +195,7 @@ export default function Settings() {
 
     <Card className="settings-login-background-card settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backgroundHistory}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backgroundHistory", event)}><CardTitle className="text-base">Nền đã tải gần đây</CardTitle><CardDescription>Chọn nhanh một trong tối đa sáu hình nền đã lưu trên thiết bị này.</CardDescription></CardHeader>
-      <CardContent>{loginBackgroundHistory.length > 0 ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{loginBackgroundHistory.map((item) => <button key={item.url} type="button" aria-label="Dùng nền đã tải" onClick={() => selectLoginBackground(item.url)} className={`relative aspect-video overflow-hidden rounded-md border transition ${loginBackgroundUrl === item.url ? "ring-2 ring-red-500" : "hover:border-sky-400"}`}><img src={item.url} alt="Nền đăng nhập đã tải" className="h-full w-full object-cover" /></button>)}</div> : <p className="rounded-lg border border-dashed px-3 py-5 text-center text-sm text-muted-foreground">Chưa có hình nền tùy chỉnh. Hãy tải và lưu ảnh đầu tiên ở mục Nền đăng nhập.</p>}</CardContent>
+      <CardContent>{loginBackgroundHistory.length > 0 ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{loginBackgroundHistory.map((item) => <div key={item.url} className="relative aspect-video"><button type="button" aria-label="Dùng nền đã tải" onClick={() => selectLoginBackground(item.url)} className={`h-full w-full overflow-hidden rounded-md border transition ${loginBackgroundUrl === item.url ? "ring-2 ring-red-500" : "hover:border-sky-400"}`}><img src={item.url} alt="Nền đăng nhập đã tải" className="h-full w-full object-cover" /></button><button type="button" aria-label="Xóa nền khỏi danh sách gần đây" title="Xóa nền khỏi danh sách gần đây" onClick={() => removeRecentLoginBackground(item.url)} className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow transition hover:bg-red-700"><Trash2 className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="rounded-lg border border-dashed px-3 py-5 text-center text-sm text-muted-foreground">Chưa có hình nền tùy chỉnh. Hãy tải và lưu ảnh đầu tiên ở mục Nền đăng nhập.</p>}</CardContent>
     </Card>
 
     <AlertDialog open={deleteSourceId !== null} onOpenChange={(open) => !open && setDeleteSourceId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nguồn theo dõi?</AlertDialogTitle><AlertDialogDescription>Nguồn sẽ không còn được kiểm tra tự động. Các Chyusen và audit log hiện có vẫn được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteSourceId && deleteSource.mutate({ id: deleteSourceId })}>Xóa nguồn</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

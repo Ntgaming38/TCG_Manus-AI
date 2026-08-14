@@ -39,3 +39,9 @@ export function rememberLoginBackgroundUrl(url: string, storage?: StorageLike) {
   storage?.setItem(LOGIN_BACKGROUND_HISTORY_STORAGE_KEY, JSON.stringify(next));
   return next;
 }
+
+export function removeLoginBackgroundUrl(url: string, storage?: StorageLike) {
+  const next = readLoginBackgroundHistory(storage).filter((item) => item.url !== url);
+  storage?.setItem(LOGIN_BACKGROUND_HISTORY_STORAGE_KEY, JSON.stringify(next));
+  return next;
+}

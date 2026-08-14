@@ -9,16 +9,17 @@ describe("Login branding", () => {
     expect(home).toContain('src={backgroundUrl}');
   });
 
-  it("hiển thị TCG Manager với lớp hiệu ứng RGB dùng chung", () => {
+  it("hiển thị TCG MANAGER với lớp hiệu ứng RGB dùng chung", () => {
     expect(home).toContain('className="tcg-logo-text');
-    expect(home).toMatch(/>\s+TCG Manager\s+<\/h1>/);
+    expect(home).toMatch(/>\s+TCG MANAGER\s+<\/h1>/);
   });
 
   it("đặt logo gần ô phiên bản và dùng chuyển cảnh RGB khi bắt đầu", () => {
     expect(home).toContain('login-rgb-transition-overlay');
     expect(home).toContain('whitespace-nowrap');
     expect(home).toContain('text-[clamp(1.75rem,8vw,3.75rem)]');
-    expect(home).toContain('-translate-y-3 sm:-translate-y-4');
+    expect(home).toContain('pb-[clamp(9rem,20vh,15.5rem)]');
+    expect(home).toContain('Phiên bản v1.1');
     expect(home).toContain('setTimeout(() => {');
     expect(home).toContain('}, 520);');
   });
