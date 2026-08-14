@@ -611,3 +611,9 @@
 - [x] Đổi chữ POKÉMON tại logo màn hình chính thành TCG Manager
 - [x] Liên kết logo chính với bảng màu và tốc độ RGB đang chọn
 - [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
+
+## Bố cục và chuyển cảnh đăng nhập RGB
+- [x] Đưa logo TCG Manager về phía trên ô TCG Manager v1.0
+- [x] Thêm chuyển cảnh phát sáng theo bảng màu RGB khi bấm Bắt đầu
+- [x] Tôn trọng chế độ giảm chuyển động và kiểm thử desktop/mobile
+- [x] Lưu checkpoint sau khi xác minh

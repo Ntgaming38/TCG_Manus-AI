@@ -22,7 +22,7 @@ export default function Home() {
     // Wait for animation to complete, then start login
     setTimeout(() => {
       startLogin();
-    }, 500);
+    }, 520);
   }, []);
 
   if (loading) {
@@ -45,12 +45,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/10 to-slate-950/70" />
       </div>
 
-      {/* Transition overlay - fades to black when starting */}
+      {/* Transition overlay - follows the user's RGB palette when starting */}
       {transitioning && (
-        <div className="absolute inset-0 z-50 bg-black page-transition-overlay flex items-center justify-center">
+        <div className="absolute inset-0 z-50 login-rgb-transition-overlay flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-10 w-10 animate-spin text-green-400" />
-            <p className="text-green-400 font-bold text-lg tracking-wider animate-pulse">
+            <Loader2 className="h-10 w-10 animate-spin text-white" />
+            <p className="text-white font-bold text-lg tracking-wider animate-pulse">
               Đang kết nối...
             </p>
           </div>
@@ -58,20 +58,18 @@ export default function Home() {
       )}
 
       {/* Overlay content - positioned over the image */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-between py-8">
-        {/* Top area - TCG Manager logo with the user's RGB preferences */}
-        <div className="flex flex-col items-center justify-center mt-2 w-full animate-slide-down">
-          <h1 className="tcg-logo-text text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider select-none text-center leading-none">
-            TCG Manager
-          </h1>
-        </div>
-
-        {/* Bottom area - Login section */}
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-end py-8">
+        {/* Bottom area - Logo is intentionally close to the version information */}
         <div className="w-full max-w-md px-6 flex flex-col items-center gap-4 mb-8 animate-slide-up">
-          {/* Server info bar */}
+          <div className="flex w-full flex-col items-center gap-2">
+            <h1 className="tcg-logo-text text-4xl sm:text-5xl md:text-6xl tracking-wider select-none text-center leading-none">
+              TCG Manager
+            </h1>
+            {/* Server info bar */}
           <div className="w-full bg-black/60 backdrop-blur-sm border border-yellow-500/30 rounded-lg px-4 py-3 flex items-center justify-between shadow-[0_0_10px_rgba(255,203,5,0.1)]">
             <span className="text-white/80 text-sm">TCG Manager</span>
             <span className="text-yellow-400 text-sm font-semibold">v1.0</span>
+          </div>
           </div>
 
           {/* Login button with pulse animation */}

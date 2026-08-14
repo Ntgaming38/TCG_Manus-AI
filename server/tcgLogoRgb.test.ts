@@ -43,4 +43,10 @@ describe("TCG Manager RGB logo", () => {
     expect(css).toContain(".tcg-logo-text");
     expect(css).toContain(":root[data-rgb-effects=\"enabled\"] main h1");
   });
+
+  it("có chuyển cảnh đăng nhập phát sáng theo bảng màu RGB và hỗ trợ reduced motion", () => {
+    expect(css).toContain(".login-rgb-transition-overlay");
+    expect(css).toContain("@keyframes login-rgb-transition");
+    expect(css).toContain("var(--tcg-rgb-gradient");
+  });
 });

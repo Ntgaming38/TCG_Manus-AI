@@ -10,6 +10,13 @@ describe("Login branding", () => {
 
   it("hiển thị TCG Manager với lớp hiệu ứng RGB dùng chung", () => {
     expect(home).toContain('className="tcg-logo-text');
-    expect(home).toContain(">\n            TCG Manager\n          </h1>");
+    expect(home).toMatch(/>\s+TCG Manager\s+<\/h1>/);
+  });
+
+  it("đặt logo gần ô phiên bản và dùng chuyển cảnh RGB khi bắt đầu", () => {
+    expect(home).toContain('login-rgb-transition-overlay');
+    expect(home).toContain('text-4xl sm:text-5xl md:text-6xl');
+    expect(home).toContain('setTimeout(() => {');
+    expect(home).toContain('}, 520);');
   });
 });
