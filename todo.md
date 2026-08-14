@@ -540,3 +540,8 @@
 - [x] Tối ưu luồng đọc ảnh AI để phản hồi nhanh hơn
 - [x] Quét mã QR từ ảnh và hiển thị liên kết cần xác nhận
 - [x] Kiểm thử tốc độ, QR và lưu checkpoint
+
+## Cửa hàng QR và làm mới bằng vuốt
+- [x] Tự nhận diện và điền cửa hàng từ URL QR Chyusen đáng tin cậy
+- [x] Thêm vuốt xuống để làm mới dữ liệu trên toàn ứng dụng
+- [x] Kiểm thử desktop/mobile và lưu checkpoint

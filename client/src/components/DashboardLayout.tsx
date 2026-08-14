@@ -22,7 +22,7 @@ import {
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
-  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift,
+  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift, RefreshCw,
   Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard, Ticket, Settings, History, Trash2
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -33,6 +33,7 @@ import { SidebarAIAssistant } from "./SidebarAIAssistant";
 import { trpc } from "@/lib/trpc";
 import { getUnreadChyusenCount } from "@shared/chyusenNotifications";
 import { shouldOpenMobileSidebarFromSwipe } from "@shared/mobileSidebarGesture";
+import { shouldTriggerPullToRefresh } from "@shared/pullToRefresh";
 import { NotificationCenter } from "./NotificationCenter";
 
 const menuItems = [
@@ -120,7 +121,10 @@ function DashboardLayoutContent({
   const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const pullStartRef = useRef<{ x: number; y: number } | null>(null);
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
   const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery(undefined, { staleTime: 60_000 });
@@ -154,6 +158,44 @@ function DashboardLayoutContent({
       window.removeEventListener("touchend", onTouchEnd);
     };
   }, [isMobile, openMobile, setOpenMobile]);
+
+  useEffect(() => {
+    if (!isMobile || isRefreshing || openMobile) return;
+    const getScrollTop = () => document.scrollingElement?.scrollTop ?? window.scrollY;
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      pullStartRef.current = touch && getScrollTop() <= 0 ? { x: touch.clientX, y: touch.clientY } : null;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      const start = pullStartRef.current;
+      if (!touch || !start || getScrollTop() > 0) return;
+      const deltaY = touch.clientY - start.y;
+      const deltaX = Math.abs(touch.clientX - start.x);
+      if (deltaY <= 0 || deltaY <= deltaX) return;
+      setPullDistance(Math.min(96, deltaY));
+      if (event.cancelable) event.preventDefault();
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      const touch = event.changedTouches[0];
+      const start = pullStartRef.current;
+      pullStartRef.current = null;
+      if (!touch || !start) { setPullDistance(0); return; }
+      const shouldRefresh = shouldTriggerPullToRefresh({ startX: start.x, startY: start.y, endX: touch.clientX, endY: touch.clientY, scrollTop: getScrollTop() });
+      setPullDistance(0);
+      if (!shouldRefresh) return;
+      setIsRefreshing(true);
+      window.setTimeout(() => window.location.reload(), 120);
+    };
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMobile, isRefreshing, openMobile]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -256,6 +298,7 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        {isMobile && (pullDistance > 0 || isRefreshing) && <div className="fixed left-1/2 top-2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-full border border-primary/40 bg-background/95 px-3 py-1.5 text-xs font-medium text-primary shadow-lg backdrop-blur"><RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />{isRefreshing ? "Đang làm mới..." : pullDistance >= 72 ? "Thả để làm mới" : "Kéo xuống để làm mới"}</div>}
         <div className="flex border-b border-primary/30 h-14 items-center justify-between bg-background/95 px-3 backdrop-blur sticky top-0 z-40">
           {isMobile ? (
             <div className="flex items-center gap-2">
