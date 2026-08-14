@@ -693,3 +693,8 @@
 - [x] Bỏ autofocus khỏi ô nhập link khi mở form Thêm Chyusen
 - [x] Giữ khả năng focus và nhập link khi người dùng chủ động chạm vào ô
 - [x] Bổ sung kiểm thử mobile và lưu checkpoint
+
+## Tự cuộn tới lỗi khi lưu Chyusen
+- [x] Xác định trường lỗi đầu tiên sau khi xác thực biểu mẫu
+- [x] Tự cuộn và focus vào trường lỗi đầu tiên sau khi bấm Lưu
+- [x] Bổ sung kiểm thử mobile và lưu checkpoint
