@@ -698,3 +698,8 @@
 - [x] Xác định trường lỗi đầu tiên sau khi xác thực biểu mẫu
 - [x] Tự cuộn và focus vào trường lỗi đầu tiên sau khi bấm Lưu
 - [x] Bổ sung kiểm thử mobile và lưu checkpoint
+
+## Nhấn mạnh trường lỗi Chyusen
+- [x] Thêm viền đỏ cho trường lỗi đầu tiên sau khi tự cuộn tới
+- [x] Thêm hiệu ứng rung nhẹ và tôn trọng chế độ giảm chuyển động
+- [x] Bổ sung kiểm thử giao diện và lưu checkpoint

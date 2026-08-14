@@ -454,6 +454,11 @@ export default function Chyusen() {
         const target = document.querySelector<HTMLElement>(`[data-chyusen-field="${firstErrorField}"] input, [data-chyusen-field="${firstErrorField}"] button`);
         target?.scrollIntoView({ behavior: "smooth", block: "center" });
         target?.focus({ preventScroll: true });
+        const fieldContainer = target?.closest<HTMLElement>(`[data-chyusen-field="${firstErrorField}"]`);
+        fieldContainer?.classList.remove("chyusen-error-attention");
+        void fieldContainer?.offsetWidth;
+        fieldContainer?.classList.add("chyusen-error-attention");
+        window.setTimeout(() => fieldContainer?.classList.remove("chyusen-error-attention"), 720);
       }, 0);
       return;
     }
