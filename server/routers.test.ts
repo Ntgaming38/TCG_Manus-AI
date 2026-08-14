@@ -25,13 +25,13 @@ vi.mock("./db", async (importOriginal) => {
   };
 });
 
-vi.mock("./trashDb", () => ({ listTrashItems: vi.fn() }));
+vi.mock("./trashDb", () => ({ listTrashItems: vi.fn(), emptyTrashItems: vi.fn() }));
 vi.mock("./trashRestore", () => ({ restoreTrashItem: vi.fn() }));
 
 import { appRouter } from "./routers";
 import * as chyusenDb from "./chyusenDb";
 import * as db from "./db";
-import { listTrashItems } from "./trashDb";
+import { emptyTrashItems, listTrashItems } from "./trashDb";
 import { restoreTrashItem } from "./trashRestore";
 import type { TrpcContext } from "./_core/context";
 
@@ -182,6 +182,14 @@ describe("appRouter", () => {
 
       await expect(caller.trash.restore({ id: 41 })).resolves.toMatchObject({ restored: true });
       expect(restoreTrashItem).toHaveBeenCalledWith(1, 41);
+    });
+
+    it("chỉ dọn sạch mục Thùng rác của người dùng sau khi xác nhận", async () => {
+      vi.mocked(emptyTrashItems).mockResolvedValue({ purgedCount: 2 });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.trash.empty({ confirmed: true })).resolves.toEqual({ purgedCount: 2 });
+      expect(emptyTrashItems).toHaveBeenCalledWith(1);
     });
   });
 

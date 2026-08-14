@@ -12,7 +12,7 @@ import { parseChyusenUrl } from "./chyusenSource";
 import { validatePublicChyusenUrl } from "./chyusenUtils";
 import { checkChyusenSourceNow } from "./chyusenMonitor";
 import { analyzeChyusenImage } from "./chyusenImageAnalysis";
-import { listTrashItems } from "./trashDb";
+import { emptyTrashItems, listTrashItems } from "./trashDb";
 import { restoreTrashItem } from "./trashRestore";
 
 const chyusenEntryBase = z.object({
@@ -372,6 +372,9 @@ export const appRouter = router({
     restore: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => restoreTrashItem(ctx.user.id, input.id)),
+    empty: protectedProcedure
+      .input(z.object({ confirmed: z.literal(true) }))
+      .mutation(({ ctx }) => emptyTrashItems(ctx.user.id)),
   }),
 
   activities: router({

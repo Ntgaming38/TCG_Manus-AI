@@ -1,5 +1,5 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
-import { trashItems } from "../drizzle/schema";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { chyusenEntries, chyusenNotifications, trashItems } from "../drizzle/schema";
 import { getDb } from "./db";
 
 export type TrashEntityType = "product" | "purchase" | "sale" | "chyusen" | "source" | "notification";
@@ -61,4 +61,21 @@ export async function markLatestTrashItemRestored(userId: number, entityType: Tr
     .orderBy(desc(trashItems.deletedAt))
     .limit(1);
   if (item) await markTrashItemRestored(userId, item.id);
+}
+
+export async function emptyTrashItems(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const items = await listTrashItems(userId);
+  if (!items.length) return { purgedCount: 0 };
+
+  const chyusenIds = items.filter((item) => item.entityType === "chyusen").map((item) => item.entityId);
+  const notificationIds = items.filter((item) => item.entityType === "notification").map((item) => item.entityId);
+  if (chyusenIds.length) {
+    await db.delete(chyusenNotifications).where(and(eq(chyusenNotifications.userId, userId), inArray(chyusenNotifications.entryId, chyusenIds)));
+    await db.delete(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), inArray(chyusenEntries.id, chyusenIds)));
+  }
+  if (notificationIds.length) await db.delete(chyusenNotifications).where(and(eq(chyusenNotifications.userId, userId), inArray(chyusenNotifications.id, notificationIds)));
+  await db.delete(trashItems).where(and(eq(trashItems.userId, userId), isNull(trashItems.restoredAt)));
+  return { purgedCount: items.length };
 }

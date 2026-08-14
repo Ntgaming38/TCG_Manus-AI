@@ -443,3 +443,9 @@
 - [x] Thêm bộ lọc 7 ngày, 30 ngày và 90 ngày vào biểu đồ lịch sử giá
 - [x] Hiển thị biến động 24 giờ bằng mũi tên xanh đỏ trong bảng Marketplace
 - [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Nâng cấp Thùng rác
+- [x] Hiển thị toast thành công khi khôi phục mục từ Thùng rác
+- [x] Thêm tìm kiếm và lọc theo ngày xóa trong Thùng rác
+- [x] Thêm Làm sạch thùng rác với xác nhận xóa vĩnh viễn
+- [x] Kiểm thử luồng khôi phục, lọc và dọn sạch trước khi lưu checkpoint
