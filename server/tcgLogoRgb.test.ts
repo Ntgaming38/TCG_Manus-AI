@@ -8,7 +8,7 @@ describe("TCG Manager RGB logo", () => {
   it("dùng gradient RGB chạy ngang cho logo TCG Manager", () => {
     expect(css).toContain(".tcg-logo-text");
     expect(css).toContain("linear-gradient(90deg");
-    expect(css).toContain("animation: tcg-rgb-flow 5.8s linear infinite");
+    expect(css).toContain("animation: tcg-rgb-flow var(--tcg-rgb-duration, 5.8s) linear infinite;");
     expect(css).toContain("from { background-position: 200% 50%; }");
     expect(css).toContain("to { background-position: 0% 50%; }");
   });
@@ -22,5 +22,12 @@ describe("TCG Manager RGB logo", () => {
     expect(css).toContain(":root[data-rgb-effects=\"enabled\"] main h1");
     expect(css).toContain(":root[data-rgb-effects=\"disabled\"] main h1");
     expect(css).toContain(":root[data-rgb-effects=\"disabled\"] .tcg-logo-text");
+  });
+
+  it("có các biến tốc độ chậm, bình thường và nhanh cho chuyển động RGB", () => {
+    expect(css).toContain(':root[data-rgb-speed="slow"] { --tcg-rgb-duration: 10s; }');
+    expect(css).toContain(':root[data-rgb-speed="normal"] { --tcg-rgb-duration: 5.8s; }');
+    expect(css).toContain(':root[data-rgb-speed="fast"] { --tcg-rgb-duration: 3.2s; }');
+    expect(css).toContain("animation: tcg-rgb-flow var(--tcg-rgb-duration, 5.8s) linear infinite;");
   });
 });

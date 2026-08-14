@@ -244,7 +244,7 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 3px rgba(255, 203, 5, 0.72)) drop-shadow(0 0 10px rgba(77, 150, 255, 0.28));
-    animation: tcg-rgb-flow 5.8s linear infinite;
+    animation: tcg-rgb-flow var(--tcg-rgb-duration, 5.8s) linear infinite;
   }
 
   @keyframes tcg-rgb-flow {
@@ -264,6 +264,10 @@
     animation: none;
   }
 
+  :root[data-rgb-speed="slow"] { --tcg-rgb-duration: 10s; }
+  :root[data-rgb-speed="normal"] { --tcg-rgb-duration: 5.8s; }
+  :root[data-rgb-speed="fast"] { --tcg-rgb-duration: 3.2s; }
+
   :root[data-rgb-effects="enabled"] main h1 {
     background-image: linear-gradient(90deg, #FFCB05 0%, #FFE16A 14%, #FF4D6D 30%, #B66CFF 46%, #42B9FF 62%, #44E28D 78%, #FFCB05 94%);
     background-size: 240% 100%;
@@ -272,7 +276,7 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 3px rgba(255, 203, 5, 0.52));
-    animation: tcg-rgb-flow 5.8s linear infinite;
+    animation: tcg-rgb-flow var(--tcg-rgb-duration, 5.8s) linear infinite;
   }
 
   :root[data-rgb-effects="disabled"] main h1 {

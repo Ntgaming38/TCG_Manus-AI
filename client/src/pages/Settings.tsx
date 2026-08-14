@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createChyusenSourceUpdatePayload } from "@shared/chyusenSourceUpdate";
 import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
-import { readRgbEffectsEnabled, saveRgbEffectsEnabled } from "@/lib/rgbEffects";
+import { readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectSpeed } from "@/lib/rgbEffects";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
@@ -37,6 +37,7 @@ export default function Settings() {
   const [sourcesExpanded, setSourcesExpanded] = useState(true);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [rgbEffectsEnabled, setRgbEffectsEnabled] = useState(() => readRgbEffectsEnabled(typeof window === "undefined" ? undefined : window.localStorage));
+  const [rgbEffectsSpeed, setRgbEffectsSpeed] = useState<RgbEffectSpeed>(() => readRgbEffectsSpeed(typeof window === "undefined" ? undefined : window.localStorage));
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -82,13 +83,18 @@ export default function Settings() {
     setRgbEffectsEnabled(enabled);
     toast.success(enabled ? "Đã bật hiệu ứng RGB cho logo và tiêu đề." : "Đã tắt hiệu ứng RGB trên thiết bị này.");
   };
+  const updateRgbEffectsSpeed = (speed: RgbEffectSpeed) => {
+    saveRgbEffectsSpeed(speed, window.localStorage);
+    setRgbEffectsSpeed(speed);
+    toast.success(`Đã đặt tốc độ hiệu ứng RGB: ${speed === "slow" ? "Chậm" : speed === "fast" ? "Nhanh" : "Bình thường"}.`);
+  };
 
   return <div className="settings-stack mx-auto max-w-5xl">
     <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">Workspace settings</p><h1 className="mt-1 text-3xl font-black tracking-tight">Cài đặt</h1><p className="mt-1 text-sm text-muted-foreground">Quản lý nhắc hạn, nguồn Chyusen và tự động đồng bộ giá ở một nơi.</p></div>
 
     <Card>
       <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-fuchsia-400" />Hiệu ứng RGB</CardTitle><CardDescription>Bật hoặc tắt hiệu ứng màu chạy ngang cho logo TCG Manager và tiêu đề chính. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
-      <CardContent><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Dải màu RGB</p><p className="mt-1 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Đang bật cho logo và tiêu đề trang" : "Đang tắt — tiêu đề hiển thị màu mặc định"}</p></div><Switch checked={rgbEffectsEnabled} onCheckedChange={updateRgbEffects} aria-label="Bật hoặc tắt hiệu ứng RGB" /></div></CardContent>
+      <CardContent className="space-y-3"><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Dải màu RGB</p><p className="mt-1 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Đang bật cho logo và tiêu đề trang" : "Đang tắt — tiêu đề hiển thị màu mặc định"}</p></div><Switch checked={rgbEffectsEnabled} onCheckedChange={updateRgbEffects} aria-label="Bật hoặc tắt hiệu ứng RGB" /></div><div className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px] sm:items-center"><div><p className="text-sm font-semibold">Tốc độ hiệu ứng</p><p className="mt-1 text-xs text-muted-foreground">Áp dụng cho dải màu RGB của logo và tiêu đề.</p></div><Select value={rgbEffectsSpeed} onValueChange={(value) => updateRgbEffectsSpeed(value as RgbEffectSpeed)}><SelectTrigger aria-label="Tốc độ hiệu ứng RGB"><SelectValue /></SelectTrigger><SelectContent>{RGB_EFFECT_SPEEDS.map((speed) => <SelectItem key={speed} value={speed}>{speed === "slow" ? "Chậm" : speed === "fast" ? "Nhanh" : "Bình thường"}</SelectItem>)}</SelectContent></Select></div></CardContent>
     </Card>
 
     <Card>

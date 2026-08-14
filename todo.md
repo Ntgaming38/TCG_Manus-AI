@@ -584,3 +584,8 @@
 - [x] Thêm tùy chọn bật/tắt hiệu ứng RGB trong trang Cài đặt và lưu theo thiết bị
 - [x] Áp dụng hiệu ứng RGB có thể tắt cho logo TCG Manager và tiêu đề chính các trang
 - [x] Kiểm thử cài đặt, desktop/mobile và lưu checkpoint
+
+## Tốc độ hiệu ứng RGB
+- [x] Thêm lựa chọn Chậm, Bình thường và Nhanh trong Cài đặt
+- [x] Lưu tốc độ theo thiết bị và áp dụng ngay cho logo cùng tiêu đề
+- [x] Bổ sung kiểm thử, xác minh desktop/mobile và lưu checkpoint
