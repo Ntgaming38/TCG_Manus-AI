@@ -1,6 +1,6 @@
 import { eq, and, like, sql, desc, inArray, asc, isNotNull, lt, ne, or, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, marketplaceSyncConfig } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, marketplaceSyncConfig, loginEvents } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
@@ -80,7 +80,7 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-export async function updateUserProfile(userId: number, data: { nickname?: string | null; avatarUrl?: string | null }) {
+export async function updateUserProfile(userId: number, data: { nickname?: string | null; avatarUrl?: string | null; avatarBorderColor?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -92,6 +92,18 @@ export async function updateUserProfile(userId: number, data: { nickname?: strin
   const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!result[0]) throw new Error("Không tìm thấy tài khoản người dùng.");
   return result[0];
+}
+
+export async function recordLoginEvent(userId: number, loginMethod?: string | null) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(loginEvents).values({ userId, loginMethod: loginMethod || null });
+}
+
+export async function listLoginEvents(userId: number, limit = 8) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(loginEvents).where(eq(loginEvents.userId, userId)).orderBy(desc(loginEvents.createdAt)).limit(limit);
 }
 
 // ========== PRODUCTS ==========

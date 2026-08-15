@@ -11,6 +11,9 @@ describe("account settings UI", () => {
     expect(source).toContain("Tên hiển thị / Nickname");
     expect(source).toContain("auth.uploadAvatar");
     expect(source).toContain("auth.updateProfile");
+    expect(source).toContain("AVATAR_BORDER_PRESETS");
+    expect(source).toContain("Cắt và căn ảnh đại diện");
+    expect(source).toContain("Đăng nhập gần đây");
     expect(sidebar).toContain("Cài đặt tài khoản");
     expect(sidebar).toContain("user?.nickname || user?.name");
   });

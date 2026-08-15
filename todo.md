@@ -860,3 +860,15 @@
 - [x] Thêm giao diện quản lý tài khoản và đồng bộ nickname/ảnh đại diện trên thanh bên
 - [x] Hiển thị hướng dẫn bảo mật hoặc đổi mật khẩu đúng theo phương thức đăng nhập OAuth
 - [x] Kiểm thử luồng cập nhật tài khoản và lưu checkpoint
+
+## Tùy chỉnh avatar và lịch sử đăng nhập
+- [x] Thêm bộ chọn màu viền ảnh đại diện và áp dụng trên thanh bên
+- [x] Thêm cắt/chỉnh khung ảnh đại diện trước khi tải lên
+- [x] Lưu và hiển thị lịch sử các lần đăng nhập gần nhất của từng người dùng
+- [x] Kiểm thử luồng cài đặt tài khoản và lưu checkpoint
+
+## Bộ lọc Kho hàng mặc định
+- [x] Đặt bộ lọc Kho hàng là Tất cả khi mở trang lần đầu
+- [x] Chỉ áp dụng trạng thái lọc khác khi người dùng chủ động chọn
+- [x] Sắp xếp Tất cả theo Trong kho, Đang giữ, Đã bán, Hỏng/Rác
+- [x] Kiểm thử bộ lọc và lưu checkpoint

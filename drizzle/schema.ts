@@ -9,6 +9,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   nickname: varchar("nickname", { length: 60 }),
   avatarUrl: text("avatarUrl"),
+  avatarBorderColor: varchar("avatarBorderColor", { length: 24 }),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
@@ -21,6 +22,13 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+export const loginEvents = mysqlTable("login_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  loginMethod: varchar("loginMethod", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [index("login_events_user_created_idx").on(table.userId, table.createdAt)]);
 
 /**
  * Products - central table for all items (Card, Box, Pack)

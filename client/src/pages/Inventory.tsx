@@ -11,13 +11,14 @@ import { RarityBadge } from "@/components/RarityBadge";
 import { getInventoryEmptyState, INVENTORY_HIDDEN_STATUS, isInventoryHiddenFilter } from "@shared/inventoryHiddenFilter";
 import { formatYen } from "@shared/formatYen";
 import { Search, Package, Warehouse, AlertTriangle, Pencil, Trash2, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { sortInventoryByStatus } from "@shared/inventoryStatusOrder";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("in_stock");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showDamageDialog, setShowDamageDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -81,6 +82,10 @@ export default function Inventory() {
   const totalValue = products?.reduce((sum: number, p: any) => sum + (Number(p.marketPrice || p.buyPrice || 0) * (p.quantity - (p.damagedQuantity || 0))), 0) ?? 0;
   const soldProductCount = soldProducts?.length ?? 0;
   const emptyState = getInventoryEmptyState(statusFilter);
+  const displayedProducts = useMemo(() => {
+    if (!products) return [];
+    return statusFilter === "all" ? sortInventoryByStatus(products) : products;
+  }, [products, statusFilter]);
 
   const openDamageDialog = (product: any) => {
     setSelectedProduct(product);
@@ -217,7 +222,7 @@ export default function Inventory() {
       )}
 
       {/* Inventory Grid */}
-      {!products || products.length === 0 ? (
+      {displayedProducts.length === 0 ? (
         <div className="text-center py-16">
           <Warehouse className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-medium text-muted-foreground">{emptyState.title}</h3>
@@ -225,7 +230,7 @@ export default function Inventory() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product: any) => {
+          {displayedProducts.map((product: any) => {
             const goodQty = (product.quantity || 0) - (product.damagedQuantity || 0);
             const hasDamaged = (product.damagedQuantity || 0) > 0;
             return (

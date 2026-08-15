@@ -67,6 +67,7 @@ export const appRouter = router({
       .input(z.object({
         nickname: z.string().trim().max(60).optional(),
         avatarUrl: z.string().trim().max(2048).nullable().optional(),
+        avatarBorderColor: z.string().trim().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         if (input.avatarUrl && !input.avatarUrl.startsWith("/manus-storage/")) {
@@ -75,11 +76,13 @@ export const appRouter = router({
         return db.updateUserProfile(ctx.user.id, {
           nickname: input.nickname === undefined ? undefined : input.nickname || null,
           avatarUrl: input.avatarUrl,
+          avatarBorderColor: input.avatarBorderColor,
         });
       }),
     uploadAvatar: protectedProcedure
       .input(z.object({ imageDataUrl: z.string().trim().min(64).max(4_500_000) }))
       .mutation(({ ctx, input }) => uploadUserAvatar(ctx.user.id, input.imageDataUrl)),
+    loginHistory: protectedProcedure.query(({ ctx }) => db.listLoginEvents(ctx.user.id)),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

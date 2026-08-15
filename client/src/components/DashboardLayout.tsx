@@ -273,7 +273,7 @@ function DashboardLayoutContent({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex min-h-16 w-full items-center gap-3.5 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-sidebar-accent focus:outline-none group-data-[collapsible=icon]:justify-center">
-                  <Avatar className="h-11 w-11 shrink-0 border border-border">
+                  <Avatar className="h-11 w-11 shrink-0 border-2" style={{ borderColor: user?.avatarBorderColor || undefined }}>
                     <AvatarImage src={user?.avatarUrl || undefined} alt={user?.nickname || user?.name || "Người dùng"} className="object-cover" />
                     <AvatarFallback className="text-xs font-medium bg-primary/20 text-primary">
                       {(user?.nickname || user?.name)?.charAt(0).toUpperCase() || '?'}
