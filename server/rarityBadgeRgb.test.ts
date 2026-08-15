@@ -17,4 +17,11 @@ describe("RGB rarity badges", () => {
     expect(styles).toContain("var(--tcg-rgb-gradient");
     expect(styles).toContain("prefers-reduced-motion: reduce");
   });
+
+  it("có badge Promo cyan và Khác nền trắng, đều tái sử dụng chữ RGB", () => {
+    const source = readFileSync(join(root, "client/src/components/RarityBadge.tsx"), "utf8");
+    expect(source).toContain('Promo: "border-cyan-300');
+    expect(source).toContain('Khác: "border-slate-300 bg-gradient-to-r from-white');
+    expect(source).toContain('className="rarity-rgb-text"');
+  });
 });

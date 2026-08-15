@@ -1,60 +1,31 @@
-export const POKEMON_CARD_RARITY_ORDER = [
-  "MUR",
-  "SAR",
-  "AR",
-  "RR",
-  "R",
-  "SR",
-  "Promo",
-  "Rare",
-  "Uncommon",
-  "Common",
-] as const;
-
-export const ONE_PIECE_CARD_RARITY_ORDER = [
-  "One Piece",
-  "Manga",
-  "SEC",
-  "SP",
-  "L",
-  "SR",
-  "R",
-  "UC",
-  "C",
-] as const;
-
 /** Thứ tự ưu tiên dùng cho Card từ mọi series: độ hiếm cao nhất đứng trước. */
 export const CARD_RARITY_ORDER = [
   "MUR",
-  "One Piece",
-  "Manga",
   "SAR",
-  "SEC",
-  "SP",
-  "L",
+  "SR",
   "AR",
   "RR",
   "R",
-  "SR",
+  "ONEPICE",
   "Promo",
-  "Rare",
-  "Uncommon",
-  "Common",
-  "UC",
-  "C",
+  "Khác",
 ] as const;
+
+export const POKEMON_CARD_RARITY_ORDER = CARD_RARITY_ORDER;
+export const ONE_PIECE_CARD_RARITY_ORDER = CARD_RARITY_ORDER;
 
 export const CARD_RARITY_OPTIONS = CARD_RARITY_ORDER.map((value) => ({ value, label: value }));
 
 export function getCardRarityOptionsForSeries(series?: string | null) {
-  const values = series === "One Piece" ? ONE_PIECE_CARD_RARITY_ORDER : POKEMON_CARD_RARITY_ORDER;
-  return values.map((value) => ({ value, label: value }));
+  void series;
+  return CARD_RARITY_OPTIONS;
 }
 
-/** Giữ các Card UR cũ hiển thị theo nhãn MUR mới mà không buộc thay đổi dữ liệu lịch sử. */
+/** Chuẩn hóa nhãn lịch sử về taxonomy gọn dùng trong toàn bộ ứng dụng. */
 export function normalizeCardRarity(rarity?: string | null): string {
   if (rarity === "UR") return "MUR";
-  if (rarity === "Onepice") return "One Piece";
+  if (["Onepice", "One Piece", "Manga", "SEC", "SP", "L", "UC", "C"].includes(rarity || "")) return "ONEPICE";
+  if (["Rare", "Uncommon", "Common"].includes(rarity || "")) return "Khác";
   return rarity || "";
 }
 

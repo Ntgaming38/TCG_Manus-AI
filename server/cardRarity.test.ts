@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CARD_RARITY_ORDER,
   CARD_RARITY_OPTIONS,
   getCardRarityOptionsForSeries,
   getCardRarityPriority,
@@ -8,49 +9,49 @@ import {
 } from "../shared/cardRarity";
 
 describe("CARD_RARITY_OPTIONS", () => {
-  it("có MUR và không còn UR trong danh sách lựa chọn mới", () => {
+  it("chỉ có các lựa chọn độ hiếm chuẩn theo đúng thứ tự", () => {
     const values = CARD_RARITY_OPTIONS.map((option) => option.value);
 
-    expect(values).toContain("MUR");
-    expect(values).toContain("One Piece");
-    expect(values).toContain("RR");
-    expect(values).toContain("R");
-    expect(values).not.toContain("UR");
+    expect(values).toEqual(["MUR", "SAR", "SR", "AR", "RR", "R", "ONEPICE", "Promo", "Khác"]);
+    expect(CARD_RARITY_ORDER).toEqual(values);
   });
 
-  it("trả danh sách rarity riêng cho Pokémon và One Piece", () => {
+  it("trả cùng taxonomy gọn cho Pokémon và One Piece", () => {
     const pokemonValues = getCardRarityOptionsForSeries("Pokemon").map((option) => option.value);
     const onePieceValues = getCardRarityOptionsForSeries("One Piece").map((option) => option.value);
 
-    expect(pokemonValues).toEqual(expect.arrayContaining(["MUR", "SAR", "AR", "RR", "R"]));
-    expect(pokemonValues).not.toContain("SEC");
-    expect(onePieceValues).toEqual(expect.arrayContaining(["One Piece", "Manga", "SEC", "SP", "L", "SR", "R", "UC", "C"]));
-    expect(onePieceValues).not.toContain("MUR");
-    expect(onePieceValues).not.toContain("AR");
-    expect(onePieceValues).not.toContain("RR");
+    expect(pokemonValues).toEqual(CARD_RARITY_ORDER);
+    expect(onePieceValues).toEqual(CARD_RARITY_ORDER);
   });
 
-  it("hiển thị Card UR cũ bằng nhãn MUR mới", () => {
+  it("chuẩn hóa nhãn legacy theo taxonomy mới", () => {
     expect(normalizeCardRarity("UR")).toBe("MUR");
-    expect(normalizeCardRarity("Onepice")).toBe("One Piece");
+    expect(normalizeCardRarity("Onepice")).toBe("ONEPICE");
+    expect(normalizeCardRarity("Manga")).toBe("ONEPICE");
+    expect(normalizeCardRarity("Common")).toBe("Khác");
     expect(normalizeCardRarity("SAR")).toBe("SAR");
     expect(normalizeCardRarity(null)).toBe("");
   });
 
-  it("xếp MUR, SAR, AR, RR rồi R theo đúng độ hiếm", () => {
+  it("xếp MUR, SAR, SR, AR, RR, R, ONEPICE, Promo rồi Khác", () => {
     expect(getCardRarityPriority("MUR")).toBeLessThan(getCardRarityPriority("SAR"));
-    expect(getCardRarityPriority("MUR")).toBeLessThan(getCardRarityPriority("One Piece"));
-    expect(getCardRarityPriority("One Piece")).toBeLessThan(getCardRarityPriority("SAR"));
+    expect(getCardRarityPriority("SAR")).toBeLessThan(getCardRarityPriority("SR"));
+    expect(getCardRarityPriority("SR")).toBeLessThan(getCardRarityPriority("AR"));
     expect(getCardRarityPriority("SAR")).toBeLessThan(getCardRarityPriority("AR"));
     expect(getCardRarityPriority("AR")).toBeLessThan(getCardRarityPriority("RR"));
     expect(getCardRarityPriority("RR")).toBeLessThan(getCardRarityPriority("R"));
+    expect(getCardRarityPriority("R")).toBeLessThan(getCardRarityPriority("ONEPICE"));
+    expect(getCardRarityPriority("ONEPICE")).toBeLessThan(getCardRarityPriority("Promo"));
+    expect(getCardRarityPriority("Promo")).toBeLessThan(getCardRarityPriority("Khác"));
   });
 
-  it("tổng hợp số lượng Card theo rarity với UR cũ được tính là MUR", () => {
+  it("tổng hợp số lượng Card theo thứ tự chuẩn mới", () => {
     const result = summarizeCardRarityQuantities([
       { rarity: "R", quantity: 2 },
       { rarity: "UR", quantity: 1 },
       { rarity: "One Piece", quantity: 2 },
+      { rarity: "Promo", quantity: 1 },
+      { rarity: "Common", quantity: 1 },
       { rarity: "RR", quantity: 3 },
       { rarity: "SAR", quantity: 4 },
       { rarity: "", quantity: 1 },
@@ -58,10 +59,12 @@ describe("CARD_RARITY_OPTIONS", () => {
 
     expect(result).toEqual([
       { rarity: "MUR", quantity: 1 },
-      { rarity: "One Piece", quantity: 2 },
       { rarity: "SAR", quantity: 4 },
       { rarity: "RR", quantity: 3 },
       { rarity: "R", quantity: 2 },
+      { rarity: "ONEPICE", quantity: 2 },
+      { rarity: "Promo", quantity: 1 },
+      { rarity: "Khác", quantity: 1 },
       { rarity: "Chưa phân loại", quantity: 1 },
     ]);
   });

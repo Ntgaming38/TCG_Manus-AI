@@ -439,7 +439,7 @@ export default function Products() {
               <SelectValue placeholder="Sắp xếp Card" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="rarity">Độ hiếm: MUR → R</SelectItem>
+              <SelectItem value="rarity">Độ hiếm: MUR → Khác</SelectItem>
               <SelectItem value="roi">ROI: cao đến thấp</SelectItem>
               <SelectItem value="marketPrice">Giá thị trường: cao đến thấp</SelectItem>
             </SelectContent>

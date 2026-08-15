@@ -821,3 +821,9 @@
 - [x] Hiển thị rõ loại đã chọn tự động và cho phép xác nhận trước khi lưu
 - [x] Giữ biểu mẫu Mua hàng cho người dùng tự chọn loại
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Chuẩn hóa độ hiếm Card
+- [x] Chuẩn hóa danh sách và thứ tự MUR, SAR, SR, AR, RR, R, ONEPICE, Promo, Khác
+- [x] Bỏ các lựa chọn độ hiếm không còn sử dụng khỏi biểu mẫu và sắp xếp
+- [x] Thêm badge Promo nền cyan chữ trắng RGB và Khác nền trắng chữ RGB
+- [x] Kiểm thử sắp xếp và giao diện rồi lưu checkpoint
