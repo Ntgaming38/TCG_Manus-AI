@@ -793,3 +793,10 @@
 - [x] Chuyển toàn bộ ký hiệu ¥ ra sau số tiền, có khoảng cách rõ ràng
 - [x] Giữ dấu âm đứng trước số tiền, màu đỏ và animation cho số âm
 - [x] Bổ sung kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Cài đặt tiền tệ và bộ lọc bán hàng
+- [x] Thêm tùy chọn vị trí ký hiệu tiền tệ trong Cài đặt
+- [x] Áp dụng lựa chọn định dạng tiền tệ thống nhất trên toàn ứng dụng
+- [x] Thêm bộ lọc khoảng ngày bán nhỏ gọn trên trang Bán hàng
+- [x] Hiển thị tổng hợp số giao dịch, số lượng, doanh thu và chi tiết từng sản phẩm trong khoảng lọc
+- [x] Bổ sung kiểm thử giao diện desktop/mobile và lưu checkpoint

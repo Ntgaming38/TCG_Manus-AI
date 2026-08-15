@@ -562,6 +562,7 @@
   .settings-stack > :nth-child(2) { order: 2; }
   .settings-stack > :nth-child(3) { order: 3; }
   .settings-stack > :nth-child(4) { order: 1; }
+  .settings-stack > .settings-currency-card { order: 0; }
   .settings-login-background-card { order: 2.5; }
 
   .settings-collapsible-panel [data-settings-header] {

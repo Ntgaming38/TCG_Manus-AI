@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, DollarSign, Calendar, CalendarRange, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
+import { filterSalesByDateRange, summarizeSales } from "@shared/salesDateFilter";
 
 const PLATFORMS = [
   { value: "user", label: "Người Dùng" },
@@ -30,6 +31,8 @@ type SortDirection = "asc" | "desc";
 
 export default function Sales() {
   const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -122,10 +125,12 @@ export default function Sales() {
   const netRevenue = totalRevenue - totalCost;
   const profit = selectedProduct ? netRevenue - (Number(selectedProduct.buyPrice) * newSale.quantity) : 0;
 
-  // Sort sales
+  const dateFilteredSales = useMemo(() => filterSalesByDateRange(sales || [], fromDate || undefined, toDate || undefined), [sales, fromDate, toDate]);
+
+  // Sort sales after applying the compact date filter.
   const sortedSales = useMemo(() => {
-    if (!sales || sales.length === 0) return [];
-    const sorted = [...sales].sort((a: any, b: any) => {
+    if (dateFilteredSales.length === 0) return [];
+    const sorted = [...dateFilteredSales].sort((a: any, b: any) => {
       let cmp = 0;
       switch (sortField) {
         case "date":
@@ -141,14 +146,12 @@ export default function Sales() {
       return sortDirection === "asc" ? cmp : -cmp;
     });
     return sorted;
-  }, [sales, sortField, sortDirection]);
+  }, [dateFilteredSales, sortField, sortDirection]);
 
-  // Calculate totals for current list
-  const totals = useMemo(() => {
-    const totalRevenue = sortedSales.reduce((sum, s: any) => sum + Number(s.totalRevenue || 0), 0);
-    const totalProfit = sortedSales.reduce((sum, s: any) => sum + Number(s.profit || 0), 0);
-    return { totalRevenue, totalProfit, count: sortedSales.length };
-  }, [sortedSales]);
+  const totals = useMemo(() => summarizeSales(sortedSales), [sortedSales]);
+  const hasDateFilter = Boolean(fromDate || toDate);
+  const resetDateFilter = () => { setFromDate(""); setToDate(""); };
+  const formatFilterDate = (value: string) => value ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN") : "…";
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -292,8 +295,15 @@ export default function Sales() {
         </Dialog>
       </div>
 
-      {/* Search + Sort */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+      {/* Compact filters */}
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/60 p-3 shadow-sm">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[138px] flex-1 sm:max-w-[180px]"><Label htmlFor="sales-from-date" className="mb-1 block text-[11px] text-muted-foreground">Từ ngày</Label><Input id="sales-from-date" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className="h-9 text-xs" /></div>
+          <div className="min-w-[138px] flex-1 sm:max-w-[180px]"><Label htmlFor="sales-to-date" className="mb-1 block text-[11px] text-muted-foreground">Đến ngày</Label><Input id="sales-to-date" type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} className="h-9 text-xs" /></div>
+          {hasDateFilter && <Button type="button" variant="ghost" size="sm" className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={resetDateFilter}><X className="mr-1 h-3.5 w-3.5" />Xóa ngày</Button>}
+          <div className="ml-auto flex items-center gap-1.5 rounded-md bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground"><CalendarRange className="h-3.5 w-3.5 text-primary" />{hasDateFilter ? `${formatFilterDate(fromDate)} — ${formatFilterDate(toDate)}` : "Tất cả thời gian"}</div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Tìm kiếm giao dịch bán..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
@@ -325,6 +335,7 @@ export default function Sales() {
             Tên <SortIcon field="name" />
           </Button>
         </div>
+        </div>
       </div>
 
       {/* Sales List */}
@@ -352,12 +363,13 @@ export default function Sales() {
                         <span>•</span>
                         {PLATFORMS.find(p => p.value === sale.platform)?.label || sale.platform}
                       </p>
+                      <p className="mt-1 text-xs text-muted-foreground">Đã bán {sale.quantity} cái · {formatYen(sale.quantity > 0 ? Math.round(Number(sale.totalRevenue) / sale.quantity) : 0)} / cái</p>
                     </div>
                  </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-bold text-sm">{formatYen(Number(sale.totalRevenue))}</p>
-                      <p className={`text-xs font-medium ${Number(sale.profit) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <p className="whitespace-nowrap font-bold text-sm">{formatYen(Number(sale.totalRevenue))}</p>
+                      <p className={`whitespace-nowrap text-xs font-medium ${Number(sale.profit) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {formatSignedYen(Number(sale.profit))}
                       </p>
                     </div>
@@ -378,7 +390,7 @@ export default function Sales() {
           {/* Total Summary */}
           <Card className="bg-card border-primary/30 border-2">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <DollarSign className="h-5 w-5 text-primary" />
@@ -386,18 +398,17 @@ export default function Sales() {
                   <div>
                     <p className="font-semibold text-sm text-primary">Tổng kết</p>
                     <p className="text-xs text-muted-foreground">
-                      {totals.count} giao dịch
+                      {totals.transactionCount} giao dịch trong khoảng đang xem
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-lg text-primary">{formatYen(totals.totalRevenue)}</p>
-                  <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
-                  <p className={`text-sm font-bold mt-0.5 ${totals.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatSignedYen(totals.totalProfit)} lợi nhuận
-                  </p>
+                <div className="grid grid-cols-2 gap-x-5 gap-y-2 text-right sm:grid-cols-3">
+                  <div><p className="font-bold text-base text-primary">{totals.totalQuantity}</p><p className="text-[11px] text-muted-foreground">Số lượng đã bán</p></div>
+                  <div><p className="font-bold text-base text-primary">{formatYen(totals.totalRevenue)}</p><p className="text-[11px] text-muted-foreground">Tổng doanh thu</p></div>
+                  <div><p className={`font-bold text-sm ${totals.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatSignedYen(totals.totalProfit)}</p><p className="text-[11px] text-muted-foreground">Lợi nhuận</p></div>
                 </div>
               </div>
+              <div className="mt-4 border-t border-border pt-3"><p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Chi tiết sản phẩm đã bán</p><div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">{totals.products.map((product) => <div key={product.key} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-2 text-xs"><div className="min-w-0"><p className="truncate font-semibold text-foreground">{product.productName}</p><p className="mt-0.5 text-muted-foreground">{product.transactionCount} giao dịch · {product.quantity} cái</p></div><div className="shrink-0 text-right"><p className="font-semibold text-foreground">{formatYen(product.totalRevenue)}</p><p className="mt-0.5 text-muted-foreground">{formatYen(product.averageUnitPrice)} / cái</p></div></div>)}</div></div>
             </CardContent>
           </Card>
        </div>

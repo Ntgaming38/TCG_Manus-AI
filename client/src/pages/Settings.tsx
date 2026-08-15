@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2 } from "lucide-react";
+import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, DollarSign, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,14 @@ import { marketplaceAutoSyncStatusLabel } from "@shared/marketplaceAutoSync";
 import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFFECTS_SPEED, readRgbEffectsColors, readRgbEffectsEnabled, readRgbEffectsSpeed, RGB_EFFECT_SPEEDS, saveRgbEffectsColors, saveRgbEffectsEnabled, saveRgbEffectsSpeed, type RgbEffectColors, type RgbEffectSpeed } from "@/lib/rgbEffects";
 import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyEligibleUrls, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyEligibleUrls, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
+import { formatYen, readCurrencySymbolPosition, saveCurrencySymbolPosition, type CurrencySymbolPosition } from "@shared/formatYen";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
 const TRASH_RETENTION_DAYS = [7, 14, 30, 60, 90, 180] as const;
 type SourceDraft = { label: string; sourceUrl: string; checkIntervalMinutes: string; isActive: boolean };
 type SourceFilter = "all" | "errors";
-type SettingsSection = "rgb" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
+type SettingsSection = "rgb" | "currency" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
 
 function statusStyle(status?: string | null) {
   if (status === "unavailable") return "border-red-200 bg-red-50 text-red-700";
@@ -42,13 +43,14 @@ export default function Settings() {
   const [rgbEffectsEnabled, setRgbEffectsEnabled] = useState(() => readRgbEffectsEnabled(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsSpeed, setRgbEffectsSpeed] = useState<RgbEffectSpeed>(() => readRgbEffectsSpeed(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsColors, setRgbEffectsColors] = useState<RgbEffectColors>(() => readRgbEffectsColors(typeof window === "undefined" ? undefined : window.localStorage));
+  const [currencySymbolPosition, setCurrencySymbolPosition] = useState<CurrencySymbolPosition>(() => readCurrencySymbolPosition(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundUrl, setLoginBackgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundHistory, setLoginBackgroundHistory] = useState<LoginBackgroundHistoryItem[]>(() => readLoginBackgroundHistory(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundDailyRandom, setLoginBackgroundDailyRandom] = useState(() => readLoginBackgroundDailyRandom(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundDailyEligibleUrls, setLoginBackgroundDailyEligibleUrls] = useState<string[]>(() => { const storage = typeof window === "undefined" ? undefined : window.localStorage; const history = readLoginBackgroundHistory(storage); return readLoginBackgroundDailyEligibleUrls(history, storage); });
   const [loginBackgroundDraft, setLoginBackgroundDraft] = useState<{ source: string; edit: LoginBackgroundEdit } | null>(null);
   const [pendingBackgroundRemoval, setPendingBackgroundRemoval] = useState<string | null>(null);
-  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
+  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -125,6 +127,11 @@ export default function Settings() {
     setRgbEffectsColors(DEFAULT_RGB_EFFECT_COLORS);
     toast.success("Đã khôi phục hiệu ứng RGB mặc định.");
   };
+  const updateCurrencySymbolPosition = (position: CurrencySymbolPosition) => {
+    saveCurrencySymbolPosition(position, window.localStorage);
+    setCurrencySymbolPosition(position);
+    toast.success(`Đã đặt ký hiệu ¥ ${position === "suffix" ? "sau" : "trước"} số tiền trên thiết bị này.`);
+  };
   const uploadLoginBackgroundFile = (file?: File) => {
     if (!file) return;
     if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error("Hãy chọn ảnh PNG, JPEG hoặc WEBP."); return; }
@@ -184,6 +191,11 @@ export default function Settings() {
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.rgb}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("rgb", event)}><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-fuchsia-400" />Hiệu ứng RGB</CardTitle><CardDescription>Bật hoặc tắt hiệu ứng màu chạy ngang cho logo TCG Manager và tiêu đề chính. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
       <CardContent className="space-y-3"><div className="flex items-center justify-between gap-4 rounded-lg border p-3"><div><p className="text-sm font-semibold">Dải màu RGB</p><p className="mt-1 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Đang bật cho logo và tiêu đề trang" : "Đang tắt — tiêu đề hiển thị màu mặc định"}</p></div><Switch checked={rgbEffectsEnabled} onCheckedChange={updateRgbEffects} aria-label="Bật hoặc tắt hiệu ứng RGB" /></div><div className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px] sm:items-center"><div><p className="text-sm font-semibold">Tốc độ hiệu ứng</p><p className="mt-1 text-xs text-muted-foreground">Áp dụng cho dải màu RGB của logo và tiêu đề.</p></div><Select value={rgbEffectsSpeed} onValueChange={(value) => updateRgbEffectsSpeed(value as RgbEffectSpeed)}><SelectTrigger aria-label="Tốc độ hiệu ứng RGB"><SelectValue /></SelectTrigger><SelectContent>{RGB_EFFECT_SPEEDS.map((speed) => <SelectItem key={speed} value={speed}>{speed === "slow" ? "Chậm" : speed === "fast" ? "Nhanh" : "Bình thường"}</SelectItem>)}</SelectContent></Select></div><div className="rounded-lg border p-3"><p className="text-sm font-semibold">Màu gradient</p><p className="mt-1 text-xs text-muted-foreground">Chọn bốn màu để tạo dải gradient chạy theo ý thích.</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">{rgbEffectsColors.map((color, index) => <label key={`${color}-${index}`} className="flex items-center gap-2 rounded-md border bg-background/40 px-2 py-1.5 text-xs"><input type="color" value={color} onChange={(event) => updateRgbEffectsColor(index, event.target.value.toUpperCase())} className="h-7 w-7 cursor-pointer rounded border-0 bg-transparent p-0" aria-label={`Chọn màu gradient ${index + 1}`} /><span className="font-mono text-muted-foreground">{color}</span></label>)}</div></div><div className={`rgb-effects-preview ${rgbEffectsEnabled ? "" : "is-disabled"}`} data-rgb-speed={rgbEffectsSpeed}><div className="flex items-center justify-between gap-3"><span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước hiệu ứng</span><span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{rgbEffectsSpeed === "slow" ? "Chậm" : rgbEffectsSpeed === "fast" ? "Nhanh" : "Bình thường"}</span></div><p className="rgb-effects-preview-logo mt-3">TCG Manager</p><p className="rgb-effects-preview-title mt-1">Tiêu đề trang của bạn</p><p className="mt-2 text-xs text-muted-foreground">{rgbEffectsEnabled ? "Bản xem trước thay đổi ngay theo tốc độ và màu bạn chọn." : "Bật hiệu ứng RGB để xem chuyển động màu."}</p></div><div className="flex justify-end"><Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={resetRgbEffects}><TimerReset className="h-3.5 w-3.5" />Đặt lại mặc định</Button></div></CardContent>
+    </Card>
+
+    <Card className="settings-collapsible-panel settings-currency-card" data-collapsed={collapsedSettingsSections.currency}>
+      <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("currency", event)}><CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-emerald-400" />Định dạng tiền tệ</CardTitle><CardDescription>Chọn vị trí ký hiệu ¥ cho số tiền trên toàn ứng dụng. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
+      <CardContent className="space-y-3"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_190px] sm:items-center"><div><p className="text-sm font-semibold">Vị trí ký hiệu ¥</p><p className="mt-1 text-xs text-muted-foreground">Số âm luôn có dấu trừ ngay trước số tiền; phần Lợi nhuận âm vẫn dùng màu đỏ và animation.</p></div><Select value={currencySymbolPosition} onValueChange={(value) => updateCurrencySymbolPosition(value as CurrencySymbolPosition)}><SelectTrigger aria-label="Vị trí ký hiệu tiền tệ"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="suffix">Sau số tiền — 1,000 ¥</SelectItem><SelectItem value="prefix">Trước số tiền — ¥ 1,000</SelectItem></SelectContent></Select></div><div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước</p><div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1"><p className="text-base font-bold text-foreground">{formatYen(12800, "ja-JP", currencySymbolPosition)}</p><p className="text-base font-bold text-red-400">{formatYen(-12800, "ja-JP", currencySymbolPosition)}</p></div></div></CardContent>
     </Card>
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.chyusen}>
