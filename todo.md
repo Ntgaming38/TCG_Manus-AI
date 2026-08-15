@@ -872,3 +872,8 @@
 - [x] Chỉ áp dụng trạng thái lọc khác khi người dùng chủ động chọn
 - [x] Sắp xếp Tất cả theo Trong kho, Đang giữ, Đã bán, Hỏng/Rác
 - [x] Kiểm thử bộ lọc và lưu checkpoint
+
+## Nút Đã xem Chyusen
+- [x] Đổi nút Đã xem sang nền đỏ dễ thấy trên nền tối
+- [x] Áp dụng hiệu ứng RGB cho chữ nút Đã xem
+- [x] Kiểm thử giao diện thông báo và lưu checkpoint
