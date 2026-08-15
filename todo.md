@@ -888,3 +888,9 @@
 - [x] Thêm tab Đã xem để xem lại thông báo Chyusen đã đọc
 - [x] Giữ bộ lọc Hạn đăng ký/Kết quả cho lịch sử đã xem
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Sao lưu và Xuất dữ liệu
+- [x] Tạo dữ liệu xuất riêng theo Kho hàng, Mua hàng, Bán hàng và Chyusen
+- [x] Tạo sao lưu toàn bộ dữ liệu cá nhân ở định dạng JSON
+- [x] Thêm khu vực Sao lưu & Xuất dữ liệu trong Cài đặt
+- [x] Kiểm thử tệp xuất và giao diện rồi lưu checkpoint

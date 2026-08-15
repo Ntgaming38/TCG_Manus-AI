@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, DollarSign, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2, Volume2, VolumeX } from "lucide-react";
+import { Archive, BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, DollarSign, Download, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,14 @@ import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFF
 import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyEligibleUrls, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyEligibleUrls, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 import { formatYen, readCurrencySymbolPosition, saveCurrencySymbolPosition, type CurrencySymbolPosition } from "@shared/formatYen";
+import { getDataBackupFileName, rowsToCsv, type DataBackupScope } from "@shared/dataBackupExport";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
 const TRASH_RETENTION_DAYS = [7, 14, 30, 60, 90, 180] as const;
 type SourceDraft = { label: string; sourceUrl: string; checkIntervalMinutes: string; isActive: boolean };
 type SourceFilter = "all" | "errors";
-type SettingsSection = "rgb" | "currency" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
+type SettingsSection = "rgb" | "currency" | "backup" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
 
 function statusStyle(status?: string | null) {
   if (status === "unavailable") return "border-red-200 bg-red-50 text-red-700";
@@ -50,7 +51,7 @@ export default function Settings() {
   const [loginBackgroundDailyEligibleUrls, setLoginBackgroundDailyEligibleUrls] = useState<string[]>(() => { const storage = typeof window === "undefined" ? undefined : window.localStorage; const history = readLoginBackgroundHistory(storage); return readLoginBackgroundDailyEligibleUrls(history, storage); });
   const [loginBackgroundDraft, setLoginBackgroundDraft] = useState<{ source: string; edit: LoginBackgroundEdit } | null>(null);
   const [pendingBackgroundRemoval, setPendingBackgroundRemoval] = useState<string | null>(null);
-  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
+  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, backup: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -90,6 +91,7 @@ export default function Settings() {
     },
     onError: (error) => toast.error(error.message || "Không thể tải ảnh nền lên."),
   });
+  const exportData = trpc.backup.exportData.useMutation({ onError: (error) => toast.error(error.message || "Không thể tạo tệp xuất dữ liệu.") });
 
   const deadlineHours = notificationSettings?.deadlineHours || [168, 72, 24, 12, 3, 1];
   const failedSources = sources.filter((source: any) => source.latestStatus === "unavailable");
@@ -162,6 +164,28 @@ export default function Settings() {
     setLoginBackgroundDailyRandom(enabled);
     toast.success(enabled ? "Đã bật đổi nền ngẫu nhiên mỗi ngày." : "Đã tắt đổi nền ngẫu nhiên mỗi ngày.");
   };
+  const downloadTextFile = (filename: string, contents: string, type: string) => {
+    const blob = new Blob([contents], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  const exportCsv = async (scope: Exclude<DataBackupScope, "all">) => {
+    const payload = await exportData.mutateAsync({ scope });
+    const rows = ((scope === "chyusen" ? payload.chyusen?.entries : payload[scope]) || []) as unknown[];
+    const csv = rowsToCsv(rows);
+    if (!csv) { toast.error("Chưa có dữ liệu để xuất ở mục này."); return; }
+    downloadTextFile(getDataBackupFileName(scope, "csv"), `\uFEFF${csv}`, "text/csv;charset=utf-8");
+    toast.success(`Đã tải tệp ${scope === "inventory" ? "Kho hàng" : scope === "purchases" ? "Mua hàng" : scope === "sales" ? "Bán hàng" : "Chyusen"}.`);
+  };
+  const exportFullBackup = async () => {
+    const payload = await exportData.mutateAsync({ scope: "all" });
+    downloadTextFile("tcg-manager-full-backup.json", JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+    toast.success("Đã tải bản sao lưu toàn bộ dữ liệu.");
+  };
   const toggleLoginBackgroundDailyEligible = (url: string) => {
     setLoginBackgroundDailyEligibleUrls((current) => {
       const next = current.includes(url) ? current.filter((currentUrl) => currentUrl !== url) : [...current, url];
@@ -196,6 +220,11 @@ export default function Settings() {
     <Card className="settings-collapsible-panel settings-currency-card" data-collapsed={collapsedSettingsSections.currency}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("currency", event)}><CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-emerald-400" />Định dạng tiền tệ</CardTitle><CardDescription>Chọn vị trí ký hiệu ¥ cho số tiền trên toàn ứng dụng. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
       <CardContent className="space-y-3"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_190px] sm:items-center"><div><p className="text-sm font-semibold">Vị trí ký hiệu ¥</p><p className="mt-1 text-xs text-muted-foreground">Số âm luôn có dấu trừ ngay trước số tiền; phần Lợi nhuận âm vẫn dùng màu đỏ và animation.</p></div><Select value={currencySymbolPosition} onValueChange={(value) => updateCurrencySymbolPosition(value as CurrencySymbolPosition)}><SelectTrigger aria-label="Vị trí ký hiệu tiền tệ"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="suffix">Sau số tiền — 1,000 ¥</SelectItem><SelectItem value="prefix">Trước số tiền — ¥ 1,000</SelectItem></SelectContent></Select></div><div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước</p><div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1"><p className="text-base font-bold text-foreground">{formatYen(12800, "ja-JP", currencySymbolPosition)}</p><p className="text-base font-bold text-red-400">{formatYen(-12800, "ja-JP", currencySymbolPosition)}</p></div></div></CardContent>
+    </Card>
+
+    <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backup}>
+      <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backup", event)}><CardTitle className="flex items-center gap-2"><Archive className="h-5 w-5 text-sky-400" />Sao lưu & Xuất dữ liệu</CardTitle><CardDescription>Tải dữ liệu riêng của tài khoản bạn về thiết bị. CSV phù hợp để mở bằng bảng tính; JSON là bản sao lưu đầy đủ.</CardDescription></CardHeader>
+      <CardContent className="space-y-3"><div className="grid gap-2 sm:grid-cols-2">{(["inventory", "purchases", "sales", "chyusen"] as const).map((scope) => <div key={scope} className="flex items-center justify-between gap-3 rounded-lg border p-3"><div><p className="text-sm font-semibold">{scope === "inventory" ? "Kho hàng" : scope === "purchases" ? "Mua hàng" : scope === "sales" ? "Bán hàng" : "Chyusen"}</p><p className="mt-0.5 text-xs text-muted-foreground">Tải bảng dữ liệu CSV</p></div><Button variant="outline" size="sm" disabled={exportData.isPending} onClick={() => void exportCsv(scope)}><Download className="mr-1.5 h-3.5 w-3.5" />CSV</Button></div>)}</div><div className="flex flex-col gap-3 rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Sao lưu toàn bộ</p><p className="mt-1 text-xs text-muted-foreground">Bao gồm Kho hàng, Mua, Bán, Chyusen, nguồn theo dõi và cài đặt nhắc hạn. Tệp này không chứa mật khẩu.</p></div><Button className="bg-red-600 hover:bg-red-700" disabled={exportData.isPending} onClick={() => void exportFullBackup()}><Archive className="mr-1.5 h-4 w-4" /><span className="rgb-action-label">{exportData.isPending ? "Đang tạo tệp" : "Tải JSON"}</span></Button></div></CardContent>
     </Card>
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.chyusen}>

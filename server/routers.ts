@@ -20,6 +20,7 @@ import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
 import { uploadLoginBackground } from "./loginBackground";
 import { normalizeCardRank } from "@shared/cardRank";
 import { uploadUserAvatar } from "./userProfile";
+import { createDataBackupPayload, DATA_BACKUP_SCOPES } from "@shared/dataBackupExport";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -88,6 +89,34 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+  }),
+
+  backup: router({
+    exportData: protectedProcedure
+      .input(z.object({ scope: z.enum(DATA_BACKUP_SCOPES) }))
+      .mutation(async ({ ctx, input }) => {
+        const [inventory, purchaseRows, saleRows, chyusenEntries, chyusenSources, chyusenNotifications, chyusenSettings] = await Promise.all([
+          db.listProducts(ctx.user.id, { status: "all" }),
+          db.listPurchases(ctx.user.id),
+          db.listSales(ctx.user.id),
+          chyusenDb.listChyusenEntries(ctx.user.id),
+          chyusenDb.listChyusenSources(ctx.user.id),
+          chyusenDb.listChyusenNotifications(ctx.user.id),
+          chyusenDb.getChyusenNotificationSettings(ctx.user.id),
+        ]);
+
+        return createDataBackupPayload(input.scope, {
+          inventory,
+          purchases: purchaseRows,
+          sales: saleRows,
+          chyusen: {
+            entries: chyusenEntries,
+            sources: chyusenSources,
+            notifications: chyusenNotifications,
+            notificationSettings: chyusenSettings,
+          },
+        });
+      }),
   }),
 
   ai: router({
