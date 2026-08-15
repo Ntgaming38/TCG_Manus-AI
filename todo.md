@@ -833,3 +833,14 @@
 - [x] Chuẩn hóa dữ liệu rank hiện có về Rank A–D
 - [x] Đồng bộ giá SNKRDUNK thủ công và tự động theo rank của từng Card
 - [x] Kiểm thử chọn đúng giá Rank A–D và lưu checkpoint
+
+## Badge màu Rank Card
+- [x] Tạo Rank A nền vàng, Rank B nền đỏ, Rank C nền xanh và Rank D nền đen
+- [x] Áp dụng chữ RGB cho toàn bộ badge Rank Card
+- [x] Hiển thị badge Rank Card trên Card và Marketplace
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Tinh giản loại trong biểu mẫu Thêm mới
+- [x] Bỏ nhãn Tự chọn theo trang nhưng giữ bộ chọn loại Card/Box/Pack
+- [x] Giữ tự chọn sẵn loại theo trang Card, Box hoặc Pack
+- [x] Kiểm thử biểu mẫu và lưu checkpoint

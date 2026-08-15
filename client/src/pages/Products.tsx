@@ -12,6 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { getCardRarityOptionsForSeries, getCardRarityPriority, normalizeCardRarity } from "@shared/cardRarity";
 import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCardSeries";
 import { RarityBadge } from "@/components/RarityBadge";
+import { RankBadge } from "@/components/RankBadge";
 import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { getAutoCreateProductType } from "@shared/productCreateType";
@@ -215,21 +216,14 @@ export default function Products() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Loại</Label>
-                  {autoCreateType ? (
-                    <div className="flex h-10 items-center justify-between rounded-md border border-primary/35 bg-primary/10 px-3 text-sm">
-                      <span className="font-medium text-foreground">{getTypeLabel()}</span>
-                      <span className="text-[11px] text-primary">Tự chọn theo trang</span>
-                    </div>
-                  ) : (
-                    <Select value={newProduct.type} onValueChange={(v) => setNewProduct(p => ({ ...p, type: v as any }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="card">Card</SelectItem>
-                        <SelectItem value="box">Box</SelectItem>
-                        <SelectItem value="pack">Pack</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Select value={newProduct.type} onValueChange={(v) => setNewProduct(p => ({ ...p, type: v as any }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="box">Box</SelectItem>
+                      <SelectItem value="pack">Pack</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Series</Label>
@@ -478,8 +472,9 @@ export default function Products() {
                 <div className="mt-3 flex min-w-0 items-center gap-2">
                   <h3 className="min-w-0 flex-1 truncate font-semibold text-sm">{product.name}</h3>
                   {product.type === "card" && <RarityBadge rarity={product.rarity} />}
+                  {product.type === "card" && <RankBadge rank={product.condition} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{product.series} - {product.setName || 'N/A'}{product.type === "card" ? ` · ${getCardRankLabel(product.condition)}` : ""}</p>
+                <p className="text-xs text-muted-foreground mt-1">{product.series} - {product.setName || 'N/A'}</p>
                 <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-muted-foreground">SL:</span>
@@ -507,7 +502,7 @@ export default function Products() {
           {sortedProducts.map((product: any) => {
             const metricColumns = visibleListColumns.filter((column) => ["quantity", "buyPrice", "marketPrice", "profit"].includes(column));
             return <Card key={product.id} className="bg-card transition-colors hover:border-primary/30"><CardContent className="flex items-center gap-2 p-2.5 sm:gap-3 sm:p-3">
-              <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3><Badge variant="secondary" className="text-[10px] capitalize">{product.type}</Badge>{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}{product.type === "card" ? ` · ${getCardRankLabel(product.condition)}` : ""}</p>}</div>
+              <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3><Badge variant="secondary" className="text-[10px] capitalize">{product.type}</Badge>{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{product.type === "card" && <RankBadge rank={product.condition} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}</div>
               {metricColumns.length > 0 && <div className="grid shrink-0 grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] sm:flex sm:items-center sm:gap-x-3">{metricColumns.map((column) => <ProductListMetric key={column} product={product} column={column} />)}</div>}
               <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onDelete={handleDelete} />
             </CardContent></Card>;
