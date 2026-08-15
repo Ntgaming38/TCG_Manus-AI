@@ -80,6 +80,20 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function updateUserProfile(userId: number, data: { nickname?: string | null; avatarUrl?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const changes = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+  if (Object.keys(changes).length) {
+    await db.update(users).set(changes).where(eq(users.id, userId));
+  }
+
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!result[0]) throw new Error("Không tìm thấy tài khoản người dùng.");
+  return result[0];
+}
+
 // ========== PRODUCTS ==========
 
 export async function listProducts(userId: number, opts?: { type?: string; status?: string; search?: string }) {

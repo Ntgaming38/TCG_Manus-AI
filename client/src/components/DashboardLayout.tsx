@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ import {
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
-  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift, RefreshCw,
+  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift, RefreshCw, UserRoundCog,
   Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard, Ticket, Settings, History, Trash2
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -35,6 +35,7 @@ import { getUnreadChyusenCount } from "@shared/chyusenNotifications";
 import { shouldOpenMobileSidebarFromSwipe } from "@shared/mobileSidebarGesture";
 import { shouldTriggerPullToRefresh } from "@shared/pullToRefresh";
 import { NotificationCenter } from "./NotificationCenter";
+import { AccountSettingsDialog } from "./AccountSettingsDialog";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "TCG Manager", path: "/thong-ke" },
@@ -121,6 +122,7 @@ function DashboardLayoutContent({
   const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
+  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -272,23 +274,29 @@ function DashboardLayoutContent({
               <DropdownMenuTrigger asChild>
                 <button className="flex min-h-16 w-full items-center gap-3.5 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-sidebar-accent focus:outline-none group-data-[collapsible=icon]:justify-center">
                   <Avatar className="h-11 w-11 shrink-0 border border-border">
+                    <AvatarImage src={user?.avatarUrl || undefined} alt={user?.nickname || user?.name || "Người dùng"} className="object-cover" />
                     <AvatarFallback className="text-xs font-medium bg-primary/20 text-primary">
-                      {user?.name?.charAt(0).toUpperCase() || '?'}
+                      {(user?.nickname || user?.name)?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1 overflow-hidden group-data-[collapsible=icon]:hidden">
-                    <p title={user?.name || "-"} className="rgb-user-name truncate text-[15px] font-semibold leading-tight">{user?.name || "-"}</p>
+                    <p title={user?.nickname || user?.name || "-"} className="rgb-user-name truncate text-[15px] font-semibold leading-tight">{user?.nickname || user?.name || "-"}</p>
                     <p title={user?.email || "-"} className="text-xs text-muted-foreground truncate mt-1.5">{user?.email || "-"}</p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setAccountSettingsOpen(true); }} className="cursor-pointer">
+                  <UserRoundCog className="mr-2 h-4 w-4" />
+                  <span>Cài đặt tài khoản</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Đăng xuất</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <AccountSettingsDialog open={accountSettingsOpen} onOpenChange={setAccountSettingsOpen} user={user} />
           </SidebarFooter>
         </Sidebar>
         <div

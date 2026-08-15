@@ -853,3 +853,10 @@
 ## Khoảng cách badge Rank Card
 - [x] Tăng khoảng cách giữa tên sản phẩm và badge Rank Card
 - [x] Kiểm thử bố cục desktop/mobile và lưu checkpoint
+
+## Cài đặt tài khoản người dùng
+- [x] Sửa lỗi accountSettingsOpen không xác định trong DashboardLayoutContent
+- [x] Thêm nickname và ảnh đại diện tùy chỉnh cho từng người dùng
+- [x] Thêm giao diện quản lý tài khoản và đồng bộ nickname/ảnh đại diện trên thanh bên
+- [x] Hiển thị hướng dẫn bảo mật hoặc đổi mật khẩu đúng theo phương thức đăng nhập OAuth
+- [x] Kiểm thử luồng cập nhật tài khoản và lưu checkpoint
