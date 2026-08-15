@@ -443,12 +443,12 @@ export async function getChyusenNotificationSettings(userId: number) {
   return created ? { ...created, deadlineHours: DEFAULT_CHYUSEN_DEADLINE_HOURS } : undefined;
 }
 
-export async function updateChyusenNotificationSettings(userId: number, input: Partial<{ lotteryNew: boolean; lotteryExpiring: boolean; lotteryResult: boolean; lotteryChanged: boolean; lotteryWon: boolean; lotteryLost: boolean; deadlineHours: number[]; quietHoursEnabled: boolean; quietStart: string; quietEnd: string }>) {
+export async function updateChyusenNotificationSettings(userId: number, input: Partial<{ lotteryNew: boolean; lotteryExpiring: boolean; lotteryResult: boolean; lotteryChanged: boolean; lotteryWon: boolean; lotteryLost: boolean; deadlineHours: number[]; soundNewEnabled: boolean; soundUrgentEnabled: boolean; quietHoursEnabled: boolean; quietStart: string; quietEnd: string }>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await getChyusenNotificationSettings(userId);
   const update: Record<string, unknown> = {};
-  for (const key of ["lotteryNew", "lotteryExpiring", "lotteryResult", "lotteryChanged", "lotteryWon", "lotteryLost", "quietHoursEnabled"] as const) if (input[key] !== undefined) update[key] = input[key] ? 1 : 0;
+  for (const key of ["lotteryNew", "lotteryExpiring", "lotteryResult", "lotteryChanged", "lotteryWon", "lotteryLost", "soundNewEnabled", "soundUrgentEnabled", "quietHoursEnabled"] as const) if (input[key] !== undefined) update[key] = input[key] ? 1 : 0;
   if (input.deadlineHours) update.deadlineHoursJson = JSON.stringify(Array.from(new Set(input.deadlineHours.filter((hour) => hour > 0 && hour <= 24 * 14))).sort((a, b) => b - a));
   if (input.quietStart !== undefined) update.quietStart = input.quietStart;
   if (input.quietEnd !== undefined) update.quietEnd = input.quietEnd;

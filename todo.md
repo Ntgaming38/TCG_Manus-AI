@@ -877,3 +877,9 @@
 - [x] Đổi nút Đã xem sang nền đỏ dễ thấy trên nền tối
 - [x] Áp dụng hiệu ứng RGB cho chữ nút Đã xem
 - [x] Kiểm thử giao diện thông báo và lưu checkpoint
+
+## Trung tâm thông báo Chyusen
+- [x] Thêm nút Đã xem tất cả cho toàn bộ thông báo Chyusen chưa đọc
+- [x] Thêm bộ lọc thông báo theo hạn đăng ký hoặc kết quả
+- [x] Thêm tùy chọn bật/tắt âm cảnh báo cho thông báo mới và khẩn cấp
+- [x] Kiểm thử thao tác, bộ lọc và âm cảnh báo rồi lưu checkpoint

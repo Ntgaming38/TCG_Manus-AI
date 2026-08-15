@@ -362,6 +362,8 @@ export const chyusenNotificationSettings = mysqlTable("chyusen_notification_sett
   lotteryLost: int("lotteryLost").default(1).notNull(),
   deadlineHoursJson: text("deadlineHoursJson").notNull(),
   pushEnabled: int("pushEnabled").default(0).notNull(),
+  soundNewEnabled: int("soundNewEnabled").default(0).notNull(),
+  soundUrgentEnabled: int("soundUrgentEnabled").default(0).notNull(),
   quietHoursEnabled: int("quietHoursEnabled").default(0).notNull(),
   quietStart: varchar("quietStart", { length: 5 }).default("22:00"),
   quietEnd: varchar("quietEnd", { length: 5 }).default("08:00"),

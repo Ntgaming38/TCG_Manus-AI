@@ -32,7 +32,9 @@ import { Button } from "./ui/button";
 import { SidebarAIAssistant } from "./SidebarAIAssistant";
 import { trpc } from "@/lib/trpc";
 import { getUnreadChyusenCount } from "@shared/chyusenNotifications";
+import { shouldPlayChyusenAlert } from "@shared/chyusenNotificationFilter";
 import { shouldOpenMobileSidebarFromSwipe } from "@shared/mobileSidebarGesture";
+import { playChyusenNotificationSound } from "@/lib/chyusenNotificationSound";
 import { shouldTriggerPullToRefresh } from "@shared/pullToRefresh";
 import { NotificationCenter } from "./NotificationCenter";
 import { AccountSettingsDialog } from "./AccountSettingsDialog";
@@ -127,10 +129,27 @@ function DashboardLayoutContent({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const pullStartRef = useRef<{ x: number; y: number } | null>(null);
+  const knownUnreadChyusenIdsRef = useRef<Set<number> | null>(null);
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
-  const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery(undefined, { staleTime: 60_000 });
+  const { data: chyusenNotifications = [] } = trpc.chyusen.notifications.useQuery(undefined, { staleTime: 60_000, refetchInterval: 60_000 });
+  const { data: chyusenNotificationSettings } = trpc.chyusen.notificationSettings.useQuery(undefined, { staleTime: 60_000 });
   const unreadChyusenCount = getUnreadChyusenCount(chyusenNotifications);
+
+  useEffect(() => {
+    const unreadNotifications = chyusenNotifications.filter((notification: any) => !notification.isRead);
+    const currentIds = new Set(unreadNotifications.map((notification: any) => notification.id));
+    if (knownUnreadChyusenIdsRef.current === null) {
+      knownUnreadChyusenIdsRef.current = currentIds;
+      return;
+    }
+    const freshNotifications = unreadNotifications.filter((notification: any) => !knownUnreadChyusenIdsRef.current?.has(notification.id));
+    knownUnreadChyusenIdsRef.current = currentIds;
+    const hasUrgent = freshNotifications.some((notification: any) => notification.priority === "high" || notification.priority === "critical");
+    const hasRegular = freshNotifications.some((notification: any) => notification.priority !== "high" && notification.priority !== "critical");
+    if (hasUrgent && shouldPlayChyusenAlert({ priority: "critical", soundUrgentEnabled: chyusenNotificationSettings?.soundUrgentEnabled })) playChyusenNotificationSound(true);
+    else if (hasRegular && shouldPlayChyusenAlert({ priority: "medium", soundNewEnabled: chyusenNotificationSettings?.soundNewEnabled })) playChyusenNotificationSound(false);
+  }, [chyusenNotificationSettings?.soundNewEnabled, chyusenNotificationSettings?.soundUrgentEnabled, chyusenNotifications]);
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);

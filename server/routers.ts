@@ -596,6 +596,8 @@ export const appRouter = router({
         lotteryWon: z.boolean().optional(),
         lotteryLost: z.boolean().optional(),
         deadlineHours: z.array(z.number().int().min(1).max(336)).max(12).optional(),
+        soundNewEnabled: z.boolean().optional(),
+        soundUrgentEnabled: z.boolean().optional(),
         quietHoursEnabled: z.boolean().optional(),
         quietStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
         quietEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
