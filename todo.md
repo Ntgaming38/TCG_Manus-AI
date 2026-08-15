@@ -827,3 +827,9 @@
 - [x] Bỏ các lựa chọn độ hiếm không còn sử dụng khỏi biểu mẫu và sắp xếp
 - [x] Thêm badge Promo nền cyan chữ trắng RGB và Khác nền trắng chữ RGB
 - [x] Kiểm thử sắp xếp và giao diện rồi lưu checkpoint
+
+## Rank Card và giá SNKRDUNK theo rank
+- [x] Thay Condition bằng Rank Card A, B, C, D trong biểu mẫu Card
+- [x] Chuẩn hóa dữ liệu rank hiện có về Rank A–D
+- [x] Đồng bộ giá SNKRDUNK thủ công và tự động theo rank của từng Card
+- [x] Kiểm thử chọn đúng giá Rank A–D và lưu checkpoint

@@ -30,7 +30,7 @@ const fieldLabels: Record<string, string> = {
   buyPrice: "Giá nhập", marketPrice: "Giá thị trường", sellPrice: "Giá bán",
   totalPrice: "Tổng tiền mua", totalRevenue: "Tổng doanh thu", salePrice: "Giá bán",
   profit: "Lợi nhuận", shop: "Cửa hàng", note: "Ghi chú", status: "Trạng thái",
-  damageNote: "Ghi chú hàng hỏng", platform: "Nền tảng",
+  damageNote: "Ghi chú hàng hỏng", platform: "Nền tảng", condition: "Rank Card",
   productName: "Tên sản phẩm", series: "Series", applicationStatus: "Trạng thái đăng ký", resultStatus: "Kết quả",
   applicationEnd: "Hạn đăng ký", resultDate: "Ngày công bố", purchaseCreatedAt: "Đã chuyển Mua Hàng",
 };

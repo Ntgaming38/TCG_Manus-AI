@@ -15,6 +15,7 @@ import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../sh
 import { shouldDisplayProductInCatalog } from '../shared/productVisibility';
 import { getSalesProfitBreakdown, getStockMetricBreakdown } from '../shared/dashboardMetricBreakdown';
 import { getDashboardMonthlyTrend } from '../shared/dashboardMonthlyTrend';
+import { getCardRankLabel, normalizeCardRank } from '../shared/cardRank';
 import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -137,6 +138,13 @@ export async function updateProduct(id: number, userId: number, data: Partial<In
       data.status = "sold" as any;
     } else if (product.status === "sold") {
       data.status = "in_stock" as any;
+    }
+  }
+  if (product.type === "card" && data.condition !== undefined) {
+    const nextRank = normalizeCardRank(data.condition);
+    data.condition = nextRank;
+    if (nextRank !== normalizeCardRank(product.condition)) {
+      data.snkrdunkLastSyncedAt = null;
     }
   }
   await db.update(products).set(data).where(and(eq(products.id, id), eq(products.userId, userId)));
@@ -307,7 +315,8 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
     throw new Error("Chưa có link sản phẩm SNKRDUNK. Hãy gắn link sản phẩm cụ thể trước khi đồng bộ.");
   }
 
-  const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack");
+  const cardRank = product.type === "card" ? normalizeCardRank(product.condition) : undefined;
+  const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack", cardRank);
   const priceDecision = resolveMarketplacePriceUpdate(product.marketPrice, result.price);
   const persisted = await persistMarketplacePriceIfValid(product.marketPrice, result.price, async (nextPrice) => {
     await db.update(products)
@@ -330,7 +339,7 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
   await db.insert(activityLogs).values({
     userId,
     action: "snkrdunk_price_synced",
-    description: `Đồng bộ giá SNKRDUNK: ${product.name} - ¥${result.price.toLocaleString("ja-JP")}`,
+    description: `Đồng bộ giá SNKRDUNK: ${product.name}${cardRank ? ` · ${getCardRankLabel(cardRank)}` : ""} - ¥${result.price.toLocaleString("ja-JP")}`,
     entityType: "product",
     entityId: id,
   });

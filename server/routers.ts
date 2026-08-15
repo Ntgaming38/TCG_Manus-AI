@@ -18,6 +18,7 @@ import { emptyTrashItems, getTrashAutoCleanupSettings, listTrashItems, saveTrash
 import { restoreTrashItem } from "./trashRestore";
 import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
 import { uploadLoginBackground } from "./loginBackground";
+import { normalizeCardRank } from "@shared/cardRank";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -216,7 +217,7 @@ export const appRouter = router({
         cardNumber: input.cardNumber,
         language: input.language || "Japanese",
         rarity: input.rarity,
-        condition: input.condition || "New",
+        condition: input.type === "card" ? normalizeCardRank(input.condition) : input.condition || "A",
         psaGrade: input.psaGrade,
         releaseDate: input.releaseDate,
         image: input.image,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseFirstRankAPrice, parseSnkrdunkPrice } from "./snkrdunk";
+import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice } from "./snkrdunk";
 
 describe("SNKRDUNK adapter", () => {
   afterEach(() => {
@@ -38,6 +38,13 @@ describe("SNKRDUNK adapter", () => {
 
   it("recognizes the Japanese Aあり label", () => {
     expect(parseFirstRankAPrice(`<button><p>Aあり</p><p>¥1,600~</p></button>`)).toBe(1600);
+  });
+
+  it("selects the requested Rank B, C or D price instead of Rank A", () => {
+    const html = `<button><p>A</p><p>¥1,600</p></button><button><p>B</p><p>¥1,200</p></button><button><p>Cあり</p><p>¥900</p></button><button><p>D</p><p>¥650</p></button>`;
+    expect(parseCardRankPrice(html, "B")).toBe(1200);
+    expect(parseCardRankPrice(html, "C")).toBe(900);
+    expect(parseCardRankPrice(html, "D")).toBe(650);
   });
 
   it("does not create a price when the page has no public price", () => {
@@ -139,6 +146,19 @@ describe("SNKRDUNK adapter", () => {
     await expect(fetchSnkrdunkPrice("https://snkrdunk.com/en/trading-cards/868598/used", "card"))
       .resolves.toMatchObject({ price: 1600 });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses Rank B from the Card page when the product is assigned Rank B", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: async () => '<button><p>A</p><p>¥1,600~</p></button><button><p>B</p><p>¥1,200~</p></button>',
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSnkrdunkPrice("https://snkrdunk.com/en/trading-cards/868598/used", "card", "B"))
+      .resolves.toMatchObject({ price: 1200 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("accepts a specific HTTPS product URL", () => {

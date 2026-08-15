@@ -36,7 +36,7 @@ export const products = mysqlTable("products", {
   cardNumber: varchar("cardNumber", { length: 50 }),
   language: varchar("language", { length: 20 }).default("Japanese"),
   rarity: varchar("rarity", { length: 50 }),
-  condition: varchar("condition", { length: 50 }).default("New"),
+  condition: varchar("condition", { length: 50 }).default("A"),
   psaGrade: varchar("psaGrade", { length: 20 }),
   // Box-specific fields
   releaseDate: varchar("releaseDate", { length: 20 }),
