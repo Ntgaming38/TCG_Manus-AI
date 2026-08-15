@@ -20,4 +20,12 @@ describe("Rank Card badge", () => {
     expect(styles).toContain(':root[data-rgb-effects="enabled"] .rank-rgb-text');
     expect(styles).toContain('prefers-reduced-motion: reduce');
   });
+
+  it("hiển thị tooltip giá thị trường khi hover hoặc focus badge", () => {
+    const source = readFileSync(join(root, "client/src/components/RankBadge.tsx"), "utf8");
+    expect(source).toContain("TooltipTrigger");
+    expect(source).toContain("tabIndex={0}");
+    expect(source).toContain("Giá thị trường theo Rank");
+    expect(source).toContain("formatYen(price)");
+  });
 });

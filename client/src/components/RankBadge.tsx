@@ -1,8 +1,11 @@
 import { normalizeCardRank } from "@shared/cardRank";
+import { formatYen } from "@shared/formatYen";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type RankBadgeProps = {
   rank?: string | null;
+  marketPrice?: number | string | null;
   className?: string;
 };
 
@@ -13,15 +16,26 @@ const RANK_BADGE_STYLES: Record<string, string> = {
   D: "border-slate-500 bg-gradient-to-r from-black via-slate-900 to-slate-700 text-white shadow-[0_0_10px_rgba(15,23,42,0.72)]",
 };
 
-export function RankBadge({ rank, className = "" }: RankBadgeProps) {
+export function RankBadge({ rank, marketPrice, className = "" }: RankBadgeProps) {
   const value = normalizeCardRank(rank);
+  const price = Number(marketPrice) || 0;
   return (
-    <Badge
-      variant="outline"
-      className={`shrink-0 border px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide ${RANK_BADGE_STYLES[value]} ${className}`}
-      aria-label={`Rank Card ${value}`}
-    >
-      <span className="rank-rgb-text">Rank {value}</span>
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0} className="inline-flex shrink-0 cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+          <Badge
+            variant="outline"
+            className={`shrink-0 border px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide transition-transform duration-150 hover:-translate-y-0.5 hover:brightness-110 ${RANK_BADGE_STYLES[value]} ${className}`}
+            aria-label={`Rank Card ${value}. ${price > 0 ? `Giá thị trường ${formatYen(price)}` : "Chưa có giá thị trường"}`}
+          >
+            <span className="rank-rgb-text">Rank {value}</span>
+          </Badge>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={7} className="max-w-56 border border-white/15 bg-slate-950 px-3 py-2 text-left text-xs text-slate-100 shadow-xl">
+        <p className="font-bold">Rank {value}</p>
+        <p className="mt-0.5 text-slate-300">{price > 0 ? `Giá thị trường theo Rank ${value}: ${formatYen(price)}` : `Chưa có giá thị trường cho Rank ${value}`}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

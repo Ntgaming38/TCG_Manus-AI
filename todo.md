@@ -844,3 +844,8 @@
 - [x] Bỏ nhãn Tự chọn theo trang nhưng giữ bộ chọn loại Card/Box/Pack
 - [x] Giữ tự chọn sẵn loại theo trang Card, Box hoặc Pack
 - [x] Kiểm thử biểu mẫu và lưu checkpoint
+
+## Tooltip và vị trí Rank Card
+- [x] Hiển thị tooltip Rank Card với giá thị trường tương ứng khi di chuột hoặc focus
+- [x] Đưa badge Rank Card sát sau tên mỗi sản phẩm Card
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
