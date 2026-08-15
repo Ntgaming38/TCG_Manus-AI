@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { filterSalesByDateRange, summarizeSales } from "@shared/salesDateFilter";
+import { getQuickSaleDateRange, type SaleQuickPeriod } from "@shared/salesQuickDateRange";
 
 const PLATFORMS = [
   { value: "user", label: "Người Dùng" },
@@ -33,6 +34,7 @@ export default function Sales() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [quickPeriod, setQuickPeriod] = useState<SaleQuickPeriod | null>(null);
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -150,7 +152,13 @@ export default function Sales() {
 
   const totals = useMemo(() => summarizeSales(sortedSales), [sortedSales]);
   const hasDateFilter = Boolean(fromDate || toDate);
-  const resetDateFilter = () => { setFromDate(""); setToDate(""); };
+  const resetDateFilter = () => { setFromDate(""); setToDate(""); setQuickPeriod(null); };
+  const applyQuickPeriod = (period: SaleQuickPeriod) => {
+    const range = getQuickSaleDateRange(period);
+    setFromDate(range.fromDate);
+    setToDate(range.toDate);
+    setQuickPeriod(period);
+  };
   const formatFilterDate = (value: string) => value ? new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN") : "…";
 
   const toggleSort = (field: SortField) => {
@@ -298,8 +306,9 @@ export default function Sales() {
       {/* Compact filters */}
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/60 p-3 shadow-sm">
         <div className="flex flex-wrap items-end justify-center gap-2 sm:justify-start">
-          <div className="w-[124px] sm:w-[170px]"><Label htmlFor="sales-from-date" className="mb-1 block text-[11px] text-muted-foreground">Từ ngày</Label><div className="relative"><Input id="sales-from-date" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className={`sales-date-input h-8 px-2 text-xs ${fromDate ? "" : "text-transparent"}`} aria-label="Từ ngày" /><span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-muted-foreground ${fromDate ? "hidden" : ""}`}>Chọn ngày</span></div></div>
-          <div className="w-[124px] sm:w-[170px]"><Label htmlFor="sales-to-date" className="mb-1 block text-[11px] text-muted-foreground">Đến ngày</Label><div className="relative"><Input id="sales-to-date" type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} className={`sales-date-input h-8 px-2 text-xs ${toDate ? "" : "text-transparent"}`} aria-label="Đến ngày" /><span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-muted-foreground ${toDate ? "hidden" : ""}`}>Chọn ngày</span></div></div>
+          <div className="w-[124px] sm:w-[170px]"><Label htmlFor="sales-from-date" className="mb-1 block text-[11px] text-muted-foreground">Từ ngày</Label><div className="relative"><Input id="sales-from-date" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => { setFromDate(event.target.value); setQuickPeriod(null); }} className={`sales-date-input h-8 px-2 text-xs ${fromDate ? "" : "text-transparent"}`} aria-label="Từ ngày" /><span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-muted-foreground ${fromDate ? "hidden" : ""}`}>Chọn ngày</span></div></div>
+          <div className="w-[124px] sm:w-[170px]"><Label htmlFor="sales-to-date" className="mb-1 block text-[11px] text-muted-foreground">Đến ngày</Label><div className="relative"><Input id="sales-to-date" type="date" value={toDate} min={fromDate || undefined} onChange={(event) => { setToDate(event.target.value); setQuickPeriod(null); }} className={`sales-date-input h-8 px-2 text-xs ${toDate ? "" : "text-transparent"}`} aria-label="Đến ngày" /><span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-muted-foreground ${toDate ? "hidden" : ""}`}>Chọn ngày</span></div></div>
+          <div className="flex w-full justify-center gap-1.5 sm:w-auto sm:justify-start">{([['today', 'Hôm nay'], ['week', 'Tuần này'], ['month', 'Tháng này']] as const).map(([period, label]) => <Button key={period} type="button" variant={quickPeriod === period ? "secondary" : "ghost"} size="sm" className={`h-8 px-2 text-[11px] ${quickPeriod === period ? "bg-primary/15 text-primary hover:bg-primary/20" : "text-muted-foreground hover:text-foreground"}`} onClick={() => applyQuickPeriod(period)}>{label}</Button>)}</div>
           {hasDateFilter && <Button type="button" variant="ghost" size="sm" className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={resetDateFilter}><X className="mr-1 h-3.5 w-3.5" />Xóa ngày</Button>}
           <div className="flex items-center rounded-md bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground sm:ml-auto">{hasDateFilter ? `${formatFilterDate(fromDate)} — ${formatFilterDate(toDate)}` : "Tất cả thời gian"}</div>
         </div>

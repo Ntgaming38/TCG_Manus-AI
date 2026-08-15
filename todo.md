@@ -810,3 +810,8 @@
 - [x] Thu gọn và căn giữa hai ô chọn ngày trên điện thoại
 - [x] Thêm gợi ý Chọn ngày và bỏ biểu tượng lịch thừa
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Bộ lọc nhanh ngày bán
+- [x] Thêm nút Hôm nay, Tuần này và Tháng này cạnh bộ lọc ngày
+- [x] Hiển thị rõ trạng thái nút lọc nhanh đang chọn
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
