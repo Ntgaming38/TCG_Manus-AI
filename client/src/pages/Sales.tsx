@@ -402,13 +402,14 @@ export default function Sales() {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-5 gap-y-2 text-right sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-x-5 gap-y-2 text-right sm:grid-cols-4">
                   <div><p className="font-bold text-base text-primary">{totals.totalQuantity}</p><p className="text-[11px] text-muted-foreground">Số lượng đã bán</p></div>
                   <div><p className="font-bold text-base text-primary">{formatYen(totals.totalRevenue)}</p><p className="text-[11px] text-muted-foreground">Tổng doanh thu</p></div>
+                  <div><p className="font-bold text-base text-amber-400">{formatYen(totals.totalCostBasis)}</p><p className="text-[11px] text-muted-foreground">Giá vốn đã mua</p></div>
                   <div><p className={`font-bold text-sm ${totals.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatSignedYen(totals.totalProfit)}</p><p className="text-[11px] text-muted-foreground">Lợi nhuận</p></div>
                 </div>
               </div>
-              <div className="mt-4 border-t border-border pt-3"><p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Chi tiết sản phẩm đã bán</p><div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">{totals.products.map((product) => <div key={product.key} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-2 text-xs"><div className="min-w-0"><p className="truncate font-semibold text-foreground">{product.productName}</p><p className="mt-0.5 text-muted-foreground">{product.transactionCount} giao dịch · {product.quantity} cái</p></div><div className="shrink-0 text-right"><p className="font-semibold text-foreground">{formatYen(product.totalRevenue)}</p><p className="mt-0.5 text-muted-foreground">{formatYen(product.averageUnitPrice)} / cái</p></div></div>)}</div></div>
+              <div className="mt-4 border-t border-border pt-3"><p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Chi tiết sản phẩm đã bán</p><div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">{totals.products.map((product) => <div key={product.key} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-2 text-xs"><div className="min-w-0"><p className="truncate font-semibold text-foreground">{product.productName}</p><p className="mt-0.5 text-muted-foreground">{product.transactionCount} giao dịch · {product.quantity} cái</p><p className="mt-0.5 text-amber-400">Giá vốn: {formatYen(product.totalCostBasis)} · {formatYen(product.averageUnitCost)} / cái</p></div><div className="shrink-0 text-right"><p className="font-semibold text-foreground">{formatYen(product.totalRevenue)}</p><p className="mt-0.5 text-muted-foreground">Bán: {formatYen(product.averageUnitPrice)} / cái</p></div></div>)}</div></div>
             </CardContent>
           </Card>
        </div>

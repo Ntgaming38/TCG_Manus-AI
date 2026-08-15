@@ -800,3 +800,8 @@
 - [x] Thêm bộ lọc khoảng ngày bán nhỏ gọn trên trang Bán hàng
 - [x] Hiển thị tổng hợp số giao dịch, số lượng, doanh thu và chi tiết từng sản phẩm trong khoảng lọc
 - [x] Bổ sung kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Giá vốn trong tổng kết bán hàng
+- [x] Bổ sung giá vốn đã mua vào tổng kết giao dịch trong khoảng lọc
+- [x] Hiển thị giá vốn, doanh thu và lợi nhuận cho từng sản phẩm đã bán
+- [x] Bổ sung kiểm thử công thức tổng kết và lưu checkpoint

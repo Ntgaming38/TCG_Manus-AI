@@ -14,8 +14,8 @@ describe("salesDateFilter", () => {
 
   it("tổng hợp số giao dịch, số lượng, doanh thu và từng sản phẩm", () => {
     const summary = summarizeSales(sales);
-    expect(summary).toMatchObject({ transactionCount: 3, totalQuantity: 6, totalRevenue: 60000, totalProfit: 13600 });
-    expect(summary.products[0]).toMatchObject({ productName: "Pikachu SAR", transactionCount: 2, quantity: 3, totalRevenue: 48000, averageUnitPrice: 16000 });
-    expect(summary.products[1]).toMatchObject({ productName: "Luffy SR", transactionCount: 1, quantity: 3, totalRevenue: 12000, averageUnitPrice: 4000 });
+    expect(summary).toMatchObject({ transactionCount: 3, totalQuantity: 6, totalRevenue: 60000, totalCostBasis: 46400, totalProfit: 13600 });
+    expect(summary.products[0]).toMatchObject({ productName: "Pikachu SAR", transactionCount: 2, quantity: 3, totalRevenue: 48000, totalCostBasis: 33500, averageUnitPrice: 16000, averageUnitCost: 11167 });
+    expect(summary.products[1]).toMatchObject({ productName: "Luffy SR", transactionCount: 1, quantity: 3, totalRevenue: 12000, totalCostBasis: 12900, averageUnitPrice: 4000, averageUnitCost: 4300 });
   });
 });
