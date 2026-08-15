@@ -21,6 +21,9 @@ import { uploadLoginBackground } from "./loginBackground";
 import { normalizeCardRank } from "@shared/cardRank";
 import { uploadUserAvatar } from "./userProfile";
 import { createDataBackupPayload, DATA_BACKUP_SCOPES } from "@shared/dataBackupExport";
+import { dataBackupRestoreSchema } from "@shared/dataBackupRestore";
+import { restoreDataBackup } from "./dataRestore";
+import { createMonthlyReport } from "@shared/monthlyReport";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -117,6 +120,19 @@ export const appRouter = router({
           },
         });
       }),
+    restorePreview: protectedProcedure
+      .input(z.object({ backup: dataBackupRestoreSchema }))
+      .query(({ input }) => ({
+        exportedAt: input.backup.exportedAt,
+        scope: input.backup.scope,
+        inventoryCount: input.backup.inventory?.length || 0,
+        purchaseCount: input.backup.purchases?.length || 0,
+        saleCount: input.backup.sales?.length || 0,
+        chyusenCount: input.backup.chyusen?.entries?.length || 0,
+      })),
+    restoreData: protectedProcedure
+      .input(z.object({ backup: dataBackupRestoreSchema, confirmed: z.literal(true) }))
+      .mutation(async ({ ctx, input }) => restoreDataBackup(ctx.user.id, input.backup)),
   }),
 
   ai: router({
@@ -667,6 +683,9 @@ export const appRouter = router({
   reports: router({
     overview: protectedProcedure
       .query(({ ctx }) => db.getReportsOverview(ctx.user.id)),
+    monthly: protectedProcedure
+      .input(z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }))
+      .query(async ({ ctx, input }) => createMonthlyReport(input.month, await db.listPurchases(ctx.user.id), await db.listSales(ctx.user.id))),
   }),
 
   shops: router({

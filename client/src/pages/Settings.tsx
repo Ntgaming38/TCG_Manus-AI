@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, DollarSign, Download, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2, Volume2, VolumeX } from "lucide-react";
+import { Archive, BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, DollarSign, Download, FileText, FileUp, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyEligibleUrls, rea
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 import { formatYen, readCurrencySymbolPosition, saveCurrencySymbolPosition, type CurrencySymbolPosition } from "@shared/formatYen";
 import { getDataBackupFileName, rowsToCsv, type DataBackupScope } from "@shared/dataBackupExport";
+import { dataBackupRestoreSchema, getDataBackupRestorePreview, type DataBackupRestorePayload } from "@shared/dataBackupRestore";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 
 const INTERVALS = [{ value: "60", label: "1 giờ" }, { value: "180", label: "3 giờ" }, { value: "360", label: "6 giờ" }, { value: "720", label: "12 giờ" }, { value: "1440", label: "24 giờ" }] as const;
 const BATCH_SIZES = [6, 12, 18, 20] as const;
@@ -51,6 +54,10 @@ export default function Settings() {
   const [loginBackgroundDailyEligibleUrls, setLoginBackgroundDailyEligibleUrls] = useState<string[]>(() => { const storage = typeof window === "undefined" ? undefined : window.localStorage; const history = readLoginBackgroundHistory(storage); return readLoginBackgroundDailyEligibleUrls(history, storage); });
   const [loginBackgroundDraft, setLoginBackgroundDraft] = useState<{ source: string; edit: LoginBackgroundEdit } | null>(null);
   const [pendingBackgroundRemoval, setPendingBackgroundRemoval] = useState<string | null>(null);
+  const [restoreBackup, setRestoreBackup] = useState<DataBackupRestorePayload | null>(null);
+  const [restoreFileName, setRestoreFileName] = useState("");
+  const [restoreConfirmation, setRestoreConfirmation] = useState("");
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, backup: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
@@ -92,6 +99,21 @@ export default function Settings() {
     onError: (error) => toast.error(error.message || "Không thể tải ảnh nền lên."),
   });
   const exportData = trpc.backup.exportData.useMutation({ onError: (error) => toast.error(error.message || "Không thể tạo tệp xuất dữ liệu.") });
+  const { data: monthlyReport } = trpc.reports.monthly.useQuery({ month: reportMonth });
+  const restoreData = trpc.backup.restoreData.useMutation({
+    onSuccess: (result) => {
+      setRestoreBackup(null);
+      setRestoreFileName("");
+      setRestoreConfirmation("");
+      void utils.products.list.invalidate();
+      void utils.purchases.list.invalidate();
+      void utils.sales.list.invalidate();
+      void utils.dashboard.stats.invalidate();
+      void utils.reports.overview.invalidate();
+      toast.success(`Đã khôi phục ${result.restoredProducts} sản phẩm, ${result.restoredPurchases} mua, ${result.restoredSales} bán, ${result.restoredChyusen} Chyusen và ${result.restoredSources} nguồn.`);
+    },
+    onError: (error) => toast.error(error.message || "Không thể khôi phục bản sao lưu."),
+  });
 
   const deadlineHours = notificationSettings?.deadlineHours || [168, 72, 24, 12, 3, 1];
   const failedSources = sources.filter((source: any) => source.latestStatus === "unavailable");
@@ -186,6 +208,46 @@ export default function Settings() {
     downloadTextFile("tcg-manager-full-backup.json", JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
     toast.success("Đã tải bản sao lưu toàn bộ dữ liệu.");
   };
+  const readRestoreBackup = (file?: File) => {
+    if (!file) return;
+    if (file.size > 8_000_000) { toast.error("Tệp sao lưu tối đa 8 MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = dataBackupRestoreSchema.safeParse(JSON.parse(String(reader.result || "")));
+        if (!parsed.success) { toast.error("Tệp không đúng định dạng sao lưu TCG Manager 1.0."); return; }
+        setRestoreBackup(parsed.data);
+        setRestoreFileName(file.name);
+        setRestoreConfirmation("");
+      } catch {
+        toast.error("Không thể đọc tệp JSON sao lưu.");
+      }
+    };
+    reader.onerror = () => toast.error("Không thể đọc tệp sao lưu.");
+    reader.readAsText(file);
+  };
+  const escapePdfHtml = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] || character);
+  const exportMonthlyPdf = async () => {
+    if (!monthlyReport) { toast.error("Đang tải dữ liệu báo cáo tháng."); return; }
+    const format = (value: number) => formatYen(value, "ja-JP", currencySymbolPosition);
+    const reportSurface = document.createElement("section");
+    reportSurface.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;background:#ffffff;color:#111827;padding:42px;font-family:Arial,sans-serif;line-height:1.45;z-index:-1;";
+    reportSurface.innerHTML = `<div style="border-bottom:3px solid #dc2626;padding-bottom:18px"><div style="color:#dc2626;font-size:12px;font-weight:700;letter-spacing:2px">TCG MANAGER</div><h1 style="margin:8px 0 4px;font-size:28px">Báo cáo thống kê tháng ${escapePdfHtml(reportMonth)}</h1><p style="margin:0;color:#4b5563;font-size:13px">Xuất ngày ${new Date().toLocaleDateString("vi-VN")}</p></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0">${[["Tổng đã mua", format(monthlyReport.totalBought)], ["Doanh thu", format(monthlyReport.totalRevenue)], ["Lợi nhuận", format(monthlyReport.totalProfit)], ["ROI", `${monthlyReport.roi.toFixed(1)}%`]].map(([label, value]) => `<div style="border:1px solid #d1d5db;border-radius:10px;padding:14px"><div style="color:#6b7280;font-size:12px">${label}</div><div style="font-size:20px;font-weight:700;margin-top:4px">${value}</div></div>`).join("")}</div><h2 style="font-size:17px;margin:20px 0 8px">Tổng hợp giao dịch</h2><table style="width:100%;border-collapse:collapse;font-size:13px"><tbody><tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Số giao dịch mua</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700">${monthlyReport.purchaseCount}</td></tr><tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Số giao dịch bán / số lượng đã bán</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700">${monthlyReport.saleCount} / ${monthlyReport.soldUnits}</td></tr><tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">Tổng phí giao dịch</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700">${format(monthlyReport.totalFees)}</td></tr></tbody></table><h2 style="font-size:17px;margin:24px 0 8px">Top sản phẩm theo lợi nhuận</h2>${monthlyReport.topProducts.length ? `<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f3f4f6"><th style="padding:8px;text-align:left">Sản phẩm</th><th style="padding:8px;text-align:right">SL</th><th style="padding:8px;text-align:right">Doanh thu</th><th style="padding:8px;text-align:right">Lợi nhuận</th></tr></thead><tbody>${monthlyReport.topProducts.map((product) => `<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb">${escapePdfHtml(product.name)}</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${product.quantity}</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${format(product.revenue)}</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${format(product.profit)}</td></tr>`).join("")}</tbody></table>` : `<p style="color:#6b7280">Chưa có giao dịch bán trong tháng này.</p>`}<p style="margin-top:28px;color:#6b7280;font-size:10px">Báo cáo được tạo từ dữ liệu riêng của tài khoản TCG Manager.</p>`;
+    document.body.appendChild(reportSurface);
+    try {
+      const canvas = await html2canvas(reportSurface, { scale: 2, backgroundColor: "#ffffff" });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const width = 190;
+      const height = canvas.height * width / canvas.width;
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 10, width, Math.min(height, 277));
+      pdf.save(`tcg-manager-bao-cao-${reportMonth}.pdf`);
+      toast.success("Đã tải báo cáo PDF theo tháng.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tạo báo cáo PDF.");
+    } finally {
+      reportSurface.remove();
+    }
+  };
   const toggleLoginBackgroundDailyEligible = (url: string) => {
     setLoginBackgroundDailyEligibleUrls((current) => {
       const next = current.includes(url) ? current.filter((currentUrl) => currentUrl !== url) : [...current, url];
@@ -224,7 +286,7 @@ export default function Settings() {
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backup}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backup", event)}><CardTitle className="flex items-center gap-2"><Archive className="h-5 w-5 text-sky-400" />Sao lưu & Xuất dữ liệu</CardTitle><CardDescription>Tải dữ liệu riêng của tài khoản bạn về thiết bị. CSV phù hợp để mở bằng bảng tính; JSON là bản sao lưu đầy đủ.</CardDescription></CardHeader>
-      <CardContent className="space-y-3"><div className="grid gap-2 sm:grid-cols-2">{(["inventory", "purchases", "sales", "chyusen"] as const).map((scope) => <div key={scope} className="flex items-center justify-between gap-3 rounded-lg border p-3"><div><p className="text-sm font-semibold">{scope === "inventory" ? "Kho hàng" : scope === "purchases" ? "Mua hàng" : scope === "sales" ? "Bán hàng" : "Chyusen"}</p><p className="mt-0.5 text-xs text-muted-foreground">Tải bảng dữ liệu CSV</p></div><Button variant="outline" size="sm" disabled={exportData.isPending} onClick={() => void exportCsv(scope)}><Download className="mr-1.5 h-3.5 w-3.5" />CSV</Button></div>)}</div><div className="flex flex-col gap-3 rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Sao lưu toàn bộ</p><p className="mt-1 text-xs text-muted-foreground">Bao gồm Kho hàng, Mua, Bán, Chyusen, nguồn theo dõi và cài đặt nhắc hạn. Tệp này không chứa mật khẩu.</p></div><Button className="bg-red-600 hover:bg-red-700" disabled={exportData.isPending} onClick={() => void exportFullBackup()}><Archive className="mr-1.5 h-4 w-4" /><span className="rgb-action-label">{exportData.isPending ? "Đang tạo tệp" : "Tải JSON"}</span></Button></div></CardContent>
+      <CardContent className="space-y-4"><div className="grid gap-2 sm:grid-cols-2">{(["inventory", "purchases", "sales", "chyusen"] as const).map((scope) => <div key={scope} className="flex items-center justify-between gap-3 rounded-lg border p-3"><div><p className="text-sm font-semibold">{scope === "inventory" ? "Kho hàng" : scope === "purchases" ? "Mua hàng" : scope === "sales" ? "Bán hàng" : "Chyusen"}</p><p className="mt-0.5 text-xs text-muted-foreground">Tải bảng dữ liệu CSV</p></div><Button variant="outline" size="sm" disabled={exportData.isPending} onClick={() => void exportCsv(scope)}><Download className="mr-1.5 h-3.5 w-3.5" />CSV</Button></div>)}</div><div className="flex flex-col gap-3 rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Sao lưu toàn bộ</p><p className="mt-1 text-xs text-muted-foreground">Bao gồm Kho hàng, Mua, Bán, Chyusen, nguồn theo dõi và cài đặt nhắc hạn. Tệp này không chứa mật khẩu.</p></div><Button className="bg-red-600 hover:bg-red-700" disabled={exportData.isPending} onClick={() => void exportFullBackup()}><Archive className="mr-1.5 h-4 w-4" /><span className="rgb-action-label">{exportData.isPending ? "Đang tạo tệp" : "Tải JSON"}</span></Button></div><div className="grid gap-3 border-t pt-4 lg:grid-cols-2"><div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3"><div><p className="flex items-center gap-2 text-sm font-semibold"><FileUp className="h-4 w-4 text-amber-400" />Khôi phục từ JSON</p><p className="mt-1 text-xs text-muted-foreground">Chọn bản sao lưu TCG Manager 1.0 để xem trước. Dữ liệu được gộp vào tài khoản hiện tại; mục trùng lặp sẽ được bỏ qua để tránh nhân đôi.</p></div><Input type="file" accept="application/json,.json" disabled={restoreData.isPending} onChange={(event) => { readRestoreBackup(event.target.files?.[0]); event.currentTarget.value = ""; }} />{restoreBackup && <div className="space-y-3 rounded-md border border-amber-500/25 bg-background/40 p-3"><p className="text-xs font-semibold">Tệp: {restoreFileName}</p><p className="text-xs text-muted-foreground">Xuất lúc {new Date(getDataBackupRestorePreview(restoreBackup).exportedAt).toLocaleString("vi-VN")}</p><div className="grid grid-cols-2 gap-2 text-xs"><span>Kho hàng: <b>{getDataBackupRestorePreview(restoreBackup).inventoryCount}</b></span><span>Mua hàng: <b>{getDataBackupRestorePreview(restoreBackup).purchaseCount}</b></span><span>Bán hàng: <b>{getDataBackupRestorePreview(restoreBackup).saleCount}</b></span><span>Chyusen: <b>{getDataBackupRestorePreview(restoreBackup).chyusenCount}</b></span></div><Input value={restoreConfirmation} onChange={(event) => setRestoreConfirmation(event.target.value)} placeholder="Nhập KHÔI PHỤC để xác nhận" aria-label="Xác nhận khôi phục dữ liệu" /><Button type="button" className="w-full bg-red-600 hover:bg-red-700" disabled={restoreConfirmation !== "KHÔI PHỤC" || restoreData.isPending} onClick={() => restoreBackup && restoreData.mutate({ backup: restoreBackup, confirmed: true })}><span className="rgb-action-label">{restoreData.isPending ? "Đang khôi phục" : "Khôi phục dữ liệu"}</span></Button></div>}</div><div className="space-y-3 rounded-lg border border-violet-500/30 bg-violet-500/5 p-3"><div><p className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-violet-400" />Báo cáo tháng PDF</p><p className="mt-1 text-xs text-muted-foreground">Tạo báo cáo gồm mua, doanh thu, lợi nhuận, ROI, phí giao dịch và top sản phẩm trong tháng chọn.</p></div><Input type="month" value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} aria-label="Chọn tháng báo cáo PDF" /><div className="grid grid-cols-2 gap-2 text-xs"><span>Doanh thu: <b>{formatYen(monthlyReport?.totalRevenue || 0, "ja-JP", currencySymbolPosition)}</b></span><span>Lợi nhuận: <b>{formatYen(monthlyReport?.totalProfit || 0, "ja-JP", currencySymbolPosition)}</b></span></div><Button type="button" variant="outline" className="w-full" onClick={() => void exportMonthlyPdf()}><FileText className="mr-1.5 h-4 w-4" />Tải báo cáo PDF</Button></div></div></CardContent>
     </Card>
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.chyusen}>

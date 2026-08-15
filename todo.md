@@ -894,3 +894,9 @@
 - [x] Tạo sao lưu toàn bộ dữ liệu cá nhân ở định dạng JSON
 - [x] Thêm khu vực Sao lưu & Xuất dữ liệu trong Cài đặt
 - [x] Kiểm thử tệp xuất và giao diện rồi lưu checkpoint
+
+## Khôi phục sao lưu và báo cáo PDF tháng
+- [x] Kiểm tra và hiển thị bản xem trước tệp JSON sao lưu trước khi khôi phục
+- [x] Khôi phục dữ liệu JSON có xác nhận, chỉ trong tài khoản hiện tại
+- [x] Tạo báo cáo thống kê theo tháng và xuất PDF
+- [x] Tích hợp thao tác trong Cài đặt, kiểm thử và lưu checkpoint
