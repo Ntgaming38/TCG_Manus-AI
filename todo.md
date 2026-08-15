@@ -805,3 +805,8 @@
 - [x] Bổ sung giá vốn đã mua vào tổng kết giao dịch trong khoảng lọc
 - [x] Hiển thị giá vốn, doanh thu và lợi nhuận cho từng sản phẩm đã bán
 - [x] Bổ sung kiểm thử công thức tổng kết và lưu checkpoint
+
+## Tinh chỉnh bộ lọc ngày bán
+- [x] Thu gọn và căn giữa hai ô chọn ngày trên điện thoại
+- [x] Thêm gợi ý Chọn ngày và bỏ biểu tượng lịch thừa
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint

@@ -565,6 +565,15 @@
   .settings-stack > .settings-currency-card { order: 0; }
   .settings-login-background-card { order: 2.5; }
 
+  .sales-date-input {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .sales-date-input::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+
   .settings-collapsible-panel [data-settings-header] {
     cursor: pointer;
     position: relative;

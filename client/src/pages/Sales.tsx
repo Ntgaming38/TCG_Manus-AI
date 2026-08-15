@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, DollarSign, Calendar, CalendarRange, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
@@ -297,11 +297,11 @@ export default function Sales() {
 
       {/* Compact filters */}
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/60 p-3 shadow-sm">
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-[138px] flex-1 sm:max-w-[180px]"><Label htmlFor="sales-from-date" className="mb-1 block text-[11px] text-muted-foreground">Từ ngày</Label><Input id="sales-from-date" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className="h-9 text-xs" /></div>
-          <div className="min-w-[138px] flex-1 sm:max-w-[180px]"><Label htmlFor="sales-to-date" className="mb-1 block text-[11px] text-muted-foreground">Đến ngày</Label><Input id="sales-to-date" type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} className="h-9 text-xs" /></div>
+        <div className="flex flex-wrap items-end justify-center gap-2 sm:justify-start">
+          <div className="w-[124px] sm:w-[170px]"><Label htmlFor="sales-from-date" className="mb-1 block text-[11px] text-muted-foreground">Từ ngày</Label><div className="relative"><Input id="sales-from-date" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className={`sales-date-input h-8 px-2 text-xs ${fromDate ? "" : "text-transparent"}`} aria-label="Từ ngày" /><span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-muted-foreground ${fromDate ? "hidden" : ""}`}>Chọn ngày</span></div></div>
+          <div className="w-[124px] sm:w-[170px]"><Label htmlFor="sales-to-date" className="mb-1 block text-[11px] text-muted-foreground">Đến ngày</Label><div className="relative"><Input id="sales-to-date" type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} className={`sales-date-input h-8 px-2 text-xs ${toDate ? "" : "text-transparent"}`} aria-label="Đến ngày" /><span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-muted-foreground ${toDate ? "hidden" : ""}`}>Chọn ngày</span></div></div>
           {hasDateFilter && <Button type="button" variant="ghost" size="sm" className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={resetDateFilter}><X className="mr-1 h-3.5 w-3.5" />Xóa ngày</Button>}
-          <div className="ml-auto flex items-center gap-1.5 rounded-md bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground"><CalendarRange className="h-3.5 w-3.5 text-primary" />{hasDateFilter ? `${formatFilterDate(fromDate)} — ${formatFilterDate(toDate)}` : "Tất cả thời gian"}</div>
+          <div className="flex items-center rounded-md bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground sm:ml-auto">{hasDateFilter ? `${formatFilterDate(fromDate)} — ${formatFilterDate(toDate)}` : "Tất cả thời gian"}</div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-md">
