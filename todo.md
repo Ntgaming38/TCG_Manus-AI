@@ -883,3 +883,8 @@
 - [x] Thêm bộ lọc thông báo theo hạn đăng ký hoặc kết quả
 - [x] Thêm tùy chọn bật/tắt âm cảnh báo cho thông báo mới và khẩn cấp
 - [x] Kiểm thử thao tác, bộ lọc và âm cảnh báo rồi lưu checkpoint
+
+## Lịch sử thông báo Chyusen đã xem
+- [x] Thêm tab Đã xem để xem lại thông báo Chyusen đã đọc
+- [x] Giữ bộ lọc Hạn đăng ký/Kết quả cho lịch sử đã xem
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
