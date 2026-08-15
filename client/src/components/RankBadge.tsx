@@ -22,10 +22,10 @@ export function RankBadge({ rank, marketPrice, className = "" }: RankBadgeProps)
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span tabIndex={0} className="inline-flex shrink-0 cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        <span tabIndex={0} className={`inline-flex shrink-0 cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${className}`}>
           <Badge
             variant="outline"
-            className={`shrink-0 border px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide transition-transform duration-150 hover:-translate-y-0.5 hover:brightness-110 ${RANK_BADGE_STYLES[value]} ${className}`}
+            className={`shrink-0 border px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide transition-transform duration-150 hover:-translate-y-0.5 hover:brightness-110 ${RANK_BADGE_STYLES[value]}`}
             aria-label={`Rank Card ${value}. ${price > 0 ? `Giá thị trường ${formatYen(price)}` : "Chưa có giá thị trường"}`}
           >
             <span className="rank-rgb-text">Rank {value}</span>

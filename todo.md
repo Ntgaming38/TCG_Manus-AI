@@ -849,3 +849,7 @@
 - [x] Hiển thị tooltip Rank Card với giá thị trường tương ứng khi di chuột hoặc focus
 - [x] Đưa badge Rank Card sát sau tên mỗi sản phẩm Card
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Khoảng cách badge Rank Card
+- [x] Tăng khoảng cách giữa tên sản phẩm và badge Rank Card
+- [x] Kiểm thử bố cục desktop/mobile và lưu checkpoint
