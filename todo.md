@@ -815,3 +815,9 @@
 - [x] Thêm nút Hôm nay, Tuần này và Tháng này cạnh bộ lọc ngày
 - [x] Hiển thị rõ trạng thái nút lọc nhanh đang chọn
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Tự chọn loại khi thêm sản phẩm
+- [x] Tự chọn Card, Box hoặc Pack trong biểu mẫu Thêm mới theo trang đang mở
+- [x] Hiển thị rõ loại đã chọn tự động và cho phép xác nhận trước khi lưu
+- [x] Giữ biểu mẫu Mua hàng cho người dùng tự chọn loại
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint

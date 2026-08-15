@@ -14,6 +14,7 @@ import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCard
 import { RarityBadge } from "@/components/RarityBadge";
 import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
+import { getAutoCreateProductType } from "@shared/productCreateType";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -48,6 +49,7 @@ export default function Products() {
   // Determine filter from URL
   const pathType = location.split("/san-pham/")[1];
   const activeType = pathType || typeFilter;
+  const autoCreateType = getAutoCreateProductType(activeType);
 
   const { data: products, refetch } = trpc.products.list.useQuery({
     type: activeType !== "all" ? activeType : undefined,
@@ -153,6 +155,11 @@ export default function Products() {
     return "Sản phẩm";
   };
 
+  const handleAddDialogChange = (open: boolean) => {
+    if (open && autoCreateType) setNewProduct((product) => ({ ...product, type: autoCreateType }));
+    setShowAddDialog(open);
+  };
+
   const toggleListColumn = (key: ProductListColumnKey) => setVisibleListColumns((current) => {
     if (current.includes(key)) {
       if (current.length === 1) { toast.error("Danh sách cần giữ ít nhất một cột thông tin."); return current; }
@@ -192,7 +199,7 @@ export default function Products() {
           <h1 className="text-2xl font-bold text-foreground">{getTypeLabel()}</h1>
           <p className="text-muted-foreground text-sm mt-1">Quản lý {getTypeLabel().toLowerCase()} của bạn. Sản phẩm đã bán hết được ẩn và sẽ hiện lại khi nhập hàng.</p>
         </div>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <Dialog open={showAddDialog} onOpenChange={handleAddDialogChange}>
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
@@ -207,14 +214,21 @@ export default function Products() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Loại</Label>
-                  <Select value={newProduct.type} onValueChange={(v) => setNewProduct(p => ({ ...p, type: v as any }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="card">Card</SelectItem>
-                      <SelectItem value="box">Box</SelectItem>
-                      <SelectItem value="pack">Pack</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {autoCreateType ? (
+                    <div className="flex h-10 items-center justify-between rounded-md border border-primary/35 bg-primary/10 px-3 text-sm">
+                      <span className="font-medium text-foreground">{getTypeLabel()}</span>
+                      <span className="text-[11px] text-primary">Tự chọn theo trang</span>
+                    </div>
+                  ) : (
+                    <Select value={newProduct.type} onValueChange={(v) => setNewProduct(p => ({ ...p, type: v as any }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="box">Box</SelectItem>
+                        <SelectItem value="pack">Pack</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Series</Label>
