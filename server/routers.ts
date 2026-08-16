@@ -16,7 +16,7 @@ import { checkChyusenSourceNow } from "./chyusenMonitor";
 import { analyzeChyusenImage, analyzeChyusenImages } from "./chyusenImageAnalysis";
 import { emptyTrashItems, getTrashAutoCleanupSettings, listTrashItems, saveTrashAutoCleanupSettings, setTrashAutoCleanupTask, TRASH_AUTO_CLEANUP_CRON } from "./trashDb";
 import { restoreTrashItem } from "./trashRestore";
-import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
+import { createHeartbeatJob, listHeartbeatJobs, updateHeartbeatJob } from "./_core/heartbeat";
 import { uploadLoginBackground } from "./loginBackground";
 import { normalizeCardRank } from "@shared/cardRank";
 import { uploadUserAvatar } from "./userProfile";
@@ -26,6 +26,7 @@ import { restoreDataBackup } from "./dataRestore";
 import { createMonthlyReport } from "@shared/monthlyReport";
 import { createManualStoredBackup, getAutoBackupSettings, listBackupArchives, listBackupRestoreHistory, AUTO_BACKUP_CRON, saveAutoBackupSettings, setAutoBackupTask, type AutoBackupFrequency } from "./backupScheduler";
 import { getReportBranding, saveReportBranding, uploadReportLogo } from "./reportBranding";
+import { findExistingAutoBackupTask } from "@shared/autoBackupSchedule";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -154,8 +155,15 @@ export const appRouter = router({
           if (!sessionToken) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để bật sao lưu tự động.");
           if (updated.scheduleCronTaskUid) await updateHeartbeatJob(updated.scheduleCronTaskUid, { cron: updated.cronExpression, path: "/api/scheduled/auto-backup", enable: true }, sessionToken);
           else {
+            const existingJobs = await listHeartbeatJobs(sessionToken);
+            const existingTaskUid = findExistingAutoBackupTask(existingJobs.jobs, ctx.user.id);
+            if (existingTaskUid) {
+              await setAutoBackupTask(ctx.user.id, existingTaskUid);
+              await updateHeartbeatJob(existingTaskUid, { cron: updated.cronExpression, path: "/api/scheduled/auto-backup", enable: true }, sessionToken);
+            } else {
             const job = await createHeartbeatJob({ name: `auto-backup-${ctx.user.id}`, cron: updated.cronExpression, path: "/api/scheduled/auto-backup", description: `Sao lưu dữ liệu ${updated.frequency === "weekly" ? "hàng tuần" : "hàng tháng"} cho tài khoản ${ctx.user.id}` }, sessionToken);
             await setAutoBackupTask(ctx.user.id, job.taskUid);
+            }
           }
           await saveAutoBackupSettings(ctx.user.id, { frequency: updated.frequency, isEnabled: true });
         } else if (updated.scheduleCronTaskUid && sessionToken) {

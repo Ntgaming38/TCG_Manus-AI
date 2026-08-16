@@ -929,3 +929,7 @@
 - [x] Hiển thị cấu hình dọn nhật ký trong Cài đặt
 - [x] Kiểm thử và lưu checkpoint trước khi kích hoạt lịch
 - [x] Kích hoạt lịch dọn nhật ký sau khi phiên bản đã xuất bản
+
+## Khắc phục lịch sao lưu tự động
+- [x] Liên kết lại lịch auto-backup đã tồn tại thay vì tạo trùng
+- [x] Kiểm thử bật sao lưu tự động và lưu checkpoint
