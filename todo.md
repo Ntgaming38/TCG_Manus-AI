@@ -925,7 +925,7 @@
 
 ## Tự động dọn Nhật ký hoạt động
 - [x] Thêm cấu hình dọn nhật ký nhạy cảm cũ hơn 30 ngày theo tài khoản
-- [ ] Tạo tác vụ định kỳ dọn nhật ký và lưu trạng thái lần chạy
+- [x] Tạo tác vụ định kỳ dọn nhật ký và lưu trạng thái lần chạy
 - [x] Hiển thị cấu hình dọn nhật ký trong Cài đặt
 - [x] Kiểm thử và lưu checkpoint trước khi kích hoạt lịch
-- [ ] Kích hoạt lịch dọn nhật ký sau khi phiên bản đã xuất bản
+- [x] Kích hoạt lịch dọn nhật ký sau khi phiên bản đã xuất bản
