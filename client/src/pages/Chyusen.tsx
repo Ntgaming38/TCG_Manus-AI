@@ -28,6 +28,7 @@ import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCard
 import { isChyusenResultAnnouncementToday } from "@shared/chyusenResultReminder";
 import { detectChyusenShopFromQrUrl, normalizeChyusenQrUrl } from "@shared/chyusenQr";
 import { matchesChyusenNotificationFilter, selectChyusenNotificationsByReadTab, type ChyusenNotificationFilter, type ChyusenNotificationReadTab } from "@shared/chyusenNotificationFilter";
+import { resolveChyusenDefaultFilter } from "@shared/chyusenDefaultFilter";
 
 const SHOPS = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Bandai Premium", "Pokémon Center", "Rakuten", "Khác"];
 const CHYUSEN_TOAST_DURATION = 8_000;
@@ -141,7 +142,7 @@ function participationBadge(status: string) {
 }
 
 export default function Chyusen() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const { data: entries = [], isLoading } = trpc.chyusen.list.useQuery();
   const { data: notifications = [] } = trpc.chyusen.notifications.useQuery();
@@ -205,8 +206,7 @@ export default function Chyusen() {
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
-    const dashboardFilter = query.get("filter");
-    if (isDashboardChyusenFilter(dashboardFilter)) setFilter(dashboardFilter);
+    setFilter(resolveChyusenDefaultFilter(window.location.search));
     if (query.get("new") === "1") {
       setEditingId(null);
       setDraft(EMPTY_CHYUSEN_DRAFT);
@@ -215,7 +215,7 @@ export default function Chyusen() {
         window.setTimeout(() => dateFieldsRef.current?.scrollIntoView({ block: "start" }), 100);
       }
     }
-  }, []);
+  }, [location]);
 
   const invalidate = () => {
     utils.chyusen.list.invalidate();

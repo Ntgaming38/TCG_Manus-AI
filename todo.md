@@ -912,3 +912,13 @@
 - [x] Yêu cầu nhập xác nhận trước khi xóa vĩnh viễn dữ liệu
 - [x] Yêu cầu nhập xác nhận trước khi khôi phục JSON sao lưu
 - [x] Kiểm thử các thao tác nhạy cảm và lưu checkpoint
+
+## Nhật ký hoạt động dữ liệu nhạy cảm
+- [x] Lưu nhật ký xóa vĩnh viễn và khôi phục dữ liệu theo từng tài khoản
+- [x] Hiển thị Nhật ký hoạt động trong Cài đặt với thời gian và chi tiết thao tác
+- [x] Kiểm thử nhật ký hoạt động và lưu checkpoint
+
+## Bộ lọc Chyusen mặc định
+- [x] Đặt bộ lọc Chyusen là Tất cả trạng thái khi mở trang
+- [x] Chỉ áp dụng trạng thái khác khi người dùng chủ động chọn
+- [x] Kiểm thử bộ lọc Chyusen và lưu checkpoint

@@ -545,6 +545,9 @@ export const appRouter = router({
         cursor: z.object({ id: z.number().int().positive(), createdAt: z.date() }).optional(),
       }).optional())
       .query(({ ctx, input }) => db.listActivityLogs(ctx.user.id, input)),
+    sensitive: protectedProcedure
+      .input(z.object({ limit: z.number().int().min(5).max(50).default(20) }).optional())
+      .query(({ ctx, input }) => db.listSensitiveActivityLogs(ctx.user.id, input?.limit)),
   }),
 
   chyusen: router({

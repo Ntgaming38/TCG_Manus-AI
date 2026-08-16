@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
-import { chyusenEntries, chyusenNotifications, trashAutoCleanupSettings, trashItems } from "../drizzle/schema";
+import { activityLogs, chyusenEntries, chyusenNotifications, trashAutoCleanupSettings, trashItems } from "../drizzle/schema";
 import { getDb } from "./db";
 
 export type TrashEntityType = "product" | "purchase" | "sale" | "chyusen" | "source" | "notification";
@@ -84,6 +84,8 @@ async function permanentlyRemoveTrashItems(userId: number, items: Awaited<Return
   }
   if (notificationIds.length) await db.delete(chyusenNotifications).where(and(eq(chyusenNotifications.userId, userId), inArray(chyusenNotifications.id, notificationIds)));
   await db.delete(trashItems).where(and(eq(trashItems.userId, userId), isNull(trashItems.restoredAt), inArray(trashItems.id, items.map((item) => item.id))));
+  const types = Array.from(new Set(items.map((item) => item.entityType))).join(", ");
+  await db.insert(activityLogs).values({ userId, action: "trash_purged", description: `Xóa vĩnh viễn ${items.length} mục trong Thùng rác${types ? ` (${types})` : ""}.`, entityType: "trash" });
   return { purgedCount: items.length };
 }
 

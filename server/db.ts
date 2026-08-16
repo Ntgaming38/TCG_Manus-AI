@@ -14,6 +14,7 @@ import { getChyusenDaysRemaining } from '../shared/chyusenDate';
 import { getMarketplace24hMovements, parseMarketplaceHistoryPeriod } from '../shared/marketplacePriceHistory';
 import { shouldDisplayProductInCatalog } from '../shared/productVisibility';
 import { getSalesProfitBreakdown, getStockMetricBreakdown } from '../shared/dashboardMetricBreakdown';
+import { SENSITIVE_ACTIVITY_ACTIONS } from "../shared/sensitiveActivityLog";
 import { getDashboardMonthlyTrend } from '../shared/dashboardMonthlyTrend';
 import { getCardRankLabel, normalizeCardRank } from '../shared/cardRank';
 import { createTrashItem } from './trashDb';
@@ -591,6 +592,17 @@ export async function listActivityLogs(userId: number, filters?: ActivityLogFilt
     nextCursor: hasNextPage && lastItem ? { id: lastItem.id, createdAt: lastItem.createdAt } : null,
     totalCount,
   };
+}
+
+/** Returns confirmed permanent deletion and backup-restore actions for the current user only. */
+export async function listSensitiveActivityLogs(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const pageSize = Math.min(Math.max(limit, 5), 50);
+  return db.select().from(activityLogs)
+    .where(and(eq(activityLogs.userId, userId), inArray(activityLogs.action, [...SENSITIVE_ACTIVITY_ACTIONS])))
+    .orderBy(desc(activityLogs.createdAt), desc(activityLogs.id))
+    .limit(pageSize);
 }
 
 // ========== PURCHASES ==========
