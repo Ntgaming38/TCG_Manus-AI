@@ -24,6 +24,8 @@ import { createDataBackupPayload, DATA_BACKUP_SCOPES } from "@shared/dataBackupE
 import { dataBackupRestoreSchema } from "@shared/dataBackupRestore";
 import { restoreDataBackup } from "./dataRestore";
 import { createMonthlyReport } from "@shared/monthlyReport";
+import { createManualStoredBackup, getAutoBackupSettings, listBackupArchives, listBackupRestoreHistory, AUTO_BACKUP_CRON, saveAutoBackupSettings, setAutoBackupTask, type AutoBackupFrequency } from "./backupScheduler";
+import { getReportBranding, saveReportBranding, uploadReportLogo } from "./reportBranding";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -131,8 +133,45 @@ export const appRouter = router({
         chyusenCount: input.backup.chyusen?.entries?.length || 0,
       })),
     restoreData: protectedProcedure
-      .input(z.object({ backup: dataBackupRestoreSchema, confirmed: z.literal(true) }))
-      .mutation(async ({ ctx, input }) => restoreDataBackup(ctx.user.id, input.backup)),
+      .input(z.object({ backup: dataBackupRestoreSchema, sourceFileName: z.string().trim().max(255).optional(), confirmed: z.literal(true) }))
+      .mutation(async ({ ctx, input }) => restoreDataBackup(ctx.user.id, input.backup, input.sourceFileName)),
+    restoreHistory: protectedProcedure.query(({ ctx }) => listBackupRestoreHistory(ctx.user.id)),
+    archives: protectedProcedure.query(({ ctx }) => listBackupArchives(ctx.user.id)),
+    createStoredSnapshot: protectedProcedure.mutation(({ ctx }) => createManualStoredBackup(ctx.user.id)),
+    autoBackupStatus: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await getAutoBackupSettings(ctx.user.id);
+      return settings ?? { isEnabled: 0, frequency: "weekly" as const, cronExpression: AUTO_BACKUP_CRON.weekly, lastRunAt: null, lastRunStatus: null, lastRunSummary: null };
+    }),
+    updateAutoBackup: protectedProcedure
+      .input(z.object({ isEnabled: z.boolean().optional(), frequency: z.enum(["weekly", "monthly"]).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const current = await getAutoBackupSettings(ctx.user.id);
+        const shouldEnable = input.isEnabled ?? Boolean(current?.isEnabled);
+        const updated = await saveAutoBackupSettings(ctx.user.id, { frequency: input.frequency as AutoBackupFrequency | undefined, isEnabled: false });
+        if (!updated) throw new Error("Không thể lưu cấu hình sao lưu tự động.");
+        const sessionToken = parseCookieHeader(ctx.req.headers.cookie ?? "")[COOKIE_NAME];
+        if (shouldEnable) {
+          if (!sessionToken) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để bật sao lưu tự động.");
+          if (updated.scheduleCronTaskUid) await updateHeartbeatJob(updated.scheduleCronTaskUid, { cron: updated.cronExpression, path: "/api/scheduled/auto-backup", enable: true }, sessionToken);
+          else {
+            const job = await createHeartbeatJob({ name: `auto-backup-${ctx.user.id}`, cron: updated.cronExpression, path: "/api/scheduled/auto-backup", description: `Sao lưu dữ liệu ${updated.frequency === "weekly" ? "hàng tuần" : "hàng tháng"} cho tài khoản ${ctx.user.id}` }, sessionToken);
+            await setAutoBackupTask(ctx.user.id, job.taskUid);
+          }
+          await saveAutoBackupSettings(ctx.user.id, { frequency: updated.frequency, isEnabled: true });
+        } else if (updated.scheduleCronTaskUid && sessionToken) {
+          await updateHeartbeatJob(updated.scheduleCronTaskUid, { enable: false }, sessionToken);
+        }
+        return (await getAutoBackupSettings(ctx.user.id)) ?? updated;
+      }),
+  }),
+
+  reportBranding: router({
+    get: protectedProcedure.query(({ ctx }) => getReportBranding(ctx.user.id)),
+    update: protectedProcedure.input(z.object({ accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(), logoUrl: z.string().max(2048).nullable().optional() })).mutation(({ ctx, input }) => {
+      if (input.logoUrl && !input.logoUrl.startsWith("/manus-storage/")) throw new Error("Logo báo cáo không hợp lệ.");
+      return saveReportBranding(ctx.user.id, input);
+    }),
+    uploadLogo: protectedProcedure.input(z.object({ imageDataUrl: z.string().trim().min(64).max(4_500_000) })).mutation(({ ctx, input }) => uploadReportLogo(ctx.user.id, input.imageDataUrl)),
   }),
 
   ai: router({

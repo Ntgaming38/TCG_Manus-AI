@@ -13,6 +13,7 @@ import { sdk } from "./sdk";
 import { runChyusenMonitor } from "../chyusenMonitor";
 import { runMarketplaceAutoSync } from "../marketplaceMonitor";
 import { runTrashAutoCleanup } from "../trashAutoCleanup";
+import { runScheduledAutoBackup } from "../backupScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -77,6 +78,19 @@ async function startServer() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("[Trash auto cleanup]", message);
+      return res.status(500).json({ error: message, timestamp: new Date().toISOString() });
+    }
+  });
+
+  app.post("/api/scheduled/auto-backup", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
+      const summary = await runScheduledAutoBackup(user.taskUid);
+      return res.json({ ok: true, ...summary, timestamp: new Date().toISOString() });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[Auto backup]", message);
       return res.status(500).json({ error: message, timestamp: new Date().toISOString() });
     }
   });

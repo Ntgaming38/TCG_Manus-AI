@@ -900,3 +900,10 @@
 - [x] Khôi phục dữ liệu JSON có xác nhận, chỉ trong tài khoản hiện tại
 - [x] Tạo báo cáo thống kê theo tháng và xuất PDF
 - [x] Tích hợp thao tác trong Cài đặt, kiểm thử và lưu checkpoint
+
+## Lịch sử khôi phục, thương hiệu PDF và sao lưu tự động
+- [x] Lưu và hiển thị lịch sử các lần khôi phục dữ liệu gần nhất
+- [x] Cho phép chọn màu và logo cá nhân cho báo cáo PDF
+- [x] Tạo và quản lý lịch sao lưu tự động hàng tuần hoặc hàng tháng
+- [x] Lưu bản sao tự động riêng theo tài khoản và hiển thị lần chạy gần nhất
+- [x] Kiểm thử toàn bộ luồng và lưu checkpoint trước khi kích hoạt lịch

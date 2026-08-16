@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { activityLogs, chyusenEntries, chyusenSources, products, purchases, sales } from "../drizzle/schema";
+import { activityLogs, backupRestoreHistory, chyusenEntries, chyusenSources, products, purchases, sales } from "../drizzle/schema";
 import { getDb } from "./db";
 import type { DataBackupRestorePayload } from "@shared/dataBackupRestore";
 import { updateChyusenNotificationSettings } from "./chyusenDb";
@@ -67,7 +67,7 @@ function backupProduct(row: BackupRow, userId: number) {
   };
 }
 
-export async function restoreDataBackup(userId: number, payload: DataBackupRestorePayload) {
+export async function restoreDataBackup(userId: number, payload: DataBackupRestorePayload, sourceFileName = "Sao lưu TCG Manager.json") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -155,5 +155,6 @@ export async function restoreDataBackup(userId: number, payload: DataBackupResto
   }
 
   await db.insert(activityLogs).values({ userId, action: "backup_restored", description: `Khôi phục sao lưu: ${restoredProducts} sản phẩm, ${restoredPurchases} mua, ${restoredSales} bán, ${restoredChyusen} Chyusen, ${restoredSources} nguồn`, entityType: "backup" });
+  await db.insert(backupRestoreHistory).values({ userId, sourceFileName: sourceFileName.slice(0, 255), scope: payload.scope, restoredProducts, restoredPurchases, restoredSales, restoredChyusen, restoredSources });
   return { restoredProducts, restoredPurchases, restoredSales, restoredChyusen, restoredSources };
 }
