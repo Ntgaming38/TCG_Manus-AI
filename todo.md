@@ -907,3 +907,8 @@
 - [x] Tạo và quản lý lịch sao lưu tự động hàng tuần hoặc hàng tháng
 - [x] Lưu bản sao tự động riêng theo tài khoản và hiển thị lần chạy gần nhất
 - [x] Kiểm thử toàn bộ luồng và lưu checkpoint trước khi kích hoạt lịch
+
+## Xác nhận thao tác dữ liệu nhạy cảm
+- [x] Yêu cầu nhập xác nhận trước khi xóa vĩnh viễn dữ liệu
+- [x] Yêu cầu nhập xác nhận trước khi khôi phục JSON sao lưu
+- [x] Kiểm thử các thao tác nhạy cảm và lưu checkpoint
