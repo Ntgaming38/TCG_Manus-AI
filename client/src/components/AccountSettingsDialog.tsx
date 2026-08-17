@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Check, Copy, Crop, ExternalLink, History, Laptop, Loader2, LogOut, Move, ShieldCheck, UserRound } from "lucide-react";
+import { Camera, Check, Chrome, Compass, Copy, Crop, ExternalLink, Globe2, History, Laptop, Loader2, LogOut, Monitor, Move, ShieldCheck, Smartphone, UserRound } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { AVATAR_BORDER_PRESETS, normalizeAvatarBorderColor } from "@shared/avatarBorder";
-import { LOGOUT_ALL_CONFIRMATION } from "@shared/sessionDevice";
+import { getSessionDeviceLabel, LOGOUT_ALL_CONFIRMATION } from "@shared/sessionDevice";
 
 type AccountUser = {
   name?: string | null;
@@ -113,6 +113,7 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
   const provider = loginProviderLabel(user?.loginMethod);
   const isGoogleLogin = user?.loginMethod?.toLowerCase() === "google";
   const securityUrl = isGoogleLogin ? "https://support.google.com/accounts/answer/41078" : "https://manus.im";
+  const currentDeviceLabel = typeof navigator === "undefined" ? null : getSessionDeviceLabel(navigator.userAgent);
 
   const handleAvatarSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -220,7 +221,7 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
           <section className="rounded-xl border border-border bg-secondary/15 p-4">
             <div className="flex items-center gap-2"><Laptop className="h-4 w-4 text-primary" /><p className="font-semibold">Thiết bị đăng nhập gần đây</p></div>
             <p className="mt-1 text-xs text-muted-foreground">Danh sách hiển thị các thiết bị đã dùng để đăng nhập tài khoản này gần đây.</p>
-            {isLoginHistoryLoading ? <p className="mt-3 text-xs text-muted-foreground">Đang tải lịch sử...</p> : loginEvents.length ? <div className="mt-3 space-y-2">{loginEvents.map((event) => <div key={event.id} className="flex items-center justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0"><div className="min-w-0"><p className="truncate text-xs font-semibold">{event.deviceLabel || "Thiết bị không xác định"}</p><span className="text-[11px] text-muted-foreground">{loginProviderLabel(event.loginMethod)}</span></div><time className="shrink-0 text-right text-[11px] text-muted-foreground">{new Date(event.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}</time></div>)}</div> : <p className="mt-3 text-xs text-muted-foreground">Lịch sử sẽ xuất hiện sau lần đăng nhập tiếp theo.</p>}
+            {isLoginHistoryLoading ? <p className="mt-3 text-xs text-muted-foreground">Đang tải lịch sử...</p> : loginEvents.length ? <div className="mt-3 space-y-2">{loginEvents.map((event, index) => { const deviceName = event.deviceLabel || "Thiết bị không xác định"; const isCurrentDevice = index === 0 && deviceName === currentDeviceLabel; const DeviceIcon = /iPhone|iPad|Android/.test(deviceName) ? Smartphone : /Mac|Windows|Linux/.test(deviceName) ? Monitor : Laptop; const BrowserIcon = deviceName.includes("Chrome") ? Chrome : deviceName.includes("Safari") ? Compass : Globe2; return <div key={event.id} className="flex items-center justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0"><div className="flex min-w-0 items-center gap-2"><div className="flex shrink-0 items-center gap-0.5 text-primary"><DeviceIcon className="h-4 w-4" /><BrowserIcon className="h-3.5 w-3.5" /></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><p className="truncate text-xs font-semibold">{deviceName}</p>{isCurrentDevice && <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">Thiết bị hiện tại</span>}</div><span className="text-[11px] text-muted-foreground">{loginProviderLabel(event.loginMethod)}</span></div></div><time className="shrink-0 text-right text-[11px] text-muted-foreground">{new Date(event.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}</time></div>; })}</div> : <p className="mt-3 text-xs text-muted-foreground">Lịch sử sẽ xuất hiện sau lần đăng nhập tiếp theo.</p>}
           </section>
 
           <section className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-4">

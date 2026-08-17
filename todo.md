@@ -959,3 +959,8 @@
 - [x] Lưu và hiển thị thiết bị đăng nhập gần đây theo tài khoản
 - [x] Thêm đăng xuất khỏi tất cả thiết bị với xác nhận an toàn
 - [x] Kiểm thử quản lý phiên và lưu checkpoint
+
+## Nhận diện thiết bị đăng nhập
+- [x] Hiển thị nhãn Thiết bị hiện tại cho phiên đang dùng
+- [x] Thêm biểu tượng hệ điều hành và trình duyệt cho từng phiên
+- [x] Kiểm thử popup thiết bị và lưu checkpoint
