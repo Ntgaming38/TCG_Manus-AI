@@ -329,7 +329,7 @@ export default function Chyusen() {
   const filteredEntries = useMemo(() => prioritizeChyusenDeadlineToday(entries.filter((entry: any) => {
     const normalizedSearch = search.trim().toLowerCase();
     const matchesSearch = !normalizedSearch || [entry.title, entry.productName, entry.shop, entry.series].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
-    const matchesFilter = filter === "all" || (isDashboardChyusenFilter(filter) ? matchesDashboardChyusenFilter(entry, filter) : entry.timeState === filter || entry.applicationStatus === filter);
+    const matchesFilter = filter === "all" || (filter === "waiting_result" ? matchesDashboardChyusenFilter(entry, "dashboard_waiting") : isDashboardChyusenFilter(filter) ? matchesDashboardChyusenFilter(entry, filter) : entry.timeState === filter || entry.applicationStatus === filter);
     return matchesSearch && matchesFilter;
   })), [entries, filter, search]);
   const unreadNotifications = selectChyusenNotificationsByReadTab(notifications, "unread");
@@ -521,7 +521,7 @@ export default function Chyusen() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm sản phẩm, cửa hàng, series..." className="pl-9" /></div>
         <Select value={filter} onValueChange={setFilter}><SelectTrigger className="w-full lg:w-[210px]"><SelectValue /></SelectTrigger><SelectContent>
-          <SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="dashboard_waiting">Chờ kết quả (Dashboard)</SelectItem><SelectItem value="dashboard_expiring">Sắp hết hạn (0–1 ngày)</SelectItem><SelectItem value="dashboard_won">Đã trúng (Dashboard)</SelectItem><SelectItem value="dashboard_lost">Đã trượt (Dashboard)</SelectItem><SelectItem value="open">Đang đăng ký</SelectItem><SelectItem value="expiring">Sắp hết hạn</SelectItem><SelectItem value="expired">Đã hết hạn</SelectItem><SelectItem value="waiting_result">Chờ kết quả</SelectItem><SelectItem value="registered">Đã đăng ký</SelectItem><SelectItem value="won">Đã trúng</SelectItem><SelectItem value="lost">Đã trượt</SelectItem>
+          <SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="waiting_result">Chờ kết quả</SelectItem><SelectItem value="dashboard_expiring">Sắp hết hạn (0–1 ngày)</SelectItem><SelectItem value="dashboard_won">Đã trúng (Dashboard)</SelectItem><SelectItem value="dashboard_lost">Đã trượt (Dashboard)</SelectItem><SelectItem value="open">Đang đăng ký</SelectItem><SelectItem value="expiring">Sắp hết hạn</SelectItem><SelectItem value="expired">Đã hết hạn</SelectItem><SelectItem value="registered">Đã đăng ký</SelectItem><SelectItem value="won">Đã trúng</SelectItem><SelectItem value="lost">Đã trượt</SelectItem>
         </SelectContent></Select>
       </div>
 

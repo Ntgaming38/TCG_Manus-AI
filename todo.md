@@ -969,3 +969,8 @@
 - [x] Đặt trạng thái Đã đăng ký ngay sau khi lưu chương trình Chyusen mới
 - [x] Chuyển trực tiếp sang Chờ kết quả và bỏ thao tác đăng ký lặp lại
 - [x] Kiểm thử luồng tạo, Tổng quan và lưu checkpoint
+
+## Bộ lọc Chyusen chờ kết quả
+- [x] Thêm lựa chọn Chờ kết quả vào bộ lọc trạng thái danh sách
+- [x] Lọc đúng các Chyusen đã đăng ký và đang chờ công bố
+- [x] Kiểm thử bộ lọc và lưu checkpoint
