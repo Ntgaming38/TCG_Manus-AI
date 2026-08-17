@@ -256,7 +256,7 @@ export default function Chyusen() {
     },
   });
   const create = trpc.chyusen.create.useMutation({
-    onSuccess: (data) => { showChyusenSavedToast("Đã lưu Chyusen thủ công thành công.", data.id); setShowDialog(false); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); invalidate(); },
+    onSuccess: (data) => { showChyusenSavedToast("Đã lưu và ghi nhận Đã đăng ký. Chyusen đang chờ kết quả.", data.id); setShowDialog(false); setDraft(EMPTY_CHYUSEN_DRAFT); setValidationErrors({}); invalidate(); },
     onError: (error) => toast.error(error.message),
   });
   const update = trpc.chyusen.update.useMutation({
@@ -480,7 +480,7 @@ export default function Chyusen() {
       return;
     }
     if (editingId) update.mutate({ id: editingId, data: payload });
-    else create.mutate(payload);
+    else create.mutate({ ...payload, applicationStatus: "registered", resultStatus: "pending" });
   };
   const focusFirstAiField = () => window.setTimeout(() => document.querySelector<HTMLElement>("[data-ai-filled='true'] input, [data-ai-filled='true'] button")?.focus(), 0);
   const applyAiProposal = () => { if (!aiProposal) return; setAiDraftBackup(draft); setDraft(aiProposal.draft); setAiFilledFields(aiProposal.fields); setAiFieldConfidence(aiProposal.confidence); setAiFieldEvidence(aiProposal.evidence); setAiProposal(null); toast.success("Đã áp dụng dữ liệu AI. Bạn vẫn có thể sửa trước khi lưu."); };

@@ -189,7 +189,11 @@ export function getChyusenUrgency(deadline: Date | null | undefined, now = new D
   return null;
 }
 
-export function getChyusenTimeState(entry: { applicationStart?: Date | null; applicationEnd?: Date | null; resultDate?: Date | null }, now = new Date()): ChyusenTimeState {
+export function getChyusenTimeState(entry: { applicationStart?: Date | null; applicationEnd?: Date | null; resultDate?: Date | null; applicationStatus?: string | null }, now = new Date()): ChyusenTimeState {
+  if (entry.applicationStatus === "registered") {
+    if (entry.resultDate && now >= entry.resultDate) return "result_ready";
+    return "waiting_result";
+  }
   if (entry.applicationStart && now < entry.applicationStart) return "upcoming";
   if (entry.applicationEnd && now <= entry.applicationEnd) {
     return getChyusenUrgency(entry.applicationEnd, now) ? "expiring" : "open";

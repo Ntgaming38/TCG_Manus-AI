@@ -964,3 +964,8 @@
 - [x] Hiển thị nhãn Thiết bị hiện tại cho phiên đang dùng
 - [x] Thêm biểu tượng hệ điều hành và trình duyệt cho từng phiên
 - [x] Kiểm thử popup thiết bị và lưu checkpoint
+
+## Tự động đăng ký khi lưu Chyusen
+- [x] Đặt trạng thái Đã đăng ký ngay sau khi lưu chương trình Chyusen mới
+- [x] Chuyển trực tiếp sang Chờ kết quả và bỏ thao tác đăng ký lặp lại
+- [x] Kiểm thử luồng tạo, Tổng quan và lưu checkpoint

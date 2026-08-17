@@ -37,6 +37,7 @@ describe("chyusen URL and schedule helpers", () => {
     const deadline = new Date("2026-08-10T02:00:00.000Z");
     expect(getChyusenUrgency(deadline, now)).toBe("deadline_3h");
     expect(getChyusenTimeState({ applicationEnd: deadline }, now)).toBe("expiring");
+    expect(getChyusenTimeState({ applicationEnd: deadline, applicationStatus: "registered" }, now)).toBe("waiting_result");
   });
 
   it("nhận dạng loại sản phẩm từ từ khóa Nhật", () => {
