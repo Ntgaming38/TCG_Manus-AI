@@ -933,3 +933,8 @@
 ## Khắc phục lịch sao lưu tự động
 - [x] Liên kết lại lịch auto-backup đã tồn tại thay vì tạo trùng
 - [x] Kiểm thử bật sao lưu tự động và lưu checkpoint
+
+## Khắc phục lưu giao dịch bán
+- [x] Xác định nguyên nhân chèn bản ghi vào bảng sales thất bại
+- [x] Sửa luồng tạo giao dịch bán và ràng buộc dữ liệu liên quan
+- [x] Kiểm thử lưu giao dịch bán và lưu checkpoint

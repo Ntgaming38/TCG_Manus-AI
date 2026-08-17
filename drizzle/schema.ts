@@ -163,7 +163,7 @@ export const sales = mysqlTable("sales", {
   quantity: int("quantity").notNull().default(1),
   salePrice: decimal("salePrice", { precision: 12, scale: 2 }).notNull(),
   totalRevenue: decimal("totalRevenue", { precision: 12, scale: 2 }).notNull(),
-  platform: mysqlEnum("platform", ["snkrdunk", "mercari", "yahoo", "shop", "offline", "other"]).default("snkrdunk"),
+  platform: mysqlEnum("platform", ["snkrdunk", "mercari", "yahoo", "shop", "offline", "user", "other"]).default("snkrdunk"),
   fee: decimal("fee", { precision: 12, scale: 2 }).default("0"),
   shippingFee: decimal("shippingFee", { precision: 12, scale: 2 }).default("0"),
   otherCost: decimal("otherCost", { precision: 12, scale: 2 }).default("0"),
