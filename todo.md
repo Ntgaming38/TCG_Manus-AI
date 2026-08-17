@@ -948,3 +948,9 @@
 ## Khắc phục liên kết bảo mật Google
 - [x] Thay liên kết Google gây lỗi 403 trong Cài đặt tài khoản
 - [x] Kiểm thử hướng dẫn quản lý mật khẩu Google và lưu checkpoint
+
+## Cải thiện popup Cài đặt tài khoản
+- [x] Hiển thị badge nhà cung cấp đăng nhập
+- [x] Thêm nút sao chép nhanh email tài khoản
+- [x] Thêm hướng dẫn đổi mật khẩu từng bước trong popup
+- [x] Kiểm thử popup tài khoản và lưu checkpoint

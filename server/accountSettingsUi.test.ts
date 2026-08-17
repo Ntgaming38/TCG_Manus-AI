@@ -14,6 +14,8 @@ describe("account settings UI", () => {
     expect(source).toContain("AVATAR_BORDER_PRESETS");
     expect(source).toContain("Cắt và căn ảnh đại diện");
     expect(source).toContain("Đăng nhập gần đây");
+    expect(source).toContain("Đăng nhập qua");
+    expect(source).toContain("Sao chép email tài khoản");
     expect(sidebar).toContain("Cài đặt tài khoản");
     expect(sidebar).toContain("user?.nickname || user?.name");
   });
@@ -23,5 +25,6 @@ describe("account settings UI", () => {
     expect(source).toContain("TCG Manager không lưu mật khẩu riêng");
     expect(source).toContain("Hướng dẫn đổi mật khẩu Google");
     expect(source).toContain("support.google.com/accounts/answer/41078");
+    expect(source).toContain("Chọn <strong>Đổi mật khẩu</strong>");
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Crop, ExternalLink, History, Loader2, Move, ShieldCheck, UserRound } from "lucide-react";
+import { Camera, Check, Copy, Crop, ExternalLink, History, Loader2, Move, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,12 @@ function loginProviderLabel(loginMethod?: string | null) {
   return loginMethod || "Manus OAuth";
 }
 
+function loginProviderBadgeClass(loginMethod?: string | null) {
+  if (loginMethod?.toLowerCase() === "google") return "border-red-400/30 bg-red-500/10 text-red-200";
+  if (loginMethod?.toLowerCase() === "apple") return "border-slate-300/30 bg-slate-400/10 text-slate-100";
+  return "border-sky-400/30 bg-sky-500/10 text-sky-100";
+}
+
 export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSettingsDialogProps) {
   const utils = trpc.useUtils();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +78,7 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
   const [cropZoom, setCropZoom] = useState(1);
   const [cropX, setCropX] = useState(0);
   const [cropY, setCropY] = useState(0);
+  const [emailCopied, setEmailCopied] = useState(false);
   const uploadAvatar = trpc.auth.uploadAvatar.useMutation();
   const { data: loginEvents = [], isLoading: isLoginHistoryLoading } = trpc.auth.loginHistory.useQuery(undefined, { enabled: open, staleTime: 30_000 });
   const updateProfile = trpc.auth.updateProfile.useMutation({
@@ -127,6 +134,18 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
     }
   };
 
+  const copyAccountEmail = async () => {
+    if (!user?.email) return;
+    try {
+      await navigator.clipboard.writeText(user.email);
+      setEmailCopied(true);
+      toast.success("Đã sao chép email tài khoản.");
+      window.setTimeout(() => setEmailCopied(false), 1600);
+    } catch {
+      toast.error("Không thể sao chép email. Vui lòng sao chép thủ công.");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto" onOpenAutoFocus={(event) => event.preventDefault()}>
@@ -144,7 +163,8 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{displayName}</p>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">{user?.email || "Không có email"}</p>
+                <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5"><p className="max-w-full truncate text-xs text-muted-foreground">{user?.email || "Không có email"}</p>{user?.email && <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground" onClick={copyAccountEmail} aria-label="Sao chép email tài khoản">{emailCopied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}</Button>}</div>
+                <span className={`mt-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${loginProviderBadgeClass(user?.loginMethod)}`}>Đăng nhập qua {provider}</span>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploadAvatar.isPending}>
                     {uploadAvatar.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Camera className="mr-1.5 h-3.5 w-3.5" />}
@@ -192,7 +212,7 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
           </section>
 
           <section className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-4">
-            <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" /><div><p className="font-semibold text-sky-100">Bảo mật đăng nhập</p><p className="mt-1 text-xs leading-5 text-sky-100/80">Bạn đang đăng nhập bằng <strong>{provider}</strong>. TCG Manager không lưu mật khẩu riêng, vì vậy mật khẩu cần được đổi trực tiếp tại nhà cung cấp đăng nhập.</p>{isGoogleLogin && <p className="mt-2 text-xs leading-5 text-sky-100/80">Liên kết dưới đây mở hướng dẫn chính thức của Google thay vì trang tài khoản trực tiếp, giúp tránh lỗi quyền truy cập 403 khi phiên đăng nhập Google không phù hợp.</p>}<a href={securityUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center text-xs font-semibold text-sky-200 hover:text-white hover:underline">{isGoogleLogin ? "Hướng dẫn đổi mật khẩu Google" : `Quản lý hoặc đổi mật khẩu ${provider}`}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></div></div>
+            <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" /><div><p className="font-semibold text-sky-100">Bảo mật đăng nhập</p><p className="mt-1 text-xs leading-5 text-sky-100/80">Bạn đang đăng nhập bằng <strong>{provider}</strong>. TCG Manager không lưu mật khẩu riêng, vì vậy mật khẩu cần được đổi trực tiếp tại nhà cung cấp đăng nhập.</p>{isGoogleLogin && <p className="mt-2 text-xs leading-5 text-sky-100/80">Liên kết dưới đây mở hướng dẫn chính thức của Google thay vì trang tài khoản trực tiếp, giúp tránh lỗi quyền truy cập 403 khi phiên đăng nhập Google không phù hợp.</p>}<ol className="mt-3 list-decimal space-y-1 pl-4 text-xs leading-5 text-sky-100/90">{isGoogleLogin ? <><li>Mở hướng dẫn chính thức của Google bằng nút bên dưới.</li><li>Đăng nhập đúng tài khoản Google đang dùng với TCG Manager.</li><li>Chọn <strong>Đổi mật khẩu</strong>, xác minh danh tính và đặt mật khẩu mới.</li><li>Quay lại TCG Manager; phiên đăng nhập hiện tại có thể cần đăng nhập lại.</li></> : <><li>Mở trang quản lý của nhà cung cấp đăng nhập.</li><li>Đăng nhập đúng tài khoản và tìm mục bảo mật hoặc mật khẩu.</li><li>Đổi mật khẩu theo hướng dẫn của nhà cung cấp.</li></>}</ol><a href={securityUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center text-xs font-semibold text-sky-200 hover:text-white hover:underline">{isGoogleLogin ? "Hướng dẫn đổi mật khẩu Google" : `Quản lý hoặc đổi mật khẩu ${provider}`}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></div></div>
           </section>
 
           <div className="flex justify-end gap-2 pt-1"><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button><Button type="button" className="bg-primary text-primary-foreground" disabled={updateProfile.isPending || uploadAvatar.isPending} onClick={() => updateProfile.mutate({ nickname: nickname.trim(), avatarUrl, avatarBorderColor: borderColor })}>{updateProfile.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Lưu thay đổi</Button></div>
