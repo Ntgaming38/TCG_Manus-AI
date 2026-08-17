@@ -944,3 +944,7 @@
 - [x] Tạo/sửa/xóa nơi bán trong Cài đặt
 - [x] Dùng danh sách nơi bán trong biểu mẫu Bán hàng
 - [x] Kiểm thử quản lý nơi bán và lưu checkpoint
+
+## Khắc phục liên kết bảo mật Google
+- [x] Thay liên kết Google gây lỗi 403 trong Cài đặt tài khoản
+- [x] Kiểm thử hướng dẫn quản lý mật khẩu Google và lưu checkpoint

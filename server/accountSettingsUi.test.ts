@@ -21,6 +21,7 @@ describe("account settings UI", () => {
   it("nêu rõ mật khẩu được quản lý bởi nhà cung cấp OAuth", () => {
     const source = readFileSync(join(root, "client/src/components/AccountSettingsDialog.tsx"), "utf8");
     expect(source).toContain("TCG Manager không lưu mật khẩu riêng");
-    expect(source).toContain("Quản lý hoặc đổi mật khẩu");
+    expect(source).toContain("Hướng dẫn đổi mật khẩu Google");
+    expect(source).toContain("support.google.com/accounts/answer/41078");
   });
 });
