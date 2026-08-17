@@ -938,3 +938,9 @@
 - [x] Xác định nguyên nhân chèn bản ghi vào bảng sales thất bại
 - [x] Sửa luồng tạo giao dịch bán và ràng buộc dữ liệu liên quan
 - [x] Kiểm thử lưu giao dịch bán và lưu checkpoint
+
+## Quản lý nơi bán
+- [x] Thêm danh sách nơi bán tùy chỉnh theo từng tài khoản
+- [x] Tạo/sửa/xóa nơi bán trong Cài đặt
+- [x] Dùng danh sách nơi bán trong biểu mẫu Bán hàng
+- [x] Kiểm thử quản lý nơi bán và lưu checkpoint

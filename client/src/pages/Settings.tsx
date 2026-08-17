@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Archive, BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, Clock3, DollarSign, Download, FileText, FileUp, ImageUp, PackageSearch, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
+import { Archive, BellRing, ChevronDown, ChevronUp, CircleAlert, CircleCheck, Clock3, DollarSign, Download, FileText, FileUp, ImageUp, PackageSearch, Plus, Radio, RefreshCw, Save, SlidersHorizontal, Sparkles, TimerReset, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ const BATCH_SIZES = [6, 12, 18, 20] as const;
 const TRASH_RETENTION_DAYS = [7, 14, 30, 60, 90, 180] as const;
 type SourceDraft = { label: string; sourceUrl: string; checkIntervalMinutes: string; isActive: boolean };
 type SourceFilter = "all" | "errors";
-type SettingsSection = "rgb" | "currency" | "backup" | "activity" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
+type SettingsSection = "rgb" | "currency" | "saleLocations" | "backup" | "activity" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
 
 function statusStyle(status?: string | null) {
   if (status === "unavailable") return "border-red-200 bg-red-50 text-red-700";
@@ -45,9 +45,13 @@ export default function Settings() {
   const { data: backupArchives = [] } = trpc.backup.archives.useQuery();
   const { data: autoBackupStatus } = trpc.backup.autoBackupStatus.useQuery();
   const { data: sensitiveActivities = [] } = trpc.activities.sensitive.useQuery();
+  const { data: saleLocations = [] } = trpc.saleLocations.list.useQuery();
   const [sourceDrafts, setSourceDrafts] = useState<Record<number, SourceDraft>>({});
   const [deleteSourceId, setDeleteSourceId] = useState<number | null>(null);
   const [newSource, setNewSource] = useState({ label: "", sourceUrl: "", checkIntervalMinutes: "360" });
+  const [newSaleLocation, setNewSaleLocation] = useState("");
+  const [saleLocationDrafts, setSaleLocationDrafts] = useState<Record<number, string>>({});
+  const [deleteSaleLocationId, setDeleteSaleLocationId] = useState<number | null>(null);
   const [sourcesExpanded, setSourcesExpanded] = useState(true);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [rgbEffectsEnabled, setRgbEffectsEnabled] = useState(() => readRgbEffectsEnabled(typeof window === "undefined" ? undefined : window.localStorage));
@@ -65,12 +69,15 @@ export default function Settings() {
   const [restoreConfirmation, setRestoreConfirmation] = useState("");
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [reportAccentColor, setReportAccentColor] = useState("#DC2626");
-  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, backup: true, activity: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
+  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, saleLocations: true, backup: true, activity: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
   const deleteSource = trpc.chyusen.deleteSource.useMutation({ onSuccess: () => { setDeleteSourceId(null); setSourceDrafts({}); utils.chyusen.sources.invalidate(); toast.success("Đã xóa nguồn theo dõi."); } });
   const createSource = trpc.chyusen.createSource.useMutation({ onSuccess: () => { setNewSource({ label: "", sourceUrl: "", checkIntervalMinutes: "360" }); utils.chyusen.sources.invalidate(); toast.success("Đã thêm nguồn theo dõi."); } });
+  const createSaleLocation = trpc.saleLocations.create.useMutation({ onSuccess: () => { setNewSaleLocation(""); utils.saleLocations.list.invalidate(); toast.success("Đã thêm nơi bán."); }, onError: (error) => toast.error(error.message || "Không thể thêm nơi bán.") });
+  const updateSaleLocation = trpc.saleLocations.update.useMutation({ onSuccess: () => { setSaleLocationDrafts({}); utils.saleLocations.list.invalidate(); toast.success("Đã cập nhật nơi bán."); }, onError: (error) => toast.error(error.message || "Không thể cập nhật nơi bán.") });
+  const deleteSaleLocation = trpc.saleLocations.delete.useMutation({ onSuccess: () => { setDeleteSaleLocationId(null); utils.saleLocations.list.invalidate(); toast.success("Đã xóa nơi bán khỏi danh sách."); }, onError: (error) => toast.error(error.message || "Không thể xóa nơi bán.") });
   const checkSourceNow = trpc.chyusen.checkSourceNow.useMutation({
     onSuccess: (result) => { utils.chyusen.sources.invalidate(); utils.chyusen.sourceHistory.invalidate(); toast[result.unavailable ? "error" : "success"](result.unavailable ? `Không thể kiểm tra nguồn: ${result.latestError || "lỗi không xác định"}` : result.changed ? "Đã kiểm tra: phát hiện nội dung nguồn thay đổi." : "Đã kiểm tra: nguồn hiện không có thay đổi."); },
     onError: (error) => toast.error(error.message || "Không thể kiểm tra nguồn ngay bây giờ."),
@@ -307,6 +314,15 @@ export default function Settings() {
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("currency", event)}><CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-emerald-400" />Định dạng tiền tệ</CardTitle><CardDescription>Chọn vị trí ký hiệu ¥ cho số tiền trên toàn ứng dụng. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
       <CardContent className="space-y-3"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_190px] sm:items-center"><div><p className="text-sm font-semibold">Vị trí ký hiệu ¥</p><p className="mt-1 text-xs text-muted-foreground">Số âm luôn có dấu trừ ngay trước số tiền; phần Lợi nhuận âm vẫn dùng màu đỏ và animation.</p></div><Select value={currencySymbolPosition} onValueChange={(value) => updateCurrencySymbolPosition(value as CurrencySymbolPosition)}><SelectTrigger aria-label="Vị trí ký hiệu tiền tệ"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="suffix">Sau số tiền — 1,000 ¥</SelectItem><SelectItem value="prefix">Trước số tiền — ¥ 1,000</SelectItem></SelectContent></Select></div><div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước</p><div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1"><p className="text-base font-bold text-foreground">{formatYen(12800, "ja-JP", currencySymbolPosition)}</p><p className="text-base font-bold text-red-400">{formatYen(-12800, "ja-JP", currencySymbolPosition)}</p></div></div></CardContent>
     </Card>
+
+    <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.saleLocations}>
+      <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("saleLocations", event)}><CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-rose-400" />Quản lý nơi bán</CardTitle><CardDescription>Tạo danh sách nơi bán riêng để chọn nhanh khi lập giao dịch Bán hàng. Các giao dịch cũ vẫn giữ nguyên tên nơi bán đã ghi nhận.</CardDescription></CardHeader>
+      <CardContent className="space-y-3"><div className="space-y-2">{saleLocations.length ? saleLocations.map((location: any) => { const draft = saleLocationDrafts[location.id] ?? location.name; return <div key={location.id} className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center"><Input value={draft} maxLength={120} onChange={(event) => setSaleLocationDrafts((current) => ({ ...current, [location.id]: event.target.value }))} aria-label={`Tên nơi bán ${location.name}`} /><div className="flex shrink-0 gap-2"><Button type="button" variant="outline" size="sm" disabled={!draft.trim() || draft.trim() === location.name || updateSaleLocation.isPending} onClick={() => updateSaleLocation.mutate({ id: location.id, name: draft.trim() })}><Save className="mr-1.5 h-3.5 w-3.5" />Lưu</Button><Button type="button" variant="outline" size="sm" className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => setDeleteSaleLocationId(location.id)}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Xóa</Button></div></div>; }) : <p className="rounded-lg border border-dashed px-3 py-5 text-center text-sm text-muted-foreground">Chưa có nơi bán tùy chỉnh. Bạn vẫn có thể dùng các lựa chọn mặc định trong Bán hàng.</p>}</div><div className="flex flex-col gap-2 rounded-lg border border-dashed p-3 sm:flex-row"><Input value={newSaleLocation} maxLength={120} placeholder="VD: Khách quen Tokyo, Sự kiện Osaka..." onChange={(event) => setNewSaleLocation(event.target.value)} aria-label="Tên nơi bán mới" /><Button type="button" className="bg-red-600 hover:bg-red-700" disabled={!newSaleLocation.trim() || createSaleLocation.isPending} onClick={() => createSaleLocation.mutate({ name: newSaleLocation.trim() })}><Plus className="mr-1.5 h-4 w-4" />{createSaleLocation.isPending ? "Đang thêm" : "Thêm nơi bán"}</Button></div></CardContent>
+    </Card>
+
+    <AlertDialog open={deleteSaleLocationId !== null} onOpenChange={(open) => !open && setDeleteSaleLocationId(null)}>
+      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nơi bán?</AlertDialogTitle><AlertDialogDescription>Nơi bán sẽ bị xóa khỏi danh sách lựa chọn mới. Các giao dịch đã lưu vẫn giữ nguyên lịch sử nơi bán.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteSaleLocationId !== null && deleteSaleLocation.mutate({ id: deleteSaleLocationId })}>Xóa nơi bán</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+    </AlertDialog>
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.backup}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("backup", event)}><CardTitle className="flex items-center gap-2"><Archive className="h-5 w-5 text-sky-400" />Sao lưu & Xuất dữ liệu</CardTitle><CardDescription>Tải dữ liệu riêng của tài khoản bạn về thiết bị. CSV phù hợp để mở bằng bảng tính; JSON là bản sao lưu đầy đủ.</CardDescription></CardHeader>

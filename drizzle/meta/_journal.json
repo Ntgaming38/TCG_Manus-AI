@@ -176,6 +176,13 @@
       "when": 1786990467512,
       "tag": "0024_tired_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1786991059922,
+      "tag": "0025_exotic_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

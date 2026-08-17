@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { filterSalesByDateRange, summarizeSales } from "@shared/salesDateFilter";
 import { getQuickSaleDateRange, type SaleQuickPeriod } from "@shared/salesQuickDateRange";
+import { getSaleLocationSelectValue, resolveSaleLocationSelection } from "@shared/saleLocation";
 
 const PLATFORMS = [
   { value: "user", label: "Người Dùng" },
@@ -44,12 +45,13 @@ export default function Sales() {
   const [editForm, setEditForm] = useState({ quantity: 1, salePrice: 0, note: "" });
   const [newSale, setNewSale] = useState({
     productId: 0, quantity: 1, salePrice: 0,
-    platform: "user" as any, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
+    platform: "user" as any, saleLocation: null as string | null, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
   });
 
   const utils = trpc.useUtils();
   const { data: sales, refetch } = trpc.sales.list.useQuery({ search: search || undefined });
   const { data: inventoryProducts } = trpc.products.inStock.useQuery();
+  const { data: saleLocations = [] } = trpc.saleLocations.list.useQuery();
 
   const invalidateAll = () => {
     utils.sales.list.invalidate();
@@ -64,7 +66,7 @@ export default function Sales() {
     onSuccess: () => {
       toast.success("Đã tạo giao dịch bán thành công!");
       setShowAddDialog(false);
-      setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "user", fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false });
+      setNewSale({ productId: 0, quantity: 1, salePrice: 0, platform: "user", saleLocation: null, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false });
       invalidateAll();
     },
     onError: (err) => toast.error(err.message),
@@ -121,6 +123,7 @@ export default function Sales() {
   };
 
   const selectedProduct = inventoryProducts?.find((p: any) => p.id === newSale.productId);
+  const saleLocationValue = getSaleLocationSelectValue(newSale.platform, newSale.saleLocation, saleLocations);
   // salePrice is TOTAL price for the lot (not per-unit)
   const totalRevenue = newSale.salePrice;
   const totalCost = newSale.fee + newSale.shippingFee + newSale.otherCost;
@@ -250,12 +253,14 @@ export default function Sales() {
               </div>
               <div className="space-y-2">
                 <Label>Nơi bán</Label>
-                <Select value={newSale.platform} onValueChange={(v) => setNewSale(p => ({ ...p, platform: v }))}>
+                <Select value={saleLocationValue} onValueChange={(v) => setNewSale((current) => ({ ...current, ...resolveSaleLocationSelection(v, saleLocations) }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PLATFORMS.map(pl => (
-                      <SelectItem key={pl.value} value={pl.value}>{pl.label}</SelectItem>
+                      <SelectItem key={pl.value} value={`platform:${pl.value}`}>{pl.label}</SelectItem>
                     ))}
+                    {saleLocations.length > 0 && <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">Nơi bán của bạn</div>}
+                    {saleLocations.map((location: any) => <SelectItem key={location.id} value={`location:${location.id}`}>{location.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -370,7 +375,7 @@ export default function Sales() {
                         <Calendar className="h-3 w-3" />
                         {new Date(sale.saleDate).toLocaleDateString('vi-VN')}
                         <span>•</span>
-                        {PLATFORMS.find(p => p.value === sale.platform)?.label || sale.platform}
+                        {sale.saleLocation || PLATFORMS.find(p => p.value === sale.platform)?.label || sale.platform}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">Đã bán {sale.quantity} cái · {formatYen(sale.quantity > 0 ? Math.round(Number(sale.totalRevenue) / sale.quantity) : 0)} / cái</p>
                     </div>

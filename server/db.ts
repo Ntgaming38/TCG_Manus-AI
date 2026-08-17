@@ -1,6 +1,6 @@
 import { eq, and, like, sql, desc, inArray, asc, isNotNull, lt, ne, or, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, activityLogs, chyusenEntries, marketplaceSyncConfig, loginEvents } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, saleLocations, activityLogs, chyusenEntries, marketplaceSyncConfig, loginEvents } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
@@ -1040,7 +1040,7 @@ export async function listSales(userId: number, opts?: { search?: string }) {
 
 export async function createSale(userId: number, data: {
   productId: number; quantity: number; salePrice: number; isDamaged?: boolean; // salePrice = TOTAL sale price for the lot
-  platform?: string; fee?: number; shippingFee?: number; otherCost?: number; note?: string;
+  platform?: string; saleLocation?: string | null; fee?: number; shippingFee?: number; otherCost?: number; note?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1073,6 +1073,7 @@ export async function createSale(userId: number, data: {
     salePrice: String(Math.round(unitSalePrice)),
     totalRevenue: String(totalRevenue),
     platform: (data.platform as any) || "snkrdunk",
+    saleLocation: data.saleLocation?.trim() || null,
     fee: String(data.fee || 0),
     shippingFee: String(data.shippingFee || 0),
     otherCost: String(data.otherCost || 0),
@@ -1335,4 +1336,41 @@ export async function createShop(data: InsertShop) {
     ...serializeActivityChange(null, data),
   });
   return { id: result[0].insertId };
+}
+
+// ========== SALE LOCATIONS ==========
+
+export async function listSaleLocations(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(saleLocations).where(eq(saleLocations.userId, userId)).orderBy(asc(saleLocations.name));
+}
+
+export async function createSaleLocation(userId: number, name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const normalizedName = name.trim();
+  const result = await db.insert(saleLocations).values({ userId, name: normalizedName });
+  await db.insert(activityLogs).values({ userId, action: "sale_location_created", description: `Thêm nơi bán: ${normalizedName}`, entityType: "sale_location", entityId: result[0].insertId, ...serializeActivityChange(null, { name: normalizedName }) });
+  return { id: result[0].insertId, name: normalizedName };
+}
+
+export async function updateSaleLocation(userId: number, id: number, name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const normalizedName = name.trim();
+  const existing = await db.select().from(saleLocations).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId))).limit(1);
+  if (!existing[0]) throw new Error("Không tìm thấy nơi bán.");
+  await db.update(saleLocations).set({ name: normalizedName }).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "sale_location_updated", description: `Sửa nơi bán: ${existing[0].name} → ${normalizedName}`, entityType: "sale_location", entityId: id, ...serializeActivityChange({ name: existing[0].name }, { name: normalizedName }) });
+  return { id, name: normalizedName };
+}
+
+export async function deleteSaleLocation(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(saleLocations).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId))).limit(1);
+  if (!existing[0]) throw new Error("Không tìm thấy nơi bán.");
+  await db.delete(saleLocations).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "sale_location_deleted", description: `Xóa nơi bán: ${existing[0].name}`, entityType: "sale_location", entityId: id, ...serializeActivityChange({ name: existing[0].name }, null) });
 }

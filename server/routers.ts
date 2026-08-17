@@ -465,6 +465,7 @@ export const appRouter = router({
         salePrice: z.number().min(0),
         isDamaged: z.boolean().optional(),
         platform: z.string().optional(),
+        saleLocation: z.string().max(120).nullable().optional(),
         fee: z.number().optional(),
         shippingFee: z.number().optional(),
         otherCost: z.number().optional(),
@@ -754,6 +755,13 @@ export const appRouter = router({
         location: input.location,
         note: input.note,
       })),
+  }),
+
+  saleLocations: router({
+    list: protectedProcedure.query(({ ctx }) => db.listSaleLocations(ctx.user.id)),
+    create: protectedProcedure.input(z.object({ name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.createSaleLocation(ctx.user.id, input.name)),
+    update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.updateSaleLocation(ctx.user.id, input.id, input.name)),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(({ ctx, input }) => db.deleteSaleLocation(ctx.user.id, input.id)),
   }),
 });
 

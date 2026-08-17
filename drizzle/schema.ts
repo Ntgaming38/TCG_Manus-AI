@@ -164,6 +164,7 @@ export const sales = mysqlTable("sales", {
   salePrice: decimal("salePrice", { precision: 12, scale: 2 }).notNull(),
   totalRevenue: decimal("totalRevenue", { precision: 12, scale: 2 }).notNull(),
   platform: mysqlEnum("platform", ["snkrdunk", "mercari", "yahoo", "shop", "offline", "user", "other"]).default("snkrdunk"),
+  saleLocation: varchar("saleLocation", { length: 255 }),
   fee: decimal("fee", { precision: 12, scale: 2 }).default("0"),
   shippingFee: decimal("shippingFee", { precision: 12, scale: 2 }).default("0"),
   otherCost: decimal("otherCost", { precision: 12, scale: 2 }).default("0"),
@@ -207,6 +208,21 @@ export const shops = mysqlTable("shops", {
 
 export type Shop = typeof shops.$inferSelect;
 export type InsertShop = typeof shops.$inferInsert;
+
+/** Per-user locations used when recording sales. */
+export const saleLocations = mysqlTable("sale_locations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("sale_locations_user_name_unique").on(table.userId, table.name),
+  index("sale_locations_user_idx").on(table.userId),
+]);
+
+export type SaleLocation = typeof saleLocations.$inferSelect;
+export type InsertSaleLocation = typeof saleLocations.$inferInsert;
 
 /**
  * Activity Logs - track all user actions
