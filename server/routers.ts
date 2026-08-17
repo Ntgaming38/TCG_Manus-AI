@@ -1,5 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { LOGOUT_ALL_CONFIRMATION } from "../shared/sessionDevice";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -90,6 +91,14 @@ export const appRouter = router({
       .input(z.object({ imageDataUrl: z.string().trim().min(64).max(4_500_000) }))
       .mutation(({ ctx, input }) => uploadUserAvatar(ctx.user.id, input.imageDataUrl)),
     loginHistory: protectedProcedure.query(({ ctx }) => db.listLoginEvents(ctx.user.id)),
+    logoutAll: protectedProcedure
+      .input(z.object({ confirmation: z.literal(LOGOUT_ALL_CONFIRMATION) }))
+      .mutation(async ({ ctx }) => {
+        await db.revokeAllUserSessions(ctx.user.id);
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+        return { success: true } as const;
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

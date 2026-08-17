@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Check, Copy, Crop, ExternalLink, History, Loader2, Move, ShieldCheck, UserRound } from "lucide-react";
+import { Camera, Check, Copy, Crop, ExternalLink, History, Laptop, Loader2, LogOut, Move, ShieldCheck, UserRound } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { AVATAR_BORDER_PRESETS, normalizeAvatarBorderColor } from "@shared/avatarBorder";
+import { LOGOUT_ALL_CONFIRMATION } from "@shared/sessionDevice";
 
 type AccountUser = {
   name?: string | null;
@@ -79,6 +81,8 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
   const [cropX, setCropX] = useState(0);
   const [cropY, setCropY] = useState(0);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [logoutAllOpen, setLogoutAllOpen] = useState(false);
+  const [logoutAllConfirmation, setLogoutAllConfirmation] = useState("");
   const uploadAvatar = trpc.auth.uploadAvatar.useMutation();
   const { data: loginEvents = [], isLoading: isLoginHistoryLoading } = trpc.auth.loginHistory.useQuery(undefined, { enabled: open, staleTime: 30_000 });
   const updateProfile = trpc.auth.updateProfile.useMutation({
@@ -88,6 +92,13 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
       onOpenChange(false);
     },
     onError: (error) => toast.error(error.message || "Không thể cập nhật tài khoản."),
+  });
+  const logoutAll = trpc.auth.logoutAll.useMutation({
+    onSuccess: () => {
+      toast.success("Đã đăng xuất khỏi tất cả thiết bị. Vui lòng đăng nhập lại.");
+      window.setTimeout(() => window.location.assign("/"), 500);
+    },
+    onError: (error) => toast.error(error.message || "Không thể đăng xuất khỏi các thiết bị."),
   });
 
   useEffect(() => {
@@ -207,16 +218,22 @@ export function AccountSettingsDialog({ open, onOpenChange, user }: AccountSetti
           </section>
 
           <section className="rounded-xl border border-border bg-secondary/15 p-4">
-            <div className="flex items-center gap-2"><History className="h-4 w-4 text-primary" /><p className="font-semibold">Đăng nhập gần đây</p></div>
-            {isLoginHistoryLoading ? <p className="mt-3 text-xs text-muted-foreground">Đang tải lịch sử...</p> : loginEvents.length ? <div className="mt-3 space-y-2">{loginEvents.map((event) => <div key={event.id} className="flex items-center justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0"><span className="text-xs font-medium">{loginProviderLabel(event.loginMethod)}</span><time className="text-right text-[11px] text-muted-foreground">{new Date(event.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}</time></div>)}</div> : <p className="mt-3 text-xs text-muted-foreground">Lịch sử sẽ xuất hiện sau lần đăng nhập tiếp theo.</p>}
+            <div className="flex items-center gap-2"><Laptop className="h-4 w-4 text-primary" /><p className="font-semibold">Thiết bị đăng nhập gần đây</p></div>
+            <p className="mt-1 text-xs text-muted-foreground">Danh sách hiển thị các thiết bị đã dùng để đăng nhập tài khoản này gần đây.</p>
+            {isLoginHistoryLoading ? <p className="mt-3 text-xs text-muted-foreground">Đang tải lịch sử...</p> : loginEvents.length ? <div className="mt-3 space-y-2">{loginEvents.map((event) => <div key={event.id} className="flex items-center justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0"><div className="min-w-0"><p className="truncate text-xs font-semibold">{event.deviceLabel || "Thiết bị không xác định"}</p><span className="text-[11px] text-muted-foreground">{loginProviderLabel(event.loginMethod)}</span></div><time className="shrink-0 text-right text-[11px] text-muted-foreground">{new Date(event.createdAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}</time></div>)}</div> : <p className="mt-3 text-xs text-muted-foreground">Lịch sử sẽ xuất hiện sau lần đăng nhập tiếp theo.</p>}
           </section>
 
           <section className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-4">
             <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" /><div><p className="font-semibold text-sky-100">Bảo mật đăng nhập</p><p className="mt-1 text-xs leading-5 text-sky-100/80">Bạn đang đăng nhập bằng <strong>{provider}</strong>. TCG Manager không lưu mật khẩu riêng, vì vậy mật khẩu cần được đổi trực tiếp tại nhà cung cấp đăng nhập.</p>{isGoogleLogin && <p className="mt-2 text-xs leading-5 text-sky-100/80">Liên kết dưới đây mở hướng dẫn chính thức của Google thay vì trang tài khoản trực tiếp, giúp tránh lỗi quyền truy cập 403 khi phiên đăng nhập Google không phù hợp.</p>}<ol className="mt-3 list-decimal space-y-1 pl-4 text-xs leading-5 text-sky-100/90">{isGoogleLogin ? <><li>Mở hướng dẫn chính thức của Google bằng nút bên dưới.</li><li>Đăng nhập đúng tài khoản Google đang dùng với TCG Manager.</li><li>Chọn <strong>Đổi mật khẩu</strong>, xác minh danh tính và đặt mật khẩu mới.</li><li>Quay lại TCG Manager; phiên đăng nhập hiện tại có thể cần đăng nhập lại.</li></> : <><li>Mở trang quản lý của nhà cung cấp đăng nhập.</li><li>Đăng nhập đúng tài khoản và tìm mục bảo mật hoặc mật khẩu.</li><li>Đổi mật khẩu theo hướng dẫn của nhà cung cấp.</li></>}</ol><a href={securityUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center text-xs font-semibold text-sky-200 hover:text-white hover:underline">{isGoogleLogin ? "Hướng dẫn đổi mật khẩu Google" : `Quản lý hoặc đổi mật khẩu ${provider}`}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></div></div>
           </section>
 
+          <section className="rounded-xl border border-red-400/30 bg-red-500/10 p-4">
+            <div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-red-100">Đăng xuất khỏi tất cả thiết bị</p><p className="mt-1 text-xs leading-5 text-red-100/80">Thu hồi mọi phiên TCG Manager đang hoạt động, bao gồm thiết bị hiện tại. Sau đó bạn cần đăng nhập lại.</p></div><Button type="button" size="sm" className="shrink-0 bg-red-600 text-white hover:bg-red-700" onClick={() => { setLogoutAllConfirmation(""); setLogoutAllOpen(true); }}><LogOut className="mr-1.5 h-3.5 w-3.5" />Đăng xuất tất cả</Button></div>
+          </section>
+
           <div className="flex justify-end gap-2 pt-1"><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button><Button type="button" className="bg-primary text-primary-foreground" disabled={updateProfile.isPending || uploadAvatar.isPending} onClick={() => updateProfile.mutate({ nickname: nickname.trim(), avatarUrl, avatarBorderColor: borderColor })}>{updateProfile.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Lưu thay đổi</Button></div>
         </div>
+        <AlertDialog open={logoutAllOpen} onOpenChange={setLogoutAllOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Đăng xuất khỏi tất cả thiết bị?</AlertDialogTitle><AlertDialogDescription>Thao tác này sẽ thu hồi toàn bộ phiên TCG Manager của tài khoản. Nhập <strong>{LOGOUT_ALL_CONFIRMATION}</strong> để xác nhận.</AlertDialogDescription></AlertDialogHeader><Input value={logoutAllConfirmation} onChange={(event) => setLogoutAllConfirmation(event.target.value)} placeholder={LOGOUT_ALL_CONFIRMATION} autoComplete="off" /><AlertDialogFooter><AlertDialogCancel disabled={logoutAll.isPending}>Hủy</AlertDialogCancel><AlertDialogAction disabled={logoutAll.isPending || logoutAllConfirmation.trim() !== LOGOUT_ALL_CONFIRMATION} className="bg-red-600 hover:bg-red-700" onClick={(event) => { event.preventDefault(); logoutAll.mutate({ confirmation: LOGOUT_ALL_CONFIRMATION }); }}>Đăng xuất tất cả</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       </DialogContent>
     </Dialog>
   );

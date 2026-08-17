@@ -954,3 +954,8 @@
 - [x] Thêm nút sao chép nhanh email tài khoản
 - [x] Thêm hướng dẫn đổi mật khẩu từng bước trong popup
 - [x] Kiểm thử popup tài khoản và lưu checkpoint
+
+## Thiết bị và phiên đăng nhập
+- [x] Lưu và hiển thị thiết bị đăng nhập gần đây theo tài khoản
+- [x] Thêm đăng xuất khỏi tất cả thiết bị với xác nhận an toàn
+- [x] Kiểm thử quản lý phiên và lưu checkpoint

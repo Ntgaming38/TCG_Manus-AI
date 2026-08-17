@@ -95,16 +95,22 @@ export async function updateUserProfile(userId: number, data: { nickname?: strin
   return result[0];
 }
 
-export async function recordLoginEvent(userId: number, loginMethod?: string | null) {
+export async function recordLoginEvent(userId: number, loginMethod?: string | null, deviceLabel?: string | null) {
   const db = await getDb();
   if (!db) return;
-  await db.insert(loginEvents).values({ userId, loginMethod: loginMethod || null });
+  await db.insert(loginEvents).values({ userId, loginMethod: loginMethod || null, deviceLabel: deviceLabel || null });
 }
 
 export async function listLoginEvents(userId: number, limit = 8) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(loginEvents).where(eq(loginEvents.userId, userId)).orderBy(desc(loginEvents.createdAt)).limit(limit);
+}
+
+export async function revokeAllUserSessions(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ sessionVersion: sql`${users.sessionVersion} + 1` }).where(eq(users.id, userId));
 }
 
 // ========== PRODUCTS ==========

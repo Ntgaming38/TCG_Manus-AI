@@ -18,6 +18,7 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  sessionVersion: int("sessionVersion").notNull().default(0),
 });
 
 export type User = typeof users.$inferSelect;
@@ -27,6 +28,7 @@ export const loginEvents = mysqlTable("login_events", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  deviceLabel: varchar("deviceLabel", { length: 120 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => [index("login_events_user_created_idx").on(table.userId, table.createdAt)]);
 

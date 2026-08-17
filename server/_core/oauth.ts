@@ -4,6 +4,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { getSessionDeviceLabel } from "../../shared/sessionDevice";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -48,10 +49,11 @@ export function registerOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
       const signedInUser = await db.getUserByOpenId(userInfo.openId);
-      if (signedInUser) await db.recordLoginEvent(signedInUser.id, userInfo.loginMethod ?? userInfo.platform ?? null);
+      if (signedInUser) await db.recordLoginEvent(signedInUser.id, userInfo.loginMethod ?? userInfo.platform ?? null, getSessionDeviceLabel(req.headers["user-agent"]));
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",
+        sessionVersion: signedInUser?.sessionVersion ?? 0,
         expiresInMs: ONE_YEAR_MS,
       });
 

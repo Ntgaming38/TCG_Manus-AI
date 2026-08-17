@@ -13,9 +13,11 @@ describe("account settings UI", () => {
     expect(source).toContain("auth.updateProfile");
     expect(source).toContain("AVATAR_BORDER_PRESETS");
     expect(source).toContain("Cắt và căn ảnh đại diện");
-    expect(source).toContain("Đăng nhập gần đây");
+    expect(source).toContain("Thiết bị đăng nhập gần đây");
     expect(source).toContain("Đăng nhập qua");
     expect(source).toContain("Sao chép email tài khoản");
+    expect(source).toContain("Thiết bị đăng nhập gần đây");
+    expect(source).toContain("Đăng xuất khỏi tất cả thiết bị");
     expect(sidebar).toContain("Cài đặt tài khoản");
     expect(sidebar).toContain("user?.nickname || user?.name");
   });
