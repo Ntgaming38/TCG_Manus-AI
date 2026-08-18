@@ -6,7 +6,7 @@ vi.mock("./db", () => ({
 }));
 
 import { getDb } from "./db";
-import { deleteChyusenShopSuggestion, listChyusenShopSuggestions, listChyusenShopSuggestionsForManagement, saveChyusenShopSuggestion, updateChyusenShopSuggestion } from "./chyusenDb";
+import { deleteChyusenShopSuggestion, listChyusenShopSuggestions, listChyusenShopSuggestionsForManagement, saveChyusenShopSuggestion, setChyusenShopSuggestionPinned, updateChyusenShopSuggestion } from "./chyusenDb";
 
 describe("gợi ý cửa hàng Chyusen theo tài khoản", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -21,7 +21,7 @@ describe("gợi ý cửa hàng Chyusen theo tài khoản", () => {
 
   it("xếp cửa hàng dùng nhiều nhất lên đầu danh sách quản lý", async () => {
     const from = vi.fn()
-      .mockReturnValueOnce({ where: vi.fn().mockResolvedValue([{ id: 2, name: "Z Shop" }, { id: 1, name: "Bandai Hobby" }]) })
+      .mockReturnValueOnce({ where: vi.fn().mockResolvedValue([{ id: 2, name: "Z Shop", isPinned: 1 }, { id: 1, name: "Bandai Hobby", isPinned: 0 }]) })
       .mockReturnValueOnce({ where: vi.fn().mockResolvedValue([{ shop: "Khác", customShopName: "Z Shop" }, { shop: "Khác", customShopName: "Z Shop" }, { shop: "Khác", customShopName: "Bandai Hobby" }]) });
     vi.mocked(getDb).mockResolvedValue({ select: () => ({ from }) } as any);
 
@@ -63,5 +63,20 @@ describe("gợi ý cửa hàng Chyusen theo tài khoản", () => {
     await expect(deleteChyusenShopSuggestion(7, 19)).resolves.toBeUndefined();
     expect(updateWhere).toHaveBeenCalledTimes(1);
     expect(deleteWhere).toHaveBeenCalledTimes(1);
+  });
+
+  it("ghi trạng thái ghim theo tài khoản để ưu tiên lên đầu", async () => {
+    const updateWhere = vi.fn().mockResolvedValue([]);
+    const set = vi.fn(() => ({ where: updateWhere }));
+    const activityValues = vi.fn().mockResolvedValue([]);
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: () => ({ where: vi.fn().mockResolvedValue([{ id: 19, name: "TCG Tokyo", isPinned: 0 }]) }) }),
+      update: () => ({ set }),
+      insert: () => ({ values: activityValues }),
+    } as any);
+
+    await expect(setChyusenShopSuggestionPinned(7, 19, true)).resolves.toEqual({ id: 19, isPinned: true });
+    expect(set).toHaveBeenCalledWith({ isPinned: 1 });
+    expect(updateWhere).toHaveBeenCalledTimes(1);
   });
 });

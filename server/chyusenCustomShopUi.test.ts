@@ -14,5 +14,8 @@ describe("cửa hàng tùy chỉnh trong Chyusen", () => {
     expect(source).toContain("updateShopSuggestion.mutate");
     expect(source).toContain("deleteShopSuggestion.mutate");
     expect(source).toContain("Đã nhận diện từ URL");
+    expect(source).toContain("Ghim cửa hàng yêu thích");
+    expect(source).toContain("setShopSuggestionPinned.mutate");
+    expect(source).toContain("<Pin className");
   });
 });

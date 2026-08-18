@@ -587,6 +587,10 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => chyusenDb.deleteChyusenShopSuggestion(ctx.user.id, input.id)),
 
+    setShopSuggestionPinned: protectedProcedure
+      .input(z.object({ id: z.number(), isPinned: z.boolean() }))
+      .mutation(({ ctx, input }) => chyusenDb.setChyusenShopSuggestionPinned(ctx.user.id, input.id, input.isPinned)),
+
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(({ ctx, input }) => chyusenDb.getChyusenEntry(ctx.user.id, input.id)),

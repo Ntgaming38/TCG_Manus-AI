@@ -204,6 +204,13 @@
       "when": 1787089623409,
       "tag": "0028_absent_millenium_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1787092253497,
+      "tag": "0029_ancient_wild_child",
+      "breakpoints": true
     }
   ]
 }

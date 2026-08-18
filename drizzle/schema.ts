@@ -335,6 +335,7 @@ export const chyusenShopSuggestions = mysqlTable("chyusen_shop_suggestions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   name: varchar("name", { length: 120 }).notNull(),
+  isPinned: int("isPinned").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => [
   uniqueIndex("chyusen_shop_suggestions_user_name_unique").on(table.userId, table.name),

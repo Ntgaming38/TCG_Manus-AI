@@ -59,7 +59,7 @@ async function listChyusenShopSuggestionDetails(userId: number) {
   }
   return rows
     .map((row) => ({ ...row, useCount: usageByName.get(row.name.trim().toLocaleLowerCase()) || 0 }))
-    .sort((a, b) => b.useCount - a.useCount || a.name.localeCompare(b.name, "vi"));
+    .sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || b.useCount - a.useCount || a.name.localeCompare(b.name, "vi"));
 }
 
 export async function listChyusenShopSuggestions(userId: number) {
@@ -106,6 +106,17 @@ export async function deleteChyusenShopSuggestion(userId: number, id: number) {
   if (!existing) throw new Error("Không tìm thấy cửa hàng gợi ý.");
   await db.delete(chyusenShopSuggestions).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
   await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_deleted", description: `Xóa cửa hàng gợi ý Chyusen: ${existing.name}`, entityType: "chyusen_shop", entityId: id, ...serializeActivityChange({ name: existing.name }, null) });
+}
+
+export async function setChyusenShopSuggestionPinned(userId: number, id: number, isPinned: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
+  const existing = rows.find((row) => row.id === id);
+  if (!existing) throw new Error("Không tìm thấy cửa hàng gợi ý.");
+  await db.update(chyusenShopSuggestions).set({ isPinned: isPinned ? 1 : 0 }).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_pinned", description: `${isPinned ? "Ghim" : "Bỏ ghim"} cửa hàng gợi ý Chyusen: ${existing.name}`, entityType: "chyusen_shop", entityId: id, ...serializeActivityChange({ isPinned: Boolean(existing.isPinned) }, { isPinned }) });
+  return { id, isPinned };
 }
 
 export type ChyusenSourceInput = {

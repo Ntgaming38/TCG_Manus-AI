@@ -1007,3 +1007,8 @@
 - [x] Xếp hạng cửa hàng gợi ý theo tần suất sử dụng thực tế
 - [x] Gợi ý tên cửa hàng khi URL công khai nhận diện được miền hỗ trợ
 - [x] Kiểm thử API, giao diện và lưu checkpoint
+
+## Ghim cửa hàng Chyusen yêu thích
+- [x] Lưu trạng thái ghim riêng theo từng cửa hàng và tài khoản
+- [x] Ưu tiên cửa hàng đã ghim trước tần suất sử dụng trong gợi ý
+- [x] Thêm biểu tượng ghim để bật/tắt và kiểm thử luồng
