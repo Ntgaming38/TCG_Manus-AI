@@ -51,7 +51,7 @@ async function listChyusenShopSuggestionDetails(userId: number) {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
-  const entries = await db.select({ shop: chyusenEntries.shop, customShopName: chyusenEntries.customShopName }).from(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)));
+  const entries = await db.select({ shop: chyusenEntries.shop, customShopName: chyusenEntries.customShopName, createdAt: chyusenEntries.createdAt }).from(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)));
   const usageByName = new Map<string, number>();
   for (const entry of entries) {
     const effectiveName = (entry.customShopName || entry.shop || "").trim().toLocaleLowerCase();
@@ -59,7 +59,7 @@ async function listChyusenShopSuggestionDetails(userId: number) {
   }
   return rows
     .map((row) => ({ ...row, useCount: usageByName.get(row.name.trim().toLocaleLowerCase()) || 0 }))
-    .sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || b.useCount - a.useCount || a.name.localeCompare(b.name, "vi"));
+    .sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || (a.isPinned ? a.pinnedOrder - b.pinnedOrder || b.useCount - a.useCount : b.useCount - a.useCount) || a.name.localeCompare(b.name, "vi"));
 }
 
 export async function listChyusenShopSuggestions(userId: number) {
@@ -68,6 +68,22 @@ export async function listChyusenShopSuggestions(userId: number) {
 
 export async function listChyusenShopSuggestionsForManagement(userId: number) {
   return listChyusenShopSuggestionDetails(userId);
+}
+
+export async function listRecentChyusenShops(userId: number, limit = 5) {
+  const db = await getDb();
+  if (!db) return [];
+  const entries = await db.select({ shop: chyusenEntries.shop, customShopName: chyusenEntries.customShopName, createdAt: chyusenEntries.createdAt }).from(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)));
+  const names = new Map<string, { name: string; usedAt: Date }>();
+  for (const entry of entries) {
+    const name = (entry.customShopName || entry.shop || "").trim();
+    if (!name) continue;
+    const key = name.toLocaleLowerCase();
+    const usedAt = entry.createdAt;
+    const current = names.get(key);
+    if (!current || usedAt > current.usedAt) names.set(key, { name, usedAt });
+  }
+  return Array.from(names.values()).sort((a, b) => b.usedAt.getTime() - a.usedAt.getTime() || a.name.localeCompare(b.name, "vi")).slice(0, limit);
 }
 
 export async function saveChyusenShopSuggestion(userId: number, rawName: string) {
@@ -114,9 +130,27 @@ export async function setChyusenShopSuggestionPinned(userId: number, id: number,
   const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
   const existing = rows.find((row) => row.id === id);
   if (!existing) throw new Error("Không tìm thấy cửa hàng gợi ý.");
-  await db.update(chyusenShopSuggestions).set({ isPinned: isPinned ? 1 : 0 }).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
+  const pinnedOrder = isPinned ? Math.max(0, ...rows.filter((row) => Boolean(row.isPinned)).map((row) => row.pinnedOrder || 0)) + 1 : 0;
+  await db.update(chyusenShopSuggestions).set({ isPinned: isPinned ? 1 : 0, pinnedOrder }).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
   await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_pinned", description: `${isPinned ? "Ghim" : "Bỏ ghim"} cửa hàng gợi ý Chyusen: ${existing.name}`, entityType: "chyusen_shop", entityId: id, ...serializeActivityChange({ isPinned: Boolean(existing.isPinned) }, { isPinned }) });
   return { id, isPinned };
+}
+
+export async function reorderPinnedChyusenShopSuggestions(userId: number, orderedIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
+  const pinned = rows.filter((row) => Boolean(row.isPinned));
+  const pinnedIds = new Set(pinned.map((row) => row.id));
+  if (orderedIds.length !== pinnedIds.size || new Set(orderedIds).size !== orderedIds.length || orderedIds.some((id) => !pinnedIds.has(id))) {
+    throw new Error("Thứ tự cửa hàng ghim không hợp lệ.");
+  }
+  for (let index = 0; index < orderedIds.length; index += 1) {
+    const id = orderedIds[index];
+    await db.update(chyusenShopSuggestions).set({ pinnedOrder: index + 1 }).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
+  }
+  await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestions_reordered", description: `Sắp xếp lại ${orderedIds.length} cửa hàng gợi ý Chyusen đã ghim`, entityType: "chyusen_shop", ...serializeActivityChange(null, { orderedIds }) });
+  return { orderedIds };
 }
 
 export type ChyusenSourceInput = {

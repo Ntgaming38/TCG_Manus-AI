@@ -6,7 +6,7 @@ vi.mock("./db", () => ({
 }));
 
 import { getDb } from "./db";
-import { deleteChyusenShopSuggestion, listChyusenShopSuggestions, listChyusenShopSuggestionsForManagement, saveChyusenShopSuggestion, setChyusenShopSuggestionPinned, updateChyusenShopSuggestion } from "./chyusenDb";
+import { deleteChyusenShopSuggestion, listChyusenShopSuggestions, listChyusenShopSuggestionsForManagement, listRecentChyusenShops, reorderPinnedChyusenShopSuggestions, saveChyusenShopSuggestion, setChyusenShopSuggestionPinned, updateChyusenShopSuggestion } from "./chyusenDb";
 
 describe("gợi ý cửa hàng Chyusen theo tài khoản", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -76,7 +76,39 @@ describe("gợi ý cửa hàng Chyusen theo tài khoản", () => {
     } as any);
 
     await expect(setChyusenShopSuggestionPinned(7, 19, true)).resolves.toEqual({ id: 19, isPinned: true });
-    expect(set).toHaveBeenCalledWith({ isPinned: 1 });
+    expect(set).toHaveBeenCalledWith({ isPinned: 1, pinnedOrder: 1 });
     expect(updateWhere).toHaveBeenCalledTimes(1);
+  });
+
+  it("trả về cửa hàng dùng gần đây theo thời điểm tạo Chyusen", async () => {
+    const now = new Date("2026-08-19T09:00:00.000Z");
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: () => ({ where: vi.fn().mockResolvedValue([
+        { shop: "Joshin", customShopName: null, createdAt: new Date("2026-08-16T09:00:00.000Z") },
+        { shop: "Khác", customShopName: "TCG Tokyo", createdAt: now },
+        { shop: "Khác", customShopName: "TCG Tokyo", createdAt: new Date("2026-08-17T09:00:00.000Z") },
+      ]) }) }),
+    } as any);
+
+    await expect(listRecentChyusenShops(7)).resolves.toEqual([
+      { name: "TCG Tokyo", usedAt: now },
+      { name: "Joshin", usedAt: new Date("2026-08-16T09:00:00.000Z") },
+    ]);
+  });
+
+  it("chỉ nhận thứ tự chứa đầy đủ các cửa hàng đã ghim của tài khoản", async () => {
+    const updateWhere = vi.fn().mockResolvedValue([]);
+    const set = vi.fn(() => ({ where: updateWhere }));
+    const activityValues = vi.fn().mockResolvedValue([]);
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: () => ({ where: vi.fn().mockResolvedValue([{ id: 4, name: "A", isPinned: 1 }, { id: 9, name: "B", isPinned: 1 }, { id: 1, name: "C", isPinned: 0 }]) }) }),
+      update: () => ({ set }),
+      insert: () => ({ values: activityValues }),
+    } as any);
+
+    await expect(reorderPinnedChyusenShopSuggestions(7, [9, 4])).resolves.toEqual({ orderedIds: [9, 4] });
+    expect(set).toHaveBeenNthCalledWith(1, { pinnedOrder: 1 });
+    expect(set).toHaveBeenNthCalledWith(2, { pinnedOrder: 2 });
+    await expect(reorderPinnedChyusenShopSuggestions(7, [9])).rejects.toThrow("Thứ tự cửa hàng ghim không hợp lệ");
   });
 });

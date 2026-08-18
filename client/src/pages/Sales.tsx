@@ -25,8 +25,8 @@ const PLATFORMS = [
   { value: "yahoo", label: "Yahoo Auction" },
   { value: "shop", label: "Card Shop" },
   { value: "offline", label: "Offline" },
-  { value: "other", label: "Khác" },
 ];
+const ADD_SALE_LOCATION_VALUE = "__add_sale_location";
 
 type SortField = "date" | "price" | "name";
 type SortDirection = "asc" | "desc";
@@ -47,6 +47,8 @@ export default function Sales() {
     productId: 0, quantity: 1, salePrice: 0,
     platform: "user" as any, saleLocation: null as string | null, fee: 0, shippingFee: 0, otherCost: 0, note: "", isDamaged: false,
   });
+  const [isAddingSaleLocation, setIsAddingSaleLocation] = useState(false);
+  const [customSaleLocationName, setCustomSaleLocationName] = useState("");
 
   const utils = trpc.useUtils();
   const { data: sales, refetch } = trpc.sales.list.useQuery({ search: search || undefined });
@@ -70,6 +72,18 @@ export default function Sales() {
       invalidateAll();
     },
     onError: (err) => toast.error(err.message),
+  });
+
+  const saveSaleLocation = trpc.saleLocations.create.useMutation({
+    onSuccess: (_result, variables) => {
+      const name = variables.name.trim();
+      setNewSale((current) => ({ ...current, platform: "other", saleLocation: name }));
+      setCustomSaleLocationName("");
+      setIsAddingSaleLocation(false);
+      utils.saleLocations.list.invalidate();
+      toast.success(`Đã lưu nơi bán ${name}.`);
+    },
+    onError: (error) => toast.error(error.message),
   });
 
   const updateSale = trpc.sales.update.useMutation({
@@ -123,7 +137,7 @@ export default function Sales() {
   };
 
   const selectedProduct = inventoryProducts?.find((p: any) => p.id === newSale.productId);
-  const saleLocationValue = getSaleLocationSelectValue(newSale.platform, newSale.saleLocation, saleLocations);
+  const saleLocationValue = isAddingSaleLocation ? ADD_SALE_LOCATION_VALUE : getSaleLocationSelectValue(newSale.platform, newSale.saleLocation, saleLocations);
   // salePrice is TOTAL price for the lot (not per-unit)
   const totalRevenue = newSale.salePrice;
   const totalCost = newSale.fee + newSale.shippingFee + newSale.otherCost;
@@ -253,7 +267,15 @@ export default function Sales() {
               </div>
               <div className="space-y-2">
                 <Label>Nơi bán</Label>
-                <Select value={saleLocationValue} onValueChange={(v) => setNewSale((current) => ({ ...current, ...resolveSaleLocationSelection(v, saleLocations) }))}>
+                <Select value={saleLocationValue} onValueChange={(v) => {
+                  if (v === ADD_SALE_LOCATION_VALUE) {
+                    setIsAddingSaleLocation(true);
+                    setNewSale((current) => ({ ...current, platform: "other", saleLocation: null }));
+                    return;
+                  }
+                  setIsAddingSaleLocation(false);
+                  setNewSale((current) => ({ ...current, ...resolveSaleLocationSelection(v, saleLocations) }));
+                }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PLATFORMS.map(pl => (
@@ -261,8 +283,10 @@ export default function Sales() {
                     ))}
                     {saleLocations.length > 0 && <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">Nơi bán của bạn</div>}
                     {saleLocations.map((location: any) => <SelectItem key={location.id} value={`location:${location.id}`}>{location.name}</SelectItem>)}
+                    <SelectItem value={ADD_SALE_LOCATION_VALUE}>+ Thêm nơi bán</SelectItem>
                   </SelectContent>
                 </Select>
+                {isAddingSaleLocation && <div className="flex gap-2"><Input value={customSaleLocationName} onChange={(event) => setCustomSaleLocationName(event.target.value)} placeholder="Nhập tên nơi bán..." /><Button type="button" variant="outline" className="shrink-0" disabled={!customSaleLocationName.trim() || saveSaleLocation.isPending} onClick={() => saveSaleLocation.mutate({ name: customSaleLocationName.trim() })}>{saveSaleLocation.isPending ? "Đang lưu..." : "Lưu & chọn"}</Button></div>}
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -299,7 +323,7 @@ export default function Sales() {
               <Button
                 className="w-full"
                 onClick={() => createSale.mutate(newSale)}
-                disabled={!newSale.productId || !newSale.salePrice || createSale.isPending}
+                disabled={!newSale.productId || !newSale.salePrice || isAddingSaleLocation || createSale.isPending}
               >
                 {createSale.isPending ? "Đang lưu..." : "Lưu giao dịch bán"}
               </Button>

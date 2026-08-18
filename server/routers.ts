@@ -575,6 +575,8 @@ export const appRouter = router({
 
     shopSuggestionDetails: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenShopSuggestionsForManagement(ctx.user.id)),
 
+    recentShops: protectedProcedure.query(({ ctx }) => chyusenDb.listRecentChyusenShops(ctx.user.id)),
+
     saveShopSuggestion: protectedProcedure
       .input(z.object({ name: z.string().trim().min(1).max(120) }))
       .mutation(({ ctx, input }) => chyusenDb.saveChyusenShopSuggestion(ctx.user.id, input.name)),
@@ -590,6 +592,10 @@ export const appRouter = router({
     setShopSuggestionPinned: protectedProcedure
       .input(z.object({ id: z.number(), isPinned: z.boolean() }))
       .mutation(({ ctx, input }) => chyusenDb.setChyusenShopSuggestionPinned(ctx.user.id, input.id, input.isPinned)),
+
+    reorderPinnedShopSuggestions: protectedProcedure
+      .input(z.object({ orderedIds: z.array(z.number().int().positive()).max(50) }))
+      .mutation(({ ctx, input }) => chyusenDb.reorderPinnedChyusenShopSuggestions(ctx.user.id, input.orderedIds)),
 
     get: protectedProcedure
       .input(z.object({ id: z.number() }))

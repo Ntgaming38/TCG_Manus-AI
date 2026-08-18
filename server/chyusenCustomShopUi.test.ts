@@ -17,5 +17,9 @@ describe("cửa hàng tùy chỉnh trong Chyusen", () => {
     expect(source).toContain("Ghim cửa hàng yêu thích");
     expect(source).toContain("setShopSuggestionPinned.mutate");
     expect(source).toContain("<Pin className");
+    expect(source).toContain("recentShops = []");
+    expect(source).toContain("Cửa hàng dùng gần đây");
+    expect(source).toContain("reorderPinnedShopSuggestions.mutate");
+    expect(source).toContain("GripVertical");
   });
 });

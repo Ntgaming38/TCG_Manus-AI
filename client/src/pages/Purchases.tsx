@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
 import { formatYen } from "@shared/formatYen";
 
-const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart", "Khác"];
+const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart"];
+const ADD_PURCHASE_SHOP_VALUE = "__add_purchase_shop";
 
 type SortField = "date" | "price" | "name";
 type SortDirection = "asc" | "desc";
@@ -33,9 +34,11 @@ export default function Purchases() {
     quantity: 1, price: 0, note: "",
   });
   const [pendingChyusenEntryId, setPendingChyusenEntryId] = useState<number | null>(null);
+  const [customPurchaseShopName, setCustomPurchaseShopName] = useState("");
 
   const utils = trpc.useUtils();
   const { data: purchases, refetch } = trpc.purchases.list.useQuery({ search: search || undefined });
+  const { data: savedShops = [] } = trpc.shops.list.useQuery();
   const { data: productSuggestions } = trpc.products.suggestions.useQuery(
     { search: newPurchase.productName },
     { enabled: newPurchase.productName.length >= 2 }
@@ -57,6 +60,17 @@ export default function Purchases() {
       utils.trash.list.invalidate();
       utils.dashboard.stats.invalidate();
       toast.success("Chyusen đã hoàn tất mua và được chuyển vào Thùng rác.");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const savePurchaseShop = trpc.shops.create.useMutation({
+    onSuccess: (_result, variables) => {
+      const name = variables.name.trim();
+      setNewPurchase((current) => ({ ...current, shop: name }));
+      setCustomPurchaseShopName("");
+      utils.shops.list.invalidate();
+      toast.success(`Đã lưu cửa hàng ${name}.`);
     },
     onError: (error) => toast.error(error.message),
   });
@@ -124,6 +138,16 @@ export default function Purchases() {
     });
     return sorted;
   }, [purchases, sortField, sortDirection]);
+
+  const purchaseShopOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return [...DEFAULT_SHOPS, ...savedShops.map((shop: any) => shop.name)].filter((name) => {
+      const key = String(name).trim().toLocaleLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [savedShops]);
 
   // Calculate totals for current list
   const totals = useMemo(() => {
@@ -256,11 +280,13 @@ export default function Purchases() {
                 <Select value={newPurchase.shop} onValueChange={(v) => setNewPurchase(p => ({ ...p, shop: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {DEFAULT_SHOPS.map(shop => (
+                    {purchaseShopOptions.map(shop => (
                       <SelectItem key={shop} value={shop}>{shop}</SelectItem>
                     ))}
+                    <SelectItem value={ADD_PURCHASE_SHOP_VALUE}>+ Thêm cửa hàng</SelectItem>
                   </SelectContent>
                 </Select>
+                {newPurchase.shop === ADD_PURCHASE_SHOP_VALUE && <div className="flex gap-2"><Input value={customPurchaseShopName} onChange={(event) => setCustomPurchaseShopName(event.target.value)} placeholder="Nhập tên cửa hàng..." /><Button type="button" variant="outline" className="shrink-0" disabled={!customPurchaseShopName.trim() || savePurchaseShop.isPending} onClick={() => savePurchaseShop.mutate({ name: customPurchaseShopName.trim() })}>{savePurchaseShop.isPending ? "Đang lưu..." : "Lưu & chọn"}</Button></div>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -285,7 +311,7 @@ export default function Purchases() {
               <Button
                 className="w-full"
                 onClick={() => createPurchase.mutate(newPurchase)}
-                disabled={!newPurchase.productName || !newPurchase.price || createPurchase.isPending}
+                disabled={!newPurchase.productName || !newPurchase.price || newPurchase.shop === ADD_PURCHASE_SHOP_VALUE || createPurchase.isPending}
               >
                 {createPurchase.isPending ? "Đang lưu..." : "Lưu giao dịch"}
               </Button>

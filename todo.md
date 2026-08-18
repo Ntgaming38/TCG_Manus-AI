@@ -1012,3 +1012,15 @@
 - [x] Lưu trạng thái ghim riêng theo từng cửa hàng và tài khoản
 - [x] Ưu tiên cửa hàng đã ghim trước tần suất sử dụng trong gợi ý
 - [x] Thêm biểu tượng ghim để bật/tắt và kiểm thử luồng
+
+## Thứ tự ghim và cửa hàng gần đây Chyusen
+- [x] Lưu thứ tự tùy chỉnh của cửa hàng đã ghim theo từng tài khoản
+- [x] Thêm kéo-thả để sắp xếp các cửa hàng đã ghim
+- [x] Hiển thị và chọn nhanh danh sách cửa hàng dùng gần đây
+- [x] Kiểm thử API, giao diện và lưu checkpoint
+
+## Địa điểm giao dịch tùy chỉnh
+- [x] Thay lựa chọn Khác bằng Thêm cửa hàng trong biểu mẫu Mua Hàng
+- [x] Thay lựa chọn Khác bằng Thêm nơi bán trong biểu mẫu Bán Hàng
+- [x] Lưu địa điểm tự nhập theo từng tài khoản và tái sử dụng trong gợi ý
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
