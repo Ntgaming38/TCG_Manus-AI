@@ -294,7 +294,7 @@ describe("appRouter", () => {
       const caller = appRouter.createCaller(createAuthContext());
 
       await expect(caller.chyusen.undoWon({ id: 46 })).resolves.toMatchObject({ id: 46, applicationStatus: "registered" });
-      expect(chyusenDb.updateChyusenEntry).toHaveBeenCalledWith(1, 46, { applicationStatus: "registered", resultStatus: "pending" });
+      expect(chyusenDb.updateChyusenEntry).toHaveBeenCalledWith(1, 46, { applicationStatus: "registered", resultStatus: "pending", resultCheckedAt: null });
     });
 
     it("không hoàn tác Đã trúng sau khi đã tạo Mua Hàng", async () => {
@@ -310,6 +310,15 @@ describe("appRouter", () => {
 
       await expect(caller.chyusen.setParticipation({ id: 48, applicationStatus: "won" })).rejects.toThrow("Chỉ có thể đánh dấu Đã trúng từ ngày công bố kết quả");
       expect(chyusenDb.updateChyusenEntry).not.toHaveBeenCalledWith(1, 48, expect.anything());
+    });
+
+    it("ghi nhận thời điểm đã kiểm tra kết quả cho Chyusen đang chờ", async () => {
+      vi.mocked(chyusenDb.getChyusenEntry).mockResolvedValue({ id: 49, applicationStatus: "registered", resultStatus: "pending", resultDate: new Date("2026-08-17T00:00:00+09:00") } as any);
+      vi.mocked(chyusenDb.updateChyusenEntry).mockResolvedValue({ id: 49, resultCheckedAt: new Date() } as any);
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await expect(caller.chyusen.markResultChecked({ id: 49 })).resolves.toMatchObject({ id: 49 });
+      expect(chyusenDb.updateChyusenEntry).toHaveBeenCalledWith(1, 49, { resultCheckedAt: expect.any(Date) });
     });
 
     it("cho phép chủ sở hữu sửa URL, nhãn, trạng thái và tần suất của nguồn theo dõi", async () => {

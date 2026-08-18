@@ -28,6 +28,7 @@ export type ChyusenEntryInput = {
   applicationStart?: Date | null;
   applicationEnd?: Date | null;
   resultDate?: Date | null;
+  resultCheckedAt?: Date | null;
   pickupStart?: Date | null;
   pickupEnd?: Date | null;
   pickupNote?: string;
@@ -55,7 +56,7 @@ export type ChyusenSourceInput = {
 const editableFields = [
   "title", "productName", "series", "productType", "shop", "customShopName", "sourceUrl", "externalProductId", "imageUrl", "price",
   "quantityLimit", "applicationStart", "applicationEnd", "resultDate", "pickupStart", "pickupEnd", "pickupNote", "requirements",
-  "applicationStatus", "resultStatus", "sourceTimezone", "parserStatus", "parserNote", "fieldConfidence", "sourceContentHash",
+  "applicationStatus", "resultStatus", "resultCheckedAt", "sourceTimezone", "parserStatus", "parserNote", "fieldConfidence", "sourceContentHash",
 ] as const;
 
 const serialize = (value: unknown): string | null => {
@@ -77,6 +78,7 @@ type ChyusenActivityEntry = {
   resultStatus?: ChyusenEntryInput["resultStatus"] | null;
   applicationEnd?: Date | null;
   resultDate?: Date | null;
+  resultCheckedAt?: Date | null;
   purchaseCreatedAt?: Date | string | null;
 };
 
@@ -90,6 +92,7 @@ function chyusenActivitySnapshot(entry: ChyusenActivityEntry) {
     resultStatus: entry.resultStatus || "pending",
     applicationEnd: serialize(entry.applicationEnd),
     resultDate: serialize(entry.resultDate),
+    resultCheckedAt: serialize(entry.resultCheckedAt),
     purchaseCreatedAt: serialize(entry.purchaseCreatedAt),
   };
 }
@@ -237,6 +240,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     requirements: input.requirements || null,
     applicationStatus: input.applicationStatus || "not_registered",
     resultStatus: input.resultStatus || "pending",
+    resultCheckedAt: input.resultCheckedAt || null,
     sourceTimezone: input.sourceTimezone || "Asia/Tokyo",
     parserStatus: input.parserStatus || "manual",
     parserNote: input.parserNote || null,
@@ -305,11 +309,12 @@ export async function updateChyusenEntry(userId: number, entryId: number, input:
     if (historyRows.length) await db.insert(chyusenHistory).values(historyRows);
     if (changeSource === "manual") {
       const statusChanged = input.applicationStatus !== undefined || input.resultStatus !== undefined;
+      const resultCheckChanged = input.resultCheckedAt !== undefined;
       await writeChyusenActivity(
         userId,
-        statusChanged ? "chyusen_status_updated" : "chyusen_updated",
+        resultCheckChanged ? "chyusen_result_checked" : statusChanged ? "chyusen_status_updated" : "chyusen_updated",
         entryId,
-        `${statusChanged ? "Cập nhật trạng thái" : "Cập nhật"} Chyusen: ${existing.title}`,
+        `${resultCheckChanged ? "Đã kiểm tra kết quả" : statusChanged ? "Cập nhật trạng thái" : "Cập nhật"} Chyusen: ${existing.title}`,
         chyusenActivitySnapshot(existing),
         chyusenActivitySnapshot({ ...existing, ...update } as ChyusenActivityEntry),
       );

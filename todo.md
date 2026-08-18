@@ -984,3 +984,8 @@
 - [x] Hiển thị huy hiệu Hôm nay cho mục có ngày công bố trùng ngày hiện tại
 - [x] Thêm tùy chọn sắp xếp theo ngày công bố kết quả gần nhất
 - [x] Kiểm thử ngày, thứ tự danh sách và lưu checkpoint
+
+## Theo dõi kiểm tra kết quả Chyusen
+- [x] Cho phép đánh dấu và lưu thời điểm Đã kiểm tra kết quả cho từng mục
+- [x] Hiển thị số ngày còn lại tới ngày công bố cho mục đang chờ
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint

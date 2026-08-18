@@ -632,12 +632,27 @@ export const appRouter = router({
         const updated = await chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
           applicationStatus: input.applicationStatus,
           resultStatus: input.applicationStatus === "won" ? "won" : input.applicationStatus === "lost" ? "lost" : "pending",
+          resultCheckedAt: input.applicationStatus === "registered" ? null : undefined,
         });
         if (input.applicationStatus === "lost") {
           const trashed = await chyusenDb.deleteChyusenEntry(ctx.user.id, input.id);
           return { ...updated, trashed: true, deletedAt: trashed.deletedAt };
         }
         return updated;
+      }),
+
+    markResultChecked: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const entry = await chyusenDb.getChyusenEntry(ctx.user.id, input.id);
+        if (!entry) throw new Error("Không tìm thấy Chyusen.");
+        if (entry.applicationStatus !== "registered" || entry.resultStatus === "won" || entry.resultStatus === "lost") {
+          throw new Error("Chỉ có thể đánh dấu kiểm tra cho Chyusen đang chờ kết quả.");
+        }
+        if (entry.resultDate && !isChyusenResultReady(entry.resultDate)) {
+          throw new Error(`Chỉ có thể kiểm tra kết quả từ ngày công bố (${formatChyusenDayMonth(entry.resultDate)}).`);
+        }
+        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, { resultCheckedAt: new Date() });
       }),
 
     undoWon: protectedProcedure
@@ -647,7 +662,7 @@ export const appRouter = router({
         if (!entry) throw new Error("Không tìm thấy Chyusen.");
         if (entry.applicationStatus !== "won" && entry.resultStatus !== "won") throw new Error("Chyusen này không ở trạng thái Đã trúng.");
         if (entry.purchaseCreatedAt) throw new Error("Không thể hoàn tác sau khi Chyusen đã được chuyển sang Mua Hàng.");
-        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, { applicationStatus: "registered", resultStatus: "pending" });
+        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, { applicationStatus: "registered", resultStatus: "pending", resultCheckedAt: null });
       }),
 
     purchaseDraft: protectedProcedure

@@ -315,6 +315,7 @@ export const chyusenEntries = mysqlTable("chyusen_entries", {
   fieldConfidence: text("fieldConfidence"),
   sourceContentHash: varchar("sourceContentHash", { length: 64 }),
   lastCheckedAt: timestamp("lastCheckedAt"),
+  resultCheckedAt: timestamp("resultCheckedAt"),
   purchaseCreatedAt: timestamp("purchaseCreatedAt"),
   deletedAt: timestamp("deletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
