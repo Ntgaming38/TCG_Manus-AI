@@ -989,3 +989,8 @@
 - [x] Cho phép đánh dấu và lưu thời điểm Đã kiểm tra kết quả cho từng mục
 - [x] Hiển thị số ngày còn lại tới ngày công bố cho mục đang chờ
 - [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Cảnh báo kiểm tra kết quả Chyusen
+- [x] Làm nổi bật mục đã qua ngày công bố nhưng chưa được kiểm tra
+- [x] Hiển thị thời điểm chi tiết kiểm tra kết quả gần nhất trên từng thẻ
+- [x] Kiểm thử cảnh báo, định dạng thời gian và lưu checkpoint
