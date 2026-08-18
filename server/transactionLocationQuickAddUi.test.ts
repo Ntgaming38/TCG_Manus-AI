@@ -9,6 +9,11 @@ describe("địa điểm giao dịch tự thêm", () => {
     expect(source).toContain("trpc.shops.list.useQuery()");
     expect(source).toContain("savePurchaseShop.mutate");
     expect(source).toContain("+ Thêm cửa hàng");
+    expect(source).toContain("trpc.shops.recent.useQuery()");
+    expect(source).toContain("updateSavedPurchaseShop.mutate");
+    expect(source).toContain("deleteSavedPurchaseShop.mutate");
+    expect(source).toContain("Cửa hàng tự thêm");
+    expect(source).toContain("Dùng gần đây");
   });
 
   it("cho phép lưu và chọn lại nơi bán mới trong Bán Hàng", () => {
@@ -16,5 +21,10 @@ describe("địa điểm giao dịch tự thêm", () => {
     expect(source).toContain("ADD_SALE_LOCATION_VALUE");
     expect(source).toContain("saveSaleLocation.mutate");
     expect(source).toContain("+ Thêm nơi bán");
+    expect(source).toContain("trpc.saleLocations.recent.useQuery()");
+    expect(source).toContain("updateSavedSaleLocation.mutate");
+    expect(source).toContain("deleteSavedSaleLocation.mutate");
+    expect(source).toContain("Nơi bán tự thêm");
+    expect(source).toContain("Dùng gần đây");
   });
 });

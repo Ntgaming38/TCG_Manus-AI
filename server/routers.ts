@@ -792,6 +792,7 @@ export const appRouter = router({
   shops: router({
     list: protectedProcedure
       .query(({ ctx }) => db.listShops(ctx.user.id)),
+    recent: protectedProcedure.query(({ ctx }) => db.listRecentPurchaseShops(ctx.user.id)),
 
     create: protectedProcedure
       .input(z.object({
@@ -805,10 +806,13 @@ export const appRouter = router({
         location: input.location,
         note: input.note,
       })),
+    update: protectedProcedure.input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.updateShop(ctx.user.id, input.id, input.name)),
+    delete: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => db.deleteShop(ctx.user.id, input.id)),
   }),
 
   saleLocations: router({
     list: protectedProcedure.query(({ ctx }) => db.listSaleLocations(ctx.user.id)),
+    recent: protectedProcedure.query(({ ctx }) => db.listRecentSaleLocations(ctx.user.id)),
     create: protectedProcedure.input(z.object({ name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.createSaleLocation(ctx.user.id, input.name)),
     update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.updateSaleLocation(ctx.user.id, input.id, input.name)),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(({ ctx, input }) => db.deleteSaleLocation(ctx.user.id, input.id)),

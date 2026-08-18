@@ -1024,3 +1024,9 @@
 - [x] Thay lựa chọn Khác bằng Thêm nơi bán trong biểu mẫu Bán Hàng
 - [x] Lưu địa điểm tự nhập theo từng tài khoản và tái sử dụng trong gợi ý
 - [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Quản lý nội tuyến địa điểm giao dịch
+- [x] Cho phép sửa/xóa cửa hàng mua tự thêm ngay trong biểu mẫu
+- [x] Cho phép sửa/xóa nơi bán tự thêm ngay trong biểu mẫu
+- [x] Hiển thị ba địa điểm dùng gần đây để chọn nhanh ở Mua Hàng/Bán Hàng
+- [x] Kiểm thử API, giao diện và lưu checkpoint

@@ -1344,6 +1344,41 @@ export async function createShop(data: InsertShop) {
   return { id: result[0].insertId };
 }
 
+export async function updateShop(userId: number, id: number, name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const normalizedName = name.trim();
+  const existing = await db.select().from(shops).where(and(eq(shops.id, id), eq(shops.userId, userId))).limit(1);
+  if (!existing[0]) throw new Error("Không tìm thấy cửa hàng.");
+  await db.update(shops).set({ name: normalizedName }).where(and(eq(shops.id, id), eq(shops.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "shop_updated", description: `Sửa cửa hàng: ${existing[0].name} → ${normalizedName}`, entityType: "shop", entityId: id, ...serializeActivityChange({ name: existing[0].name }, { name: normalizedName }) });
+  return { id, name: normalizedName };
+}
+
+export async function deleteShop(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(shops).where(and(eq(shops.id, id), eq(shops.userId, userId))).limit(1);
+  if (!existing[0]) throw new Error("Không tìm thấy cửa hàng.");
+  await db.delete(shops).where(and(eq(shops.id, id), eq(shops.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "shop_deleted", description: `Xóa cửa hàng: ${existing[0].name}`, entityType: "shop", entityId: id, ...serializeActivityChange({ name: existing[0].name }, null) });
+}
+
+export async function listRecentPurchaseShops(userId: number, limit = 3) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({ name: purchases.shop, usedAt: purchases.purchaseDate }).from(purchases).where(eq(purchases.userId, userId));
+  const recent = new Map<string, { name: string; usedAt: Date }>();
+  rows.forEach((row) => {
+    const name = row.name?.trim();
+    if (!name) return;
+    const key = name.toLocaleLowerCase();
+    const existing = recent.get(key);
+    if (!existing || row.usedAt > existing.usedAt) recent.set(key, { name, usedAt: row.usedAt });
+  });
+  return Array.from(recent.values()).sort((a, b) => b.usedAt.getTime() - a.usedAt.getTime() || a.name.localeCompare(b.name, "vi")).slice(0, limit);
+}
+
 // ========== SALE LOCATIONS ==========
 
 export async function listSaleLocations(userId: number) {
@@ -1379,4 +1414,20 @@ export async function deleteSaleLocation(userId: number, id: number) {
   if (!existing[0]) throw new Error("Không tìm thấy nơi bán.");
   await db.delete(saleLocations).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId)));
   await db.insert(activityLogs).values({ userId, action: "sale_location_deleted", description: `Xóa nơi bán: ${existing[0].name}`, entityType: "sale_location", entityId: id, ...serializeActivityChange({ name: existing[0].name }, null) });
+}
+
+export async function listRecentSaleLocations(userId: number, limit = 3) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({ platform: sales.platform, saleLocation: sales.saleLocation, usedAt: sales.saleDate }).from(sales).where(eq(sales.userId, userId));
+  const recent = new Map<string, { name: string; platform: string; saleLocation: string | null; usedAt: Date }>();
+  rows.forEach((row) => {
+    const platform = row.platform || "other";
+    const saleLocation = row.saleLocation?.trim() || null;
+    const name = saleLocation || platform;
+    const key = `${platform}:${saleLocation || ""}`.toLocaleLowerCase();
+    const existing = recent.get(key);
+    if (!existing || row.usedAt > existing.usedAt) recent.set(key, { name, platform, saleLocation, usedAt: row.usedAt });
+  });
+  return Array.from(recent.values()).sort((a, b) => b.usedAt.getTime() - a.usedAt.getTime() || a.name.localeCompare(b.name, "vi")).slice(0, limit);
 }

@@ -35,10 +35,13 @@ export default function Purchases() {
   });
   const [pendingChyusenEntryId, setPendingChyusenEntryId] = useState<number | null>(null);
   const [customPurchaseShopName, setCustomPurchaseShopName] = useState("");
+  const [editingSavedShop, setEditingSavedShop] = useState<{ id: number; name: string } | null>(null);
+  const [deleteSavedShopId, setDeleteSavedShopId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
   const { data: purchases, refetch } = trpc.purchases.list.useQuery({ search: search || undefined });
   const { data: savedShops = [] } = trpc.shops.list.useQuery();
+  const { data: recentPurchaseShops = [] } = trpc.shops.recent.useQuery();
   const { data: productSuggestions } = trpc.products.suggestions.useQuery(
     { search: newPurchase.productName },
     { enabled: newPurchase.productName.length >= 2 }
@@ -72,6 +75,14 @@ export default function Purchases() {
       utils.shops.list.invalidate();
       toast.success(`Đã lưu cửa hàng ${name}.`);
     },
+    onError: (error) => toast.error(error.message),
+  });
+  const updateSavedPurchaseShop = trpc.shops.update.useMutation({
+    onSuccess: (data) => { setNewPurchase((current) => current.shop === editingSavedShop?.name ? { ...current, shop: data.name } : current); setEditingSavedShop(null); utils.shops.list.invalidate(); utils.shops.recent.invalidate(); toast.success("Đã cập nhật cửa hàng."); },
+    onError: (error) => toast.error(error.message),
+  });
+  const deleteSavedPurchaseShop = trpc.shops.delete.useMutation({
+    onSuccess: () => { setDeleteSavedShopId(null); utils.shops.list.invalidate(); utils.shops.recent.invalidate(); toast.success("Đã xóa cửa hàng khỏi gợi ý."); },
     onError: (error) => toast.error(error.message),
   });
 
@@ -277,6 +288,7 @@ export default function Purchases() {
               </div>
               <div className="space-y-2">
                 <Label>Shop mua</Label>
+                {recentPurchaseShops.length > 0 && <div className="flex flex-wrap gap-1.5"><span className="w-full text-xs text-muted-foreground">Dùng gần đây</span>{recentPurchaseShops.map((shop) => <Button key={`recent-${shop.name}`} type="button" size="sm" variant="outline" className="h-7 border-sky-400/40 px-2 text-xs text-sky-100 hover:bg-sky-500/15" onClick={() => setNewPurchase((current) => ({ ...current, shop: shop.name }))}>{shop.name}</Button>)}</div>}
                 <Select value={newPurchase.shop} onValueChange={(v) => setNewPurchase(p => ({ ...p, shop: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -287,6 +299,7 @@ export default function Purchases() {
                   </SelectContent>
                 </Select>
                 {newPurchase.shop === ADD_PURCHASE_SHOP_VALUE && <div className="flex gap-2"><Input value={customPurchaseShopName} onChange={(event) => setCustomPurchaseShopName(event.target.value)} placeholder="Nhập tên cửa hàng..." /><Button type="button" variant="outline" className="shrink-0" disabled={!customPurchaseShopName.trim() || savePurchaseShop.isPending} onClick={() => savePurchaseShop.mutate({ name: customPurchaseShopName.trim() })}>{savePurchaseShop.isPending ? "Đang lưu..." : "Lưu & chọn"}</Button></div>}
+                {savedShops.length > 0 && <div className="space-y-1 rounded-md border border-border bg-background/40 p-2"><p className="text-xs font-medium text-muted-foreground">Cửa hàng tự thêm</p>{savedShops.map((shop: any) => editingSavedShop?.id === shop.id ? <div key={shop.id} className="flex gap-1"><Input className="h-8" value={editingSavedShop?.name ?? ""} onChange={(event) => setEditingSavedShop((current) => current ? { ...current, name: event.target.value } : current)} /><Button type="button" size="sm" className="h-8" disabled={!(editingSavedShop?.name ?? "").trim() || updateSavedPurchaseShop.isPending} onClick={() => updateSavedPurchaseShop.mutate({ id: shop.id, name: (editingSavedShop?.name ?? "").trim() })}>Lưu</Button><Button type="button" size="sm" variant="ghost" className="h-8" onClick={() => setEditingSavedShop(null)}>Hủy</Button></div> : <div key={shop.id} className="flex items-center gap-1"><Button type="button" size="sm" variant="ghost" className="h-7 flex-1 justify-start px-1.5" onClick={() => setNewPurchase((current) => ({ ...current, shop: shop.name }))}>{shop.name}</Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Sửa ${shop.name}`} onClick={() => setEditingSavedShop({ id: shop.id, name: shop.name })}><Pencil className="h-3.5 w-3.5" /></Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-300 hover:text-red-200" aria-label={`Xóa ${shop.name}`} onClick={() => setDeleteSavedShopId(shop.id)}><Trash2 className="h-3.5 w-3.5" /></Button></div>)}</div>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -318,6 +331,7 @@ export default function Purchases() {
             </div>
           </DialogContent>
         </Dialog>
+        <AlertDialog open={deleteSavedShopId !== null} onOpenChange={(open) => !open && setDeleteSavedShopId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa cửa hàng tự thêm?</AlertDialogTitle><AlertDialogDescription>Cửa hàng sẽ bị bỏ khỏi gợi ý. Lịch sử mua hàng cũ không bị thay đổi.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" disabled={deleteSavedPurchaseShop.isPending} onClick={() => deleteSavedShopId && deleteSavedPurchaseShop.mutate({ id: deleteSavedShopId })}>Xóa cửa hàng</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       </div>
 
       {/* Search + Sort */}

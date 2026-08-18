@@ -49,11 +49,14 @@ export default function Sales() {
   });
   const [isAddingSaleLocation, setIsAddingSaleLocation] = useState(false);
   const [customSaleLocationName, setCustomSaleLocationName] = useState("");
+  const [editingSaleLocation, setEditingSaleLocation] = useState<{ id: number; name: string } | null>(null);
+  const [deleteSaleLocationId, setDeleteSaleLocationId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
   const { data: sales, refetch } = trpc.sales.list.useQuery({ search: search || undefined });
   const { data: inventoryProducts } = trpc.products.inStock.useQuery();
   const { data: saleLocations = [] } = trpc.saleLocations.list.useQuery();
+  const { data: recentSaleLocations = [] } = trpc.saleLocations.recent.useQuery();
 
   const invalidateAll = () => {
     utils.sales.list.invalidate();
@@ -83,6 +86,14 @@ export default function Sales() {
       utils.saleLocations.list.invalidate();
       toast.success(`Đã lưu nơi bán ${name}.`);
     },
+    onError: (error) => toast.error(error.message),
+  });
+  const updateSavedSaleLocation = trpc.saleLocations.update.useMutation({
+    onSuccess: (data) => { setNewSale((current) => current.saleLocation === editingSaleLocation?.name ? { ...current, saleLocation: data.name } : current); setEditingSaleLocation(null); utils.saleLocations.list.invalidate(); utils.saleLocations.recent.invalidate(); toast.success("Đã cập nhật nơi bán."); },
+    onError: (error) => toast.error(error.message),
+  });
+  const deleteSavedSaleLocation = trpc.saleLocations.delete.useMutation({
+    onSuccess: () => { setDeleteSaleLocationId(null); utils.saleLocations.list.invalidate(); utils.saleLocations.recent.invalidate(); toast.success("Đã xóa nơi bán khỏi gợi ý."); },
     onError: (error) => toast.error(error.message),
   });
 
@@ -267,6 +278,7 @@ export default function Sales() {
               </div>
               <div className="space-y-2">
                 <Label>Nơi bán</Label>
+                {recentSaleLocations.length > 0 && <div className="flex flex-wrap gap-1.5"><span className="w-full text-xs text-muted-foreground">Dùng gần đây</span>{recentSaleLocations.map((location) => <Button key={`recent-${location.platform}-${location.saleLocation || ""}`} type="button" size="sm" variant="outline" className="h-7 border-sky-400/40 px-2 text-xs text-sky-100 hover:bg-sky-500/15" onClick={() => { setIsAddingSaleLocation(false); setNewSale((current) => ({ ...current, platform: location.platform, saleLocation: location.saleLocation })); }}>{location.saleLocation || PLATFORMS.find((platform) => platform.value === location.platform)?.label || location.name}</Button>)}</div>}
                 <Select value={saleLocationValue} onValueChange={(v) => {
                   if (v === ADD_SALE_LOCATION_VALUE) {
                     setIsAddingSaleLocation(true);
@@ -287,6 +299,7 @@ export default function Sales() {
                   </SelectContent>
                 </Select>
                 {isAddingSaleLocation && <div className="flex gap-2"><Input value={customSaleLocationName} onChange={(event) => setCustomSaleLocationName(event.target.value)} placeholder="Nhập tên nơi bán..." /><Button type="button" variant="outline" className="shrink-0" disabled={!customSaleLocationName.trim() || saveSaleLocation.isPending} onClick={() => saveSaleLocation.mutate({ name: customSaleLocationName.trim() })}>{saveSaleLocation.isPending ? "Đang lưu..." : "Lưu & chọn"}</Button></div>}
+                {saleLocations.length > 0 && <div className="space-y-1 rounded-md border border-border bg-background/40 p-2"><p className="text-xs font-medium text-muted-foreground">Nơi bán tự thêm</p>{saleLocations.map((location: any) => editingSaleLocation?.id === location.id ? <div key={location.id} className="flex gap-1"><Input className="h-8" value={editingSaleLocation?.name ?? ""} onChange={(event) => setEditingSaleLocation((current) => current ? { ...current, name: event.target.value } : current)} /><Button type="button" size="sm" className="h-8" disabled={!(editingSaleLocation?.name ?? "").trim() || updateSavedSaleLocation.isPending} onClick={() => updateSavedSaleLocation.mutate({ id: location.id, name: (editingSaleLocation?.name ?? "").trim() })}>Lưu</Button><Button type="button" size="sm" variant="ghost" className="h-8" onClick={() => setEditingSaleLocation(null)}>Hủy</Button></div> : <div key={location.id} className="flex items-center gap-1"><Button type="button" size="sm" variant="ghost" className="h-7 flex-1 justify-start px-1.5" onClick={() => { setIsAddingSaleLocation(false); setNewSale((current) => ({ ...current, platform: "other", saleLocation: location.name })); }}>{location.name}</Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Sửa ${location.name}`} onClick={() => setEditingSaleLocation({ id: location.id, name: location.name })}><Pencil className="h-3.5 w-3.5" /></Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-300 hover:text-red-200" aria-label={`Xóa ${location.name}`} onClick={() => setDeleteSaleLocationId(location.id)}><Trash2 className="h-3.5 w-3.5" /></Button></div>)}</div>}
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -330,6 +343,7 @@ export default function Sales() {
             </div>
           </DialogContent>
         </Dialog>
+        <AlertDialog open={deleteSaleLocationId !== null} onOpenChange={(open) => !open && setDeleteSaleLocationId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa nơi bán tự thêm?</AlertDialogTitle><AlertDialogDescription>Nơi bán sẽ bị bỏ khỏi gợi ý. Lịch sử giao dịch bán cũ không bị thay đổi.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction className="bg-red-600 hover:bg-red-700" disabled={deleteSavedSaleLocation.isPending} onClick={() => deleteSaleLocationId && deleteSavedSaleLocation.mutate({ id: deleteSaleLocationId })}>Xóa nơi bán</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       </div>
 
       {/* Compact filters */}
