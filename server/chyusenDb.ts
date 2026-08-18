@@ -47,11 +47,27 @@ export const CHYUSEN_INTERVAL_MINUTES = [60, 180, 360, 720, 1440] as const;
 export const DEFAULT_CHYUSEN_DEADLINE_HOURS = [168, 72, 24, 12, 3, 1];
 export const CHYUSEN_UNDO_WINDOW_MS = 10_000;
 
-export async function listChyusenShopSuggestions(userId: number) {
+async function listChyusenShopSuggestionDetails(userId: number) {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
-  return rows.sort((a, b) => a.name.localeCompare(b.name, "vi")).map((row) => row.name);
+  const entries = await db.select({ shop: chyusenEntries.shop, customShopName: chyusenEntries.customShopName }).from(chyusenEntries).where(and(eq(chyusenEntries.userId, userId), isNull(chyusenEntries.deletedAt)));
+  const usageByName = new Map<string, number>();
+  for (const entry of entries) {
+    const effectiveName = (entry.customShopName || entry.shop || "").trim().toLocaleLowerCase();
+    if (effectiveName) usageByName.set(effectiveName, (usageByName.get(effectiveName) || 0) + 1);
+  }
+  return rows
+    .map((row) => ({ ...row, useCount: usageByName.get(row.name.trim().toLocaleLowerCase()) || 0 }))
+    .sort((a, b) => b.useCount - a.useCount || a.name.localeCompare(b.name, "vi"));
+}
+
+export async function listChyusenShopSuggestions(userId: number) {
+  return (await listChyusenShopSuggestionDetails(userId)).map((row) => row.name);
+}
+
+export async function listChyusenShopSuggestionsForManagement(userId: number) {
+  return listChyusenShopSuggestionDetails(userId);
 }
 
 export async function saveChyusenShopSuggestion(userId: number, rawName: string) {
@@ -65,6 +81,31 @@ export async function saveChyusenShopSuggestion(userId: number, rawName: string)
   const result = await db.insert(chyusenShopSuggestions).values({ userId, name });
   await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_created", description: `Thêm cửa hàng gợi ý Chyusen: ${name}`, entityType: "chyusen_shop", entityId: result[0].insertId, ...serializeActivityChange(null, { name }) });
   return { id: result[0].insertId, name, created: true };
+}
+
+export async function updateChyusenShopSuggestion(userId: number, id: number, rawName: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const name = rawName.trim().replace(/\s+/g, " ");
+  if (!name) throw new Error("Vui lòng nhập tên cửa hàng.");
+  const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
+  const existing = rows.find((row) => row.id === id);
+  if (!existing) throw new Error("Không tìm thấy cửa hàng gợi ý.");
+  const duplicate = rows.find((row) => row.id !== id && row.name.localeCompare(name, undefined, { sensitivity: "accent" }) === 0);
+  if (duplicate) throw new Error("Tên cửa hàng này đã có trong gợi ý.");
+  await db.update(chyusenShopSuggestions).set({ name }).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_updated", description: `Sửa cửa hàng gợi ý Chyusen: ${existing.name} → ${name}`, entityType: "chyusen_shop", entityId: id, ...serializeActivityChange({ name: existing.name }, { name }) });
+  return { id, name };
+}
+
+export async function deleteChyusenShopSuggestion(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
+  const existing = rows.find((row) => row.id === id);
+  if (!existing) throw new Error("Không tìm thấy cửa hàng gợi ý.");
+  await db.delete(chyusenShopSuggestions).where(and(eq(chyusenShopSuggestions.id, id), eq(chyusenShopSuggestions.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_deleted", description: `Xóa cửa hàng gợi ý Chyusen: ${existing.name}`, entityType: "chyusen_shop", entityId: id, ...serializeActivityChange({ name: existing.name }, null) });
 }
 
 export type ChyusenSourceInput = {

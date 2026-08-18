@@ -10,5 +10,9 @@ describe("cửa hàng tùy chỉnh trong Chyusen", () => {
     expect(source).toContain("Cửa hàng bạn đã lưu");
     expect(source).toContain("trpc.chyusen.shopSuggestions.useQuery()");
     expect(source).toContain("saveShopSuggestion.mutate({ name: draft.customShopName })");
+    expect(source).toContain("shopSuggestionDetails");
+    expect(source).toContain("updateShopSuggestion.mutate");
+    expect(source).toContain("deleteShopSuggestion.mutate");
+    expect(source).toContain("Đã nhận diện từ URL");
   });
 });

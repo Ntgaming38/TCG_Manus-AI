@@ -1001,3 +1001,9 @@
 - [x] Hiển thị cửa hàng đã lưu trong gợi ý khi thêm Chyusen lần sau
 - [x] Bỏ Lawson và Seven Eleven khỏi danh sách gợi ý mặc định
 - [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Quản lý gợi ý cửa hàng Chyusen
+- [x] Cho phép sửa và xóa cửa hàng tự thêm theo từng tài khoản
+- [x] Xếp hạng cửa hàng gợi ý theo tần suất sử dụng thực tế
+- [x] Gợi ý tên cửa hàng khi URL công khai nhận diện được miền hỗ trợ
+- [x] Kiểm thử API, giao diện và lưu checkpoint

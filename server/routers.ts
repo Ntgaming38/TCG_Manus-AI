@@ -573,9 +573,19 @@ export const appRouter = router({
 
     shopSuggestions: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenShopSuggestions(ctx.user.id)),
 
+    shopSuggestionDetails: protectedProcedure.query(({ ctx }) => chyusenDb.listChyusenShopSuggestionsForManagement(ctx.user.id)),
+
     saveShopSuggestion: protectedProcedure
       .input(z.object({ name: z.string().trim().min(1).max(120) }))
       .mutation(({ ctx, input }) => chyusenDb.saveChyusenShopSuggestion(ctx.user.id, input.name)),
+
+    updateShopSuggestion: protectedProcedure
+      .input(z.object({ id: z.number(), name: z.string().trim().min(1).max(120) }))
+      .mutation(({ ctx, input }) => chyusenDb.updateChyusenShopSuggestion(ctx.user.id, input.id, input.name)),
+
+    deleteShopSuggestion: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ ctx, input }) => chyusenDb.deleteChyusenShopSuggestion(ctx.user.id, input.id)),
 
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
