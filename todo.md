@@ -1030,3 +1030,9 @@
 - [x] Cho phép sửa/xóa nơi bán tự thêm ngay trong biểu mẫu
 - [x] Hiển thị ba địa điểm dùng gần đây để chọn nhanh ở Mua Hàng/Bán Hàng
 - [x] Kiểm thử API, giao diện và lưu checkpoint
+
+## Ghim và tần suất địa điểm giao dịch
+- [x] Lưu trạng thái ghim riêng cho cửa hàng mua và nơi bán tùy chỉnh
+- [x] Tính và hiển thị số lần giao dịch theo từng địa điểm gợi ý
+- [x] Ưu tiên địa điểm đã ghim trong biểu mẫu Mua Hàng/Bán Hàng
+- [x] Kiểm thử API, giao diện và lưu checkpoint

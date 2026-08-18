@@ -205,6 +205,7 @@ export const shops = mysqlTable("shops", {
   name: varchar("name", { length: 255 }).notNull(),
   location: varchar("location", { length: 255 }),
   note: text("note"),
+  isPinned: int("isPinned").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -216,6 +217,7 @@ export const saleLocations = mysqlTable("sale_locations", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   name: varchar("name", { length: 120 }).notNull(),
+  isPinned: int("isPinned").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [

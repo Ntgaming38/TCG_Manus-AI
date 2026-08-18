@@ -14,6 +14,9 @@ describe("địa điểm giao dịch tự thêm", () => {
     expect(source).toContain("deleteSavedPurchaseShop.mutate");
     expect(source).toContain("Cửa hàng tự thêm");
     expect(source).toContain("Dùng gần đây");
+    expect(source).toContain("setSavedPurchaseShopPinned.mutate");
+    expect(source).toContain("Ghim & tần suất cửa hàng");
+    expect(source).toContain("useCount");
   });
 
   it("cho phép lưu và chọn lại nơi bán mới trong Bán Hàng", () => {
@@ -26,5 +29,8 @@ describe("địa điểm giao dịch tự thêm", () => {
     expect(source).toContain("deleteSavedSaleLocation.mutate");
     expect(source).toContain("Nơi bán tự thêm");
     expect(source).toContain("Dùng gần đây");
+    expect(source).toContain("setSavedSaleLocationPinned.mutate");
+    expect(source).toContain("Ghim & tần suất nơi bán");
+    expect(source).toContain("useCount");
   });
 });

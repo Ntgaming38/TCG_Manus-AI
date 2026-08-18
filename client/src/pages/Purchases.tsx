@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Pin, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
@@ -85,6 +85,10 @@ export default function Purchases() {
     onSuccess: () => { setDeleteSavedShopId(null); utils.shops.list.invalidate(); utils.shops.recent.invalidate(); toast.success("Đã xóa cửa hàng khỏi gợi ý."); },
     onError: (error) => toast.error(error.message),
   });
+  const setSavedPurchaseShopPinned = trpc.shops.setPinned.useMutation({
+    onSuccess: (data) => { utils.shops.list.invalidate(); toast.success(data.isPinned ? "Đã ghim cửa hàng lên đầu gợi ý." : "Đã bỏ ghim cửa hàng."); },
+    onError: (error) => toast.error(error.message),
+  });
 
   useEffect(() => {
     const rawDraft = localStorage.getItem(CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY);
@@ -152,13 +156,15 @@ export default function Purchases() {
 
   const purchaseShopOptions = useMemo(() => {
     const seen = new Set<string>();
-    return [...DEFAULT_SHOPS, ...savedShops.map((shop: any) => shop.name)].filter((name) => {
+    return [...savedShops.map((shop: any) => shop.name), ...DEFAULT_SHOPS].filter((name) => {
       const key = String(name).trim().toLocaleLowerCase();
       if (!key || seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   }, [savedShops]);
+
+  const savedPurchaseShopByName = useMemo(() => new Map(savedShops.map((shop: any) => [shop.name.trim().toLocaleLowerCase(), shop])), [savedShops]);
 
   // Calculate totals for current list
   const totals = useMemo(() => {
@@ -293,12 +299,13 @@ export default function Purchases() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {purchaseShopOptions.map(shop => (
-                      <SelectItem key={shop} value={shop}>{shop}</SelectItem>
+                      <SelectItem key={shop} value={shop}>{shop}{savedPurchaseShopByName.get(shop.trim().toLocaleLowerCase())?.useCount ? ` · ${savedPurchaseShopByName.get(shop.trim().toLocaleLowerCase()).useCount} lần` : ""}</SelectItem>
                     ))}
                     <SelectItem value={ADD_PURCHASE_SHOP_VALUE}>+ Thêm cửa hàng</SelectItem>
                   </SelectContent>
                 </Select>
                 {newPurchase.shop === ADD_PURCHASE_SHOP_VALUE && <div className="flex gap-2"><Input value={customPurchaseShopName} onChange={(event) => setCustomPurchaseShopName(event.target.value)} placeholder="Nhập tên cửa hàng..." /><Button type="button" variant="outline" className="shrink-0" disabled={!customPurchaseShopName.trim() || savePurchaseShop.isPending} onClick={() => savePurchaseShop.mutate({ name: customPurchaseShopName.trim() })}>{savePurchaseShop.isPending ? "Đang lưu..." : "Lưu & chọn"}</Button></div>}
+                {savedShops.length > 0 && <div className="space-y-1 rounded-md border border-amber-400/30 bg-amber-500/5 p-2"><p className="text-xs font-medium text-muted-foreground">Ghim & tần suất cửa hàng</p>{savedShops.map((shop: any) => <div key={`pin-${shop.id}`} className="flex items-center gap-1"><span className="min-w-0 flex-1 truncate text-xs">{shop.name} <span className="text-muted-foreground">· {shop.useCount || 0} lần</span></span><Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${shop.isPinned ? "text-amber-300 hover:text-amber-200" : "text-muted-foreground hover:text-amber-200"}`} aria-label={`${shop.isPinned ? "Bỏ ghim" : "Ghim"} ${shop.name}`} disabled={setSavedPurchaseShopPinned.isPending} onClick={() => setSavedPurchaseShopPinned.mutate({ id: shop.id, isPinned: !Boolean(shop.isPinned) })}><Pin className={`h-3.5 w-3.5 ${shop.isPinned ? "fill-current" : ""}`} /></Button></div>)}</div>}
                 {savedShops.length > 0 && <div className="space-y-1 rounded-md border border-border bg-background/40 p-2"><p className="text-xs font-medium text-muted-foreground">Cửa hàng tự thêm</p>{savedShops.map((shop: any) => editingSavedShop?.id === shop.id ? <div key={shop.id} className="flex gap-1"><Input className="h-8" value={editingSavedShop?.name ?? ""} onChange={(event) => setEditingSavedShop((current) => current ? { ...current, name: event.target.value } : current)} /><Button type="button" size="sm" className="h-8" disabled={!(editingSavedShop?.name ?? "").trim() || updateSavedPurchaseShop.isPending} onClick={() => updateSavedPurchaseShop.mutate({ id: shop.id, name: (editingSavedShop?.name ?? "").trim() })}>Lưu</Button><Button type="button" size="sm" variant="ghost" className="h-8" onClick={() => setEditingSavedShop(null)}>Hủy</Button></div> : <div key={shop.id} className="flex items-center gap-1"><Button type="button" size="sm" variant="ghost" className="h-7 flex-1 justify-start px-1.5" onClick={() => setNewPurchase((current) => ({ ...current, shop: shop.name }))}>{shop.name}</Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Sửa ${shop.name}`} onClick={() => setEditingSavedShop({ id: shop.id, name: shop.name })}><Pencil className="h-3.5 w-3.5" /></Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-300 hover:text-red-200" aria-label={`Xóa ${shop.name}`} onClick={() => setDeleteSavedShopId(shop.id)}><Trash2 className="h-3.5 w-3.5" /></Button></div>)}</div>}
               </div>
               <div className="grid grid-cols-2 gap-4">

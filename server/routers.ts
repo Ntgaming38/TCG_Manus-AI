@@ -808,6 +808,7 @@ export const appRouter = router({
       })),
     update: protectedProcedure.input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.updateShop(ctx.user.id, input.id, input.name)),
     delete: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => db.deleteShop(ctx.user.id, input.id)),
+    setPinned: protectedProcedure.input(z.object({ id: z.number().int().positive(), isPinned: z.boolean() })).mutation(({ ctx, input }) => db.setShopPinned(ctx.user.id, input.id, input.isPinned)),
   }),
 
   saleLocations: router({
@@ -816,6 +817,7 @@ export const appRouter = router({
     create: protectedProcedure.input(z.object({ name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.createSaleLocation(ctx.user.id, input.name)),
     update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().trim().min(1).max(120) })).mutation(({ ctx, input }) => db.updateSaleLocation(ctx.user.id, input.id, input.name)),
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(({ ctx, input }) => db.deleteSaleLocation(ctx.user.id, input.id)),
+    setPinned: protectedProcedure.input(z.object({ id: z.number().int().positive(), isPinned: z.boolean() })).mutation(({ ctx, input }) => db.setSaleLocationPinned(ctx.user.id, input.id, input.isPinned)),
   }),
 });
 

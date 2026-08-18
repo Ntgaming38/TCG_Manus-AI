@@ -10,8 +10,12 @@ describe("API địa điểm giao dịch", () => {
     expect(router).toContain("listRecentPurchaseShops");
     expect(router).toContain("db.updateShop");
     expect(router).toContain("db.deleteShop");
+    expect(router).toContain("db.setShopPinned");
     expect(router).toContain("listRecentSaleLocations");
+    expect(router).toContain("db.setSaleLocationPinned");
     expect(database).toContain("export async function listRecentPurchaseShops");
     expect(database).toContain("export async function listRecentSaleLocations");
+    expect(database).toContain("export async function setShopPinned");
+    expect(database).toContain("export async function setSaleLocationPinned");
   });
 });

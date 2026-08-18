@@ -1326,7 +1326,16 @@ export async function getReportsOverview(userId: number) {
 export async function listShops(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(shops).where(eq(shops.userId, userId));
+  const [rows, purchasesForUsage] = await Promise.all([
+    db.select().from(shops).where(eq(shops.userId, userId)),
+    db.select({ shop: purchases.shop }).from(purchases).where(eq(purchases.userId, userId)),
+  ]);
+  const usageByName = new Map<string, number>();
+  purchasesForUsage.forEach((purchase) => {
+    const key = purchase.shop?.trim().toLocaleLowerCase();
+    if (key) usageByName.set(key, (usageByName.get(key) || 0) + 1);
+  });
+  return rows.map((row) => ({ ...row, useCount: usageByName.get(row.name.trim().toLocaleLowerCase()) || 0 })).sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || b.useCount - a.useCount || a.name.localeCompare(b.name, "vi"));
 }
 
 export async function createShop(data: InsertShop) {
@@ -1364,6 +1373,16 @@ export async function deleteShop(userId: number, id: number) {
   await db.insert(activityLogs).values({ userId, action: "shop_deleted", description: `Xóa cửa hàng: ${existing[0].name}`, entityType: "shop", entityId: id, ...serializeActivityChange({ name: existing[0].name }, null) });
 }
 
+export async function setShopPinned(userId: number, id: number, isPinned: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(shops).where(and(eq(shops.id, id), eq(shops.userId, userId))).limit(1);
+  if (!existing[0]) throw new Error("Không tìm thấy cửa hàng.");
+  await db.update(shops).set({ isPinned: isPinned ? 1 : 0 }).where(and(eq(shops.id, id), eq(shops.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "shop_pinned", description: `${isPinned ? "Ghim" : "Bỏ ghim"} cửa hàng: ${existing[0].name}`, entityType: "shop", entityId: id, ...serializeActivityChange({ isPinned: Boolean(existing[0].isPinned) }, { isPinned }) });
+  return { id, isPinned };
+}
+
 export async function listRecentPurchaseShops(userId: number, limit = 3) {
   const db = await getDb();
   if (!db) return [];
@@ -1384,7 +1403,16 @@ export async function listRecentPurchaseShops(userId: number, limit = 3) {
 export async function listSaleLocations(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(saleLocations).where(eq(saleLocations.userId, userId)).orderBy(asc(saleLocations.name));
+  const [rows, salesForUsage] = await Promise.all([
+    db.select().from(saleLocations).where(eq(saleLocations.userId, userId)),
+    db.select({ saleLocation: sales.saleLocation }).from(sales).where(eq(sales.userId, userId)),
+  ]);
+  const usageByName = new Map<string, number>();
+  salesForUsage.forEach((sale) => {
+    const key = sale.saleLocation?.trim().toLocaleLowerCase();
+    if (key) usageByName.set(key, (usageByName.get(key) || 0) + 1);
+  });
+  return rows.map((row) => ({ ...row, useCount: usageByName.get(row.name.trim().toLocaleLowerCase()) || 0 })).sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || b.useCount - a.useCount || a.name.localeCompare(b.name, "vi"));
 }
 
 export async function createSaleLocation(userId: number, name: string) {
@@ -1414,6 +1442,16 @@ export async function deleteSaleLocation(userId: number, id: number) {
   if (!existing[0]) throw new Error("Không tìm thấy nơi bán.");
   await db.delete(saleLocations).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId)));
   await db.insert(activityLogs).values({ userId, action: "sale_location_deleted", description: `Xóa nơi bán: ${existing[0].name}`, entityType: "sale_location", entityId: id, ...serializeActivityChange({ name: existing[0].name }, null) });
+}
+
+export async function setSaleLocationPinned(userId: number, id: number, isPinned: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(saleLocations).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId))).limit(1);
+  if (!existing[0]) throw new Error("Không tìm thấy nơi bán.");
+  await db.update(saleLocations).set({ isPinned: isPinned ? 1 : 0 }).where(and(eq(saleLocations.id, id), eq(saleLocations.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: "sale_location_pinned", description: `${isPinned ? "Ghim" : "Bỏ ghim"} nơi bán: ${existing[0].name}`, entityType: "sale_location", entityId: id, ...serializeActivityChange({ isPinned: Boolean(existing[0].isPinned) }, { isPinned }) });
+  return { id, isPinned };
 }
 
 export async function listRecentSaleLocations(userId: number, limit = 3) {

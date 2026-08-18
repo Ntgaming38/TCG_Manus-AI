@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Search, DollarSign, Calendar, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Pin, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
@@ -94,6 +94,10 @@ export default function Sales() {
   });
   const deleteSavedSaleLocation = trpc.saleLocations.delete.useMutation({
     onSuccess: () => { setDeleteSaleLocationId(null); utils.saleLocations.list.invalidate(); utils.saleLocations.recent.invalidate(); toast.success("Đã xóa nơi bán khỏi gợi ý."); },
+    onError: (error) => toast.error(error.message),
+  });
+  const setSavedSaleLocationPinned = trpc.saleLocations.setPinned.useMutation({
+    onSuccess: (data) => { utils.saleLocations.list.invalidate(); toast.success(data.isPinned ? "Đã ghim nơi bán lên đầu gợi ý." : "Đã bỏ ghim nơi bán."); },
     onError: (error) => toast.error(error.message),
   });
 
@@ -294,11 +298,12 @@ export default function Sales() {
                       <SelectItem key={pl.value} value={`platform:${pl.value}`}>{pl.label}</SelectItem>
                     ))}
                     {saleLocations.length > 0 && <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">Nơi bán của bạn</div>}
-                    {saleLocations.map((location: any) => <SelectItem key={location.id} value={`location:${location.id}`}>{location.name}</SelectItem>)}
+                    {saleLocations.map((location: any) => <SelectItem key={location.id} value={`location:${location.id}`}>{location.name}{location.useCount ? ` · ${location.useCount} lần` : ""}</SelectItem>)}
                     <SelectItem value={ADD_SALE_LOCATION_VALUE}>+ Thêm nơi bán</SelectItem>
                   </SelectContent>
                 </Select>
                 {isAddingSaleLocation && <div className="flex gap-2"><Input value={customSaleLocationName} onChange={(event) => setCustomSaleLocationName(event.target.value)} placeholder="Nhập tên nơi bán..." /><Button type="button" variant="outline" className="shrink-0" disabled={!customSaleLocationName.trim() || saveSaleLocation.isPending} onClick={() => saveSaleLocation.mutate({ name: customSaleLocationName.trim() })}>{saveSaleLocation.isPending ? "Đang lưu..." : "Lưu & chọn"}</Button></div>}
+                {saleLocations.length > 0 && <div className="space-y-1 rounded-md border border-amber-400/30 bg-amber-500/5 p-2"><p className="text-xs font-medium text-muted-foreground">Ghim & tần suất nơi bán</p>{saleLocations.map((location: any) => <div key={`pin-${location.id}`} className="flex items-center gap-1"><span className="min-w-0 flex-1 truncate text-xs">{location.name} <span className="text-muted-foreground">· {location.useCount || 0} lần</span></span><Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${location.isPinned ? "text-amber-300 hover:text-amber-200" : "text-muted-foreground hover:text-amber-200"}`} aria-label={`${location.isPinned ? "Bỏ ghim" : "Ghim"} ${location.name}`} disabled={setSavedSaleLocationPinned.isPending} onClick={() => setSavedSaleLocationPinned.mutate({ id: location.id, isPinned: !Boolean(location.isPinned) })}><Pin className={`h-3.5 w-3.5 ${location.isPinned ? "fill-current" : ""}`} /></Button></div>)}</div>}
                 {saleLocations.length > 0 && <div className="space-y-1 rounded-md border border-border bg-background/40 p-2"><p className="text-xs font-medium text-muted-foreground">Nơi bán tự thêm</p>{saleLocations.map((location: any) => editingSaleLocation?.id === location.id ? <div key={location.id} className="flex gap-1"><Input className="h-8" value={editingSaleLocation?.name ?? ""} onChange={(event) => setEditingSaleLocation((current) => current ? { ...current, name: event.target.value } : current)} /><Button type="button" size="sm" className="h-8" disabled={!(editingSaleLocation?.name ?? "").trim() || updateSavedSaleLocation.isPending} onClick={() => updateSavedSaleLocation.mutate({ id: location.id, name: (editingSaleLocation?.name ?? "").trim() })}>Lưu</Button><Button type="button" size="sm" variant="ghost" className="h-8" onClick={() => setEditingSaleLocation(null)}>Hủy</Button></div> : <div key={location.id} className="flex items-center gap-1"><Button type="button" size="sm" variant="ghost" className="h-7 flex-1 justify-start px-1.5" onClick={() => { setIsAddingSaleLocation(false); setNewSale((current) => ({ ...current, platform: "other", saleLocation: location.name })); }}>{location.name}</Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Sửa ${location.name}`} onClick={() => setEditingSaleLocation({ id: location.id, name: location.name })}><Pencil className="h-3.5 w-3.5" /></Button><Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-300 hover:text-red-200" aria-label={`Xóa ${location.name}`} onClick={() => setDeleteSaleLocationId(location.id)}><Trash2 className="h-3.5 w-3.5" /></Button></div>)}</div>}
               </div>
               <div className="grid grid-cols-3 gap-4">
