@@ -1,0 +1,14 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+describe("cửa hàng tùy chỉnh trong Chyusen", () => {
+  it("có luồng thêm cửa hàng và lưu lại trong gợi ý theo tài khoản", () => {
+    const source = readFileSync(join(process.cwd(), "client/src/pages/Chyusen.tsx"), "utf8");
+
+    expect(source).toContain("ADD_CUSTOM_CHYUSEN_SHOP_VALUE");
+    expect(source).toContain("Cửa hàng bạn đã lưu");
+    expect(source).toContain("trpc.chyusen.shopSuggestions.useQuery()");
+    expect(source).toContain("saveShopSuggestion.mutate({ name: draft.customShopName })");
+  });
+});

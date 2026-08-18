@@ -994,3 +994,10 @@
 - [x] Làm nổi bật mục đã qua ngày công bố nhưng chưa được kiểm tra
 - [x] Hiển thị thời điểm chi tiết kiểm tra kết quả gần nhất trên từng thẻ
 - [x] Kiểm thử cảnh báo, định dạng thời gian và lưu checkpoint
+
+## Cửa hàng Chyusen tùy chỉnh
+- [x] Đổi lựa chọn Khác thành Thêm cửa hàng trong biểu mẫu Chyusen
+- [x] Lưu tên cửa hàng tự nhập riêng theo từng tài khoản
+- [x] Hiển thị cửa hàng đã lưu trong gợi ý khi thêm Chyusen lần sau
+- [x] Bỏ Lawson và Seven Eleven khỏi danh sách gợi ý mặc định
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint

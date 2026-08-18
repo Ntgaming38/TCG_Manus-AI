@@ -330,6 +330,19 @@ export const chyusenEntries = mysqlTable("chyusen_entries", {
 export type ChyusenEntry = typeof chyusenEntries.$inferSelect;
 export type InsertChyusenEntry = typeof chyusenEntries.$inferInsert;
 
+/** User-managed shop suggestions for manual Chyusen entries. */
+export const chyusenShopSuggestions = mysqlTable("chyusen_shop_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("chyusen_shop_suggestions_user_name_unique").on(table.userId, table.name),
+  index("chyusen_shop_suggestions_user_idx").on(table.userId),
+]);
+
+export type ChyusenShopSuggestion = typeof chyusenShopSuggestions.$inferSelect;
+
 /** Public sources can be refreshed automatically, but are private to their owner. */
 export const chyusenSources = mysqlTable("chyusen_sources", {
   id: int("id").autoincrement().primaryKey(),

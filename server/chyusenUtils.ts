@@ -96,15 +96,13 @@ export function detectSeries(text: string): string {
 }
 
 export function detectShop(text: string, url: string): { shop: string; customShopName?: string } {
-  const values = ["Geo", "Joshin", "Fruichi", "Toysrus", "Lawson", "Seven Eleven", "Family Mart"] as const;
+  const values = ["Geo", "Joshin", "Fruichi", "Toysrus", "Family Mart"] as const;
   const normalized = `${text} ${url}`.toLowerCase();
   const checks: Array<[typeof values[number], RegExp]> = [
     ["Geo", /geo|ゲオ/i],
     ["Joshin", /joshin|上新/i],
     ["Fruichi", /furuichi|ふるいち|古本市場/i],
     ["Toysrus", /toysrus|トイザらス/i],
-    ["Lawson", /lawson|ローソン/i],
-    ["Seven Eleven", /seven|7net|セブン/i],
     ["Family Mart", /family\s*mart|ファミリーマート/i],
   ];
   const match = checks.find(([, pattern]) => pattern.test(normalized));

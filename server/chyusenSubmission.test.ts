@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_CHYUSEN_DRAFT } from "../client/src/lib/chyusenDraft";
 import { buildChyusenSubmission } from "../client/src/lib/chyusenSubmission";
+import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE } from "../shared/chyusenShops";
 
 describe("buildChyusenSubmission", () => {
   it("chuyển ngày dd/mm của bản ghi chỉnh sửa thành Date năm hiện tại theo JST", () => {
@@ -29,5 +30,15 @@ describe("buildChyusenSubmission", () => {
     expect(payload.pickupStart?.toISOString()).toBe("2026-09-02T15:00:00.000Z");
     expect(payload.pickupEnd).toBeNull();
     expect(payload.pickupNote).toBe("Khoảng đầu tháng 9");
+  });
+
+  it("chuẩn hóa Thêm cửa hàng thành tên cửa hàng thực tế khi lưu", () => {
+    const payload = buildChyusenSubmission({
+      ...EMPTY_CHYUSEN_DRAFT,
+      title: "Chyusen", productName: "Pikachu Box", shop: ADD_CUSTOM_CHYUSEN_SHOP_VALUE, customShopName: "  TCG Tokyo  ",
+    });
+
+    expect(payload.shop).toBe("Khác");
+    expect(payload.customShopName).toBe("TCG Tokyo");
   });
 });

@@ -8,6 +8,7 @@ import {
   chyusenNotificationSettings,
   chyusenSources,
   chyusenSourceHistory,
+  chyusenShopSuggestions,
 } from "../drizzle/schema";
 import { getDb, serializeActivityChange } from "./db";
 import { getChyusenTimeState, getChyusenUrgency } from "./chyusenUtils";
@@ -45,6 +46,26 @@ export type ChyusenEntryInput = {
 export const CHYUSEN_INTERVAL_MINUTES = [60, 180, 360, 720, 1440] as const;
 export const DEFAULT_CHYUSEN_DEADLINE_HOURS = [168, 72, 24, 12, 3, 1];
 export const CHYUSEN_UNDO_WINDOW_MS = 10_000;
+
+export async function listChyusenShopSuggestions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
+  return rows.sort((a, b) => a.name.localeCompare(b.name, "vi")).map((row) => row.name);
+}
+
+export async function saveChyusenShopSuggestion(userId: number, rawName: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const name = rawName.trim().replace(/\s+/g, " ");
+  if (!name) throw new Error("Vui lòng nhập tên cửa hàng.");
+  const existing = await db.select().from(chyusenShopSuggestions).where(eq(chyusenShopSuggestions.userId, userId));
+  const matched = existing.find((row) => row.name.localeCompare(name, undefined, { sensitivity: "accent" }) === 0);
+  if (matched) return { id: matched.id, name: matched.name, created: false };
+  const result = await db.insert(chyusenShopSuggestions).values({ userId, name });
+  await db.insert(activityLogs).values({ userId, action: "chyusen_shop_suggestion_created", description: `Thêm cửa hàng gợi ý Chyusen: ${name}`, entityType: "chyusen_shop", entityId: result[0].insertId, ...serializeActivityChange(null, { name }) });
+  return { id: result[0].insertId, name, created: true };
+}
 
 export type ChyusenSourceInput = {
   sourceUrl: string;
@@ -264,6 +285,7 @@ export async function createChyusenEntry(userId: number, input: ChyusenEntryInpu
     changeSource: input.parserStatus === "manual" ? "manual" : "source_import",
   });
   await writeChyusenActivity(userId, "chyusen_created", entryId, `Thêm Chyusen: ${input.title}`, null, chyusenActivitySnapshot(input));
+  if (input.customShopName?.trim()) await saveChyusenShopSuggestion(userId, input.customShopName);
   return { id: entryId, sourceId: source?.id ?? null };
 }
 
@@ -319,6 +341,7 @@ export async function updateChyusenEntry(userId: number, entryId: number, input:
         chyusenActivitySnapshot({ ...existing, ...update } as ChyusenActivityEntry),
       );
     }
+    if (input.customShopName?.trim()) await saveChyusenShopSuggestion(userId, input.customShopName);
   }
   if (input.sourceUrl && input.sourceUrl !== existing.sourceUrl) {
     await upsertChyusenSource(userId, input.sourceUrl, { entryId, label: input.shop || existing.shop || "Nguồn Chyusen" });
