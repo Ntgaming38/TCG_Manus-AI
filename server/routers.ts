@@ -54,7 +54,7 @@ const chyusenEntryBase = z.object({
   parserStatus: z.enum(["manual", "partial", "detected", "unavailable"]).optional(),
   parserNote: z.string().trim().max(1000).optional(),
   fieldConfidence: z.record(z.string(), z.enum(["detected", "needs_review", "missing"])).optional(),
-  sourceContentHash: z.string().trim().max(64).optional(),
+  sourceContentHash: z.string().trim().max(64).nullable().optional(),
 });
 
 // UI lưu thủ công hiển thị validation bắt buộc; API vẫn giữ dữ liệu ngày tùy chọn
@@ -623,19 +623,27 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(chyusenEntryInput)
-      .mutation(({ ctx, input }) => chyusenDb.createChyusenEntry(ctx.user.id, {
-        ...input,
-        sourceUrl: input.sourceUrl ? validateChyusenSourceUrl(input.sourceUrl) : undefined,
-        imageUrl: input.imageUrl || undefined,
-      })),
+      .mutation(({ ctx, input }) => {
+        const { sourceContentHash, ...data } = input;
+        return chyusenDb.createChyusenEntry(ctx.user.id, {
+          ...data,
+          sourceUrl: data.sourceUrl ? validateChyusenSourceUrl(data.sourceUrl) : undefined,
+          imageUrl: data.imageUrl || undefined,
+          sourceContentHash: sourceContentHash || undefined,
+        });
+      }),
 
     update: protectedProcedure
       .input(z.object({ id: z.number(), data: chyusenEntryBase.partial() }))
-      .mutation(({ ctx, input }) => chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
-        ...input.data,
-        sourceUrl: input.data.sourceUrl ? validateChyusenSourceUrl(input.data.sourceUrl) : undefined,
-        imageUrl: input.data.imageUrl || undefined,
-      })),
+      .mutation(({ ctx, input }) => {
+        const { sourceContentHash, ...data } = input.data;
+        return chyusenDb.updateChyusenEntry(ctx.user.id, input.id, {
+          ...data,
+          sourceUrl: data.sourceUrl ? validateChyusenSourceUrl(data.sourceUrl) : undefined,
+          imageUrl: data.imageUrl || undefined,
+          sourceContentHash: sourceContentHash || undefined,
+        });
+      }),
 
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))

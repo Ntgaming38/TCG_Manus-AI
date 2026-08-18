@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_CHYUSEN_DRAFT } from "../client/src/lib/chyusenDraft";
+import { EMPTY_CHYUSEN_DRAFT, toChyusenDraft } from "../client/src/lib/chyusenDraft";
 import { buildChyusenSubmission } from "../client/src/lib/chyusenSubmission";
 import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE } from "../shared/chyusenShops";
 
@@ -40,5 +40,13 @@ describe("buildChyusenSubmission", () => {
 
     expect(payload.shop).toBe("Khác");
     expect(payload.customShopName).toBe("TCG Tokyo");
+  });
+
+  it("không gửi sourceContentHash null khi mở lại Chyusen cũ", () => {
+    const draft = toChyusenDraft({ title: "Chyusen cũ", productName: "Pikachu Box", sourceContentHash: null });
+    const payload = buildChyusenSubmission(draft);
+
+    expect(draft.sourceContentHash).toBeUndefined();
+    expect(payload.sourceContentHash).toBeUndefined();
   });
 });

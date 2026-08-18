@@ -572,7 +572,7 @@ export default function Chyusen() {
       {resultAnnouncementToday.length > 0 && (
         <Card className="border-violet-300 bg-violet-500/10 shadow-[0_0_0_1px_rgba(196,181,253,0.18)]">
           <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base text-violet-100"><Trophy className="h-4 w-4 text-yellow-300" />Hôm nay có kết quả Chyusen ({resultAnnouncementToday.length})</CardTitle><CardDescription className="text-violet-200/85">Kiểm tra kết quả từ cửa hàng trước khi đánh dấu Đã trúng hoặc Đã trượt.</CardDescription></CardHeader>
-          <CardContent className="flex flex-wrap gap-2">{resultAnnouncementToday.slice(0, 4).map((entry: any) => <Button key={entry.id} type="button" size="sm" variant="outline" className="border-violet-300/60 text-violet-100 hover:bg-violet-500/20" onClick={() => openEdit(entry)}>{entry.title}<span className="ml-2 text-violet-200/70">• {entry.shop || "Khác"}</span></Button>)}</CardContent>
+          <CardContent className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">{resultAnnouncementToday.slice(0, 4).map((entry: any) => <Button key={entry.id} type="button" size="sm" variant="outline" className="w-full min-w-0 max-w-full justify-start border-violet-300/60 text-violet-100 hover:bg-violet-500/20 sm:w-auto" onClick={() => openEdit(entry)}><span className="min-w-0 flex-1 truncate text-left">{entry.title}</span><span className="ml-2 shrink-0 text-violet-200/70">• {entry.shop || "Khác"}</span></Button>)}</CardContent>
         </Card>
       )}
 

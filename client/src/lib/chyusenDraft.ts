@@ -40,6 +40,6 @@ export function toChyusenDraft(data: Record<string, any>): ChyusenDraft {
     price: data.price === undefined || data.price === null ? "" : String(data.price), quantityLimit: data.quantityLimit || "",
     applicationStart: formatChyusenDayMonth(data.applicationStart), applicationEnd: formatChyusenDayMonth(data.applicationEnd), resultDate: formatChyusenDayMonth(data.resultDate),
     pickupStart: formatChyusenDayMonth(data.pickupStart), pickupEnd: formatChyusenDayMonth(data.pickupEnd), pickupNote: data.pickupNote || "", requirements: data.requirements || "",
-    parserStatus: data.parserStatus || "manual", parserNote: data.parserNote || "", fieldConfidence: data.fieldConfidence || {}, sourceContentHash: data.sourceContentHash,
+    parserStatus: data.parserStatus || "manual", parserNote: data.parserNote || "", fieldConfidence: data.fieldConfidence || {}, sourceContentHash: data.sourceContentHash || undefined,
   };
 }

@@ -1036,3 +1036,9 @@
 - [x] Tính và hiển thị số lần giao dịch theo từng địa điểm gợi ý
 - [x] Ưu tiên địa điểm đã ghim trong biểu mẫu Mua Hàng/Bán Hàng
 - [x] Kiểm thử API, giao diện và lưu checkpoint
+
+## Sửa Chyusen di động và dữ liệu nguồn
+- [x] Tắt thu phóng trình duyệt trên giao diện web app di động
+- [x] Chuẩn hóa sourceContentHash null trước khi gửi dữ liệu Chyusen vào API
+- [x] Sửa tên sản phẩm/cảnh báo Chyusen không tràn ngang trên điện thoại
+- [x] Kiểm thử lỗi, viewport và lưu checkpoint
