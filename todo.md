@@ -974,3 +974,8 @@
 - [x] Thêm lựa chọn Chờ kết quả vào bộ lọc trạng thái danh sách
 - [x] Lọc đúng các Chyusen đã đăng ký và đang chờ công bố
 - [x] Kiểm thử bộ lọc và lưu checkpoint
+
+## Số lượng bộ lọc trạng thái Chyusen
+- [x] Tính số lượng mục theo từng trạng thái bằng cùng quy tắc lọc hiện có
+- [x] Hiển thị số lượng ngay bên cạnh từng lựa chọn bộ lọc
+- [x] Kiểm thử số lượng, giao diện và lưu checkpoint
