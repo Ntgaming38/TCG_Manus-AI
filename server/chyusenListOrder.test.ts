@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prioritizeChyusenDeadlineToday } from "../shared/chyusenListOrder";
+import { prioritizeChyusenDeadlineToday, sortChyusenByNearestResultDate } from "../shared/chyusenListOrder";
 
 describe("prioritizeChyusenDeadlineToday", () => {
   it("đưa các mục có hạn từ hôm nay đến nhiều ngày sau theo thứ tự tăng dần", () => {
@@ -21,5 +21,18 @@ describe("prioritizeChyusenDeadlineToday", () => {
     ], new Date("2026-08-13T12:00:00+09:00"));
 
     expect(sorted.map((entry) => entry.id)).toEqual([3, 1, 2]);
+  });
+});
+
+describe("sortChyusenByNearestResultDate", () => {
+  it("đưa ngày công bố hôm nay và các ngày sắp tới lên trước ngày cũ hoặc không có ngày", () => {
+    const sorted = sortChyusenByNearestResultDate([
+      { id: 1, resultDate: "2026-08-12T00:00:00+09:00" },
+      { id: 2, resultDate: null },
+      { id: 3, resultDate: "2026-08-17T00:00:00+09:00" },
+      { id: 4, resultDate: "2026-08-18T00:00:00+09:00" },
+    ], new Date("2026-08-17T10:00:00+09:00"));
+
+    expect(sorted.map((entry) => entry.id)).toEqual([3, 4, 1, 2]);
   });
 });

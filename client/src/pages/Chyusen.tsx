@@ -20,7 +20,7 @@ import { EMPTY_CHYUSEN_DRAFT, toChyusenDraft, type ChyusenDraft } from "@/lib/ch
 import { buildChyusenSubmission } from "../lib/chyusenSubmission";
 import { formatChyusenDayMonth, formatChyusenDayMonthInput, formatChyusenDaysRemaining, getChyusenDeadlineTone, isChyusenDeadlineToday, isChyusenRegistrationExpired, isChyusenResultReady } from "@shared/chyusenDate";
 import { CHYUSEN_STATUS_FILTER_OPTIONS, countChyusenStatusFilters, matchesChyusenStatusFilter } from "@shared/chyusenStatusFilter";
-import { prioritizeChyusenDeadlineToday } from "@shared/chyusenListOrder";
+import { prioritizeChyusenDeadlineToday, sortChyusenByNearestResultDate } from "@shared/chyusenListOrder";
 import { getChyusenAiFilledFields } from "@shared/chyusenAiFields";
 import { createChyusenPreviewFallback } from "@shared/chyusenPreview";
 import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "@shared/chyusenManualValidation";
@@ -152,6 +152,7 @@ export default function Chyusen() {
   const resultAnnouncementToday = entries.filter((entry: any) => isChyusenResultAnnouncementToday(entry));
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"deadline" | "resultDate">("deadline");
   const [notificationFilter, setNotificationFilter] = useState<ChyusenNotificationFilter>("all");
   const [notificationReadTab, setNotificationReadTab] = useState<ChyusenNotificationReadTab>("unread");
   const [showDialog, setShowDialog] = useState(false);
@@ -327,12 +328,15 @@ export default function Chyusen() {
   });
 
   const statusFilterCounts = useMemo(() => countChyusenStatusFilters(entries), [entries]);
-  const filteredEntries = useMemo(() => prioritizeChyusenDeadlineToday(entries.filter((entry: any) => {
+  const filteredEntries = useMemo(() => {
+    const matchingEntries = entries.filter((entry: any) => {
     const normalizedSearch = search.trim().toLowerCase();
     const matchesSearch = !normalizedSearch || [entry.title, entry.productName, entry.shop, entry.series].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
     const matchesFilter = matchesChyusenStatusFilter(entry, filter);
     return matchesSearch && matchesFilter;
-  })), [entries, filter, search]);
+    });
+    return sortOrder === "resultDate" ? sortChyusenByNearestResultDate(matchingEntries) : prioritizeChyusenDeadlineToday(matchingEntries);
+  }, [entries, filter, search, sortOrder]);
   const unreadNotifications = selectChyusenNotificationsByReadTab(notifications, "unread");
   const readNotifications = selectChyusenNotificationsByReadTab(notifications, "read");
   const activeNotificationTabItems = notificationReadTab === "read" ? readNotifications : unreadNotifications;
@@ -524,6 +528,7 @@ export default function Chyusen() {
         <Select value={filter} onValueChange={setFilter}><SelectTrigger className="w-full lg:w-[210px]"><SelectValue /></SelectTrigger><SelectContent>
           {CHYUSEN_STATUS_FILTER_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label} ({statusFilterCounts[option.value]})</SelectItem>)}
         </SelectContent></Select>
+        <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "deadline" | "resultDate")}><SelectTrigger className="w-full lg:w-[220px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="deadline">Sắp theo hạn đăng ký</SelectItem><SelectItem value="resultDate">Công bố gần nhất</SelectItem></SelectContent></Select>
       </div>
 
       {isLoading ? <div className="py-16 text-center text-sm text-muted-foreground">Đang tải Chyusen...</div> : filteredEntries.length === 0 ? (
@@ -532,8 +537,9 @@ export default function Chyusen() {
         <div className="grid gap-4 xl:grid-cols-2">
           {filteredEntries.map((entry: any) => {
             const deadlineToday = isChyusenDeadlineToday(entry.applicationEnd);
+            const resultToday = isChyusenResultAnnouncementToday(entry);
             return (
-            <Card key={entry.id} className="overflow-hidden"><CardHeader className="space-y-3 pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex items-center gap-2"><CardTitle className="truncate text-lg">{entry.title}</CardTitle>{deadlineToday && <Tooltip open={deadlineTooltipId === entry.id || showTodayTooltip} onOpenChange={(open) => setDeadlineTooltipId(open ? entry.id : null)}><TooltipTrigger asChild><button type="button" aria-label="Hạn đăng ký là hôm nay. Chạm để xem chi tiết." aria-expanded={deadlineTooltipId === entry.id || showTodayTooltip} onClick={() => setDeadlineTooltipId((current) => current === entry.id ? null : entry.id)} className="shrink-0 rounded-full text-red-400 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-red-400"><CircleAlert className="h-5 w-5 animate-pulse" aria-hidden="true" /></button></TooltipTrigger><TooltipContent side="top">Hạn đăng ký là hôm nay. Hãy hoàn tất trước khi hết ngày.</TooltipContent></Tooltip>}</div><CardDescription className="mt-1 truncate">{entry.shop || "Khác"} · {entry.productType} · {entry.series || "Pokemon"}</CardDescription></div><div className="flex shrink-0 flex-col items-end gap-1">{timeBadge(entry.timeState)}{participationBadge(entry.applicationStatus)}</div></div></CardHeader>
+            <Card key={entry.id} className="overflow-hidden"><CardHeader className="space-y-3 pb-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex items-center gap-2"><CardTitle className="truncate text-lg">{entry.title}</CardTitle>{resultToday && <Badge className="shrink-0 gap-1 border border-yellow-200 bg-yellow-400 px-2 py-0.5 text-xs font-bold text-slate-950 shadow-[0_0_18px_rgba(250,204,21,0.7)] motion-safe:animate-pulse"><Trophy className="h-3.5 w-3.5" />Hôm nay</Badge>}{deadlineToday && <Tooltip open={deadlineTooltipId === entry.id || showTodayTooltip} onOpenChange={(open) => setDeadlineTooltipId(open ? entry.id : null)}><TooltipTrigger asChild><button type="button" aria-label="Hạn đăng ký là hôm nay. Chạm để xem chi tiết." aria-expanded={deadlineTooltipId === entry.id || showTodayTooltip} onClick={() => setDeadlineTooltipId((current) => current === entry.id ? null : entry.id)} className="shrink-0 rounded-full text-red-400 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-red-400"><CircleAlert className="h-5 w-5 animate-pulse" aria-hidden="true" /></button></TooltipTrigger><TooltipContent side="top">Hạn đăng ký là hôm nay. Hãy hoàn tất trước khi hết ngày.</TooltipContent></Tooltip>}</div><CardDescription className="mt-1 truncate">{entry.shop || "Khác"} · {entry.productType} · {entry.series || "Pokemon"}</CardDescription></div><div className="flex shrink-0 flex-col items-end gap-1">{timeBadge(entry.timeState)}{participationBadge(entry.applicationStatus)}</div></div></CardHeader>
               <CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3 text-sm"><div className="rounded-lg bg-secondary/55 p-3"><p className="text-xs text-muted-foreground">Hết hạn đăng ký</p><p className="mt-1 font-medium">{displayDate(entry.applicationEnd)}</p></div><div className="rounded-lg bg-secondary/55 p-3"><p className="text-xs text-muted-foreground">Công bố kết quả</p><p className="mt-1 font-medium">{displayDate(entry.resultDate)}</p></div></div>
                 {isChyusenRegistrationExpired(entry.applicationEnd) && <div className="flex items-center justify-between gap-2 rounded-lg border border-red-300 bg-red-500/15 px-3 py-2 text-sm font-medium text-red-300"><span className="flex items-center gap-2"><Clock3 className="h-4 w-4" />Hạn đăng ký đã qua. Không thể đăng ký mới.</span><Badge className="shrink-0 border border-red-300 bg-red-500/20 text-red-200 hover:bg-red-500/20">{formatChyusenDaysRemaining(entry.applicationEnd)}</Badge></div>}
                 {!isChyusenRegistrationExpired(entry.applicationEnd) && formatChyusenDaysRemaining(entry.applicationEnd) && <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${getChyusenDeadlineTone(entry.applicationEnd) === "urgent" ? "border-red-400/80 bg-red-500/20 text-red-100 shadow-[0_0_18px_rgba(248,113,113,0.26)]" : getChyusenDeadlineTone(entry.applicationEnd) === "warning" ? "border-amber-300/80 bg-amber-500/15 text-amber-100" : "border-sky-300/50 bg-sky-500/10 text-sky-200"}`}><CalendarClock className="h-4 w-4" />{formatChyusenDaysRemaining(entry.applicationEnd)}</div>}

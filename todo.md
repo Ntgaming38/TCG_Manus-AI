@@ -979,3 +979,8 @@
 - [x] Tính số lượng mục theo từng trạng thái bằng cùng quy tắc lọc hiện có
 - [x] Hiển thị số lượng ngay bên cạnh từng lựa chọn bộ lọc
 - [x] Kiểm thử số lượng, giao diện và lưu checkpoint
+
+## Công bố kết quả Chyusen
+- [x] Hiển thị huy hiệu Hôm nay cho mục có ngày công bố trùng ngày hiện tại
+- [x] Thêm tùy chọn sắp xếp theo ngày công bố kết quả gần nhất
+- [x] Kiểm thử ngày, thứ tự danh sách và lưu checkpoint
