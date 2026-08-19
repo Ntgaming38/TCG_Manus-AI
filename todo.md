@@ -1063,3 +1063,9 @@
 - [x] Giữ hộp Thêm Chyusen trong khung nhìn trên máy tính
 - [x] Thêm vùng cuộn nội dung và hành động dễ tiếp cận trên điện thoại
 - [x] Kiểm thử kích thước desktop/mobile và lưu checkpoint
+
+## Hoàn thiện biểu mẫu Chyusen
+- [x] Hiển thị thanh tiến trình phần thông tin đã điền
+- [x] Thu gọn mặc định các khối AI và QR dài
+- [x] Thêm nút quay lại trường lỗi đầu tiên sau khi lưu
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint

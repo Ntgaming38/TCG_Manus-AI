@@ -23,6 +23,10 @@ describe("Chyusen trên màn hình nhỏ", () => {
     expect(page).toContain("sm:max-w-4xl lg:max-w-5xl");
     expect(page).toContain("min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain");
     expect(page).toContain("sticky bottom-0 z-10");
+    expect(page).toContain("data-chyusen-completion");
+    expect(page).toContain("Hoàn thiện thông tin");
+    expect(page).toContain("data-chyusen-qr-tools");
+    expect(page).toContain("<details");
     expect(page).not.toContain('"Đã kiểm tra kết quả"');
     expect(page).not.toContain("Đã kiểm tra lần gần nhất:");
     expect(router).toContain("sourceContentHash: z.string().trim().max(64).nullable().optional()");
