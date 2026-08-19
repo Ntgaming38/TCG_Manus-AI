@@ -1048,3 +1048,8 @@
 - [x] Giữ dữ liệu kiểm tra nội bộ cho cảnh báo quá hạn
 - [x] Thêm kiểm tra bố cục tự động cho tên tiếng Nhật dài trên điện thoại
 - [x] Kiểm thử giao diện và lưu checkpoint
+
+## Popup tên Chyusen đầy đủ
+- [x] Mở popup tên sản phẩm đầy đủ khi chạm tiêu đề rút gọn trên điện thoại
+- [x] Giữ tiêu đề gọn, không tràn và hỗ trợ đóng popup dễ dàng
+- [x] Kiểm thử tương tác và lưu checkpoint
