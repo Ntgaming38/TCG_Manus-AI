@@ -1042,3 +1042,9 @@
 - [x] Chuẩn hóa sourceContentHash null trước khi gửi dữ liệu Chyusen vào API
 - [x] Sửa tên sản phẩm/cảnh báo Chyusen không tràn ngang trên điện thoại
 - [x] Kiểm thử lỗi, viewport và lưu checkpoint
+
+## Tinh gọn trạng thái Chyusen
+- [x] Bỏ dòng Đã kiểm tra kết quả khỏi thẻ Chyusen
+- [x] Giữ dữ liệu kiểm tra nội bộ cho cảnh báo quá hạn
+- [x] Thêm kiểm tra bố cục tự động cho tên tiếng Nhật dài trên điện thoại
+- [x] Kiểm thử giao diện và lưu checkpoint
