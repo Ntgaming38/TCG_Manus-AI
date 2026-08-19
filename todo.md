@@ -1058,3 +1058,8 @@
 - [x] Bỏ khối Thông báo Chyusen khỏi trang danh sách
 - [x] Giữ Trung tâm Thông báo và dữ liệu thông báo hoạt động riêng
 - [x] Kiểm thử giao diện và lưu checkpoint
+
+## Biểu mẫu Thêm Chyusen responsive
+- [x] Giữ hộp Thêm Chyusen trong khung nhìn trên máy tính
+- [x] Thêm vùng cuộn nội dung và hành động dễ tiếp cận trên điện thoại
+- [x] Kiểm thử kích thước desktop/mobile và lưu checkpoint

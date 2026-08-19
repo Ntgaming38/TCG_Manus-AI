@@ -18,6 +18,11 @@ describe("Chyusen trên màn hình nhỏ", () => {
     expect(page).toContain("Toàn bộ tên sản phẩm được hiển thị bên dưới.");
     expect(page).toContain("break-words");
     expect(page).toContain('title={`${entry.shop || "Khác"} · ${entry.productType} · ${entry.series || "Pokemon"}`} className="mt-1 truncate"');
+    expect(page).toContain("max-h-[calc(100dvh-1rem)]");
+    expect(page).toContain("w-[calc(100vw-1rem)]");
+    expect(page).toContain("sm:max-w-4xl lg:max-w-5xl");
+    expect(page).toContain("min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain");
+    expect(page).toContain("sticky bottom-0 z-10");
     expect(page).not.toContain('"Đã kiểm tra kết quả"');
     expect(page).not.toContain("Đã kiểm tra lần gần nhất:");
     expect(router).toContain("sourceContentHash: z.string().trim().max(64).nullable().optional()");
