@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("chyusen notification read button", () => {
-  it("dùng nền đỏ và chữ RGB cho nút Đã xem", () => {
-    const source = readFileSync(join(process.cwd(), "client/src/pages/Chyusen.tsx"), "utf8");
-    expect(source).toContain("bg-red-600");
-    expect(source).toContain("hover:bg-red-700");
-    expect(source).toContain('<span className="rgb-action-label">Đã xem</span>');
+  it("không còn nút Đã xem trong trang Chyusen, nhưng Trung tâm Thông báo vẫn quản lý trạng thái đọc", () => {
+    const chyusenPage = readFileSync(join(process.cwd(), "client/src/pages/Chyusen.tsx"), "utf8");
+    const notificationCenter = readFileSync(join(process.cwd(), "client/src/components/NotificationCenter.tsx"), "utf8");
+
+    expect(chyusenPage).not.toContain("Thông báo Chyusen (");
+    expect(chyusenPage).not.toContain("markNotificationRead.useMutation");
+    expect(notificationCenter).toContain("markRead.mutate({ id: notification.id })");
+    expect(notificationCenter).toContain("markAllRead.mutate()");
   });
 });

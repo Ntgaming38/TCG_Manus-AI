@@ -1053,3 +1053,8 @@
 - [x] Mở popup tên sản phẩm đầy đủ khi chạm tiêu đề rút gọn trên điện thoại
 - [x] Giữ tiêu đề gọn, không tràn và hỗ trợ đóng popup dễ dàng
 - [x] Kiểm thử tương tác và lưu checkpoint
+
+## Tinh gọn trang Chyusen
+- [x] Bỏ khối Thông báo Chyusen khỏi trang danh sách
+- [x] Giữ Trung tâm Thông báo và dữ liệu thông báo hoạt động riêng
+- [x] Kiểm thử giao diện và lưu checkpoint

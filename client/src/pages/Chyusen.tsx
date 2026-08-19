@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { BellRing, CalendarClock, CheckCheck, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, GripVertical, ImageUp, Link2, Pencil, Pin, Plus, QrCode, Radio, RotateCcw, Search, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, CircleAlert, Clock3, ExternalLink, FileSearch, Gift, GripVertical, ImageUp, Link2, Pencil, Pin, Plus, QrCode, Radio, RotateCcw, Search, Sparkles, Ticket, ToggleLeft, ToggleRight, Trophy, Trash2, XCircle } from "lucide-react";
 import jsQR from "jsqr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,6 @@ import { validateChyusenManualDraft, type ChyusenManualValidationErrors } from "
 import { TRADING_CARD_SERIES, tradingCardSeriesLabel } from "@shared/tradingCardSeries";
 import { formatChyusenResultCountdown, isChyusenResultAnnouncementToday, isChyusenResultCheckOverdue } from "@shared/chyusenResultReminder";
 import { detectChyusenShopFromQrUrl, detectChyusenShopFromUrl, normalizeChyusenQrUrl } from "@shared/chyusenQr";
-import { matchesChyusenNotificationFilter, selectChyusenNotificationsByReadTab, type ChyusenNotificationFilter, type ChyusenNotificationReadTab } from "@shared/chyusenNotificationFilter";
 import { resolveChyusenDefaultFilter } from "@shared/chyusenDefaultFilter";
 import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE, customChyusenShopOptionValue, DEFAULT_CHYUSEN_SHOPS, parseCustomChyusenShopOptionValue } from "@shared/chyusenShops";
 
@@ -149,7 +148,6 @@ export default function Chyusen() {
   const { data: shopSuggestions = [] } = trpc.chyusen.shopSuggestions.useQuery();
   const { data: shopSuggestionDetails = [] } = trpc.chyusen.shopSuggestionDetails.useQuery();
   const { data: recentShops = [] } = trpc.chyusen.recentShops.useQuery();
-  const { data: notifications = [] } = trpc.chyusen.notifications.useQuery();
   const { data: sources = [] } = trpc.chyusen.sources.useQuery();
   const { data: sourceHistory = [] } = trpc.chyusen.sourceHistory.useQuery();
   const { data: notificationSettings } = trpc.chyusen.notificationSettings.useQuery();
@@ -157,8 +155,6 @@ export default function Chyusen() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState<"deadline" | "resultDate">("deadline");
-  const [notificationFilter, setNotificationFilter] = useState<ChyusenNotificationFilter>("all");
-  const [notificationReadTab, setNotificationReadTab] = useState<ChyusenNotificationReadTab>("unread");
   const [showDialog, setShowDialog] = useState(false);
   const [draft, setDraft] = useState<ChyusenDraft>(EMPTY_CHYUSEN_DRAFT);
   const [editingShopSuggestion, setEditingShopSuggestion] = useState<{ id: number; name: string } | null>(null);
@@ -337,14 +333,6 @@ export default function Chyusen() {
     },
     onError: (error) => toast.error(error.message),
   });
-  const markNotificationRead = trpc.chyusen.markNotificationRead.useMutation({
-    onSuccess: () => utils.chyusen.notifications.invalidate(),
-    onError: (error) => toast.error(error.message),
-  });
-  const markAllNotificationsRead = trpc.chyusen.markAllNotificationsRead.useMutation({
-    onSuccess: () => { utils.chyusen.notifications.invalidate(); toast.success("Đã đánh dấu toàn bộ thông báo Chyusen là đã xem."); },
-    onError: (error) => toast.error(error.message),
-  });
   const updateNotificationSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); }, onError: (error) => toast.error(error.message) });
   const createSource = trpc.chyusen.createSource.useMutation({ onSuccess: () => { toast.success("Đã lưu nguồn theo dõi."); setShowSourceDialog(false); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { toast.success("Đã cập nhật nguồn theo dõi."); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
@@ -379,10 +367,6 @@ export default function Chyusen() {
     });
     return sortOrder === "resultDate" ? sortChyusenByNearestResultDate(matchingEntries) : prioritizeChyusenDeadlineToday(matchingEntries);
   }, [entries, filter, search, sortOrder]);
-  const unreadNotifications = selectChyusenNotificationsByReadTab(notifications, "unread");
-  const readNotifications = selectChyusenNotificationsByReadTab(notifications, "read");
-  const activeNotificationTabItems = notificationReadTab === "read" ? readNotifications : unreadNotifications;
-  const visibleNotificationTabItems = activeNotificationTabItems.filter((notification: any) => matchesChyusenNotificationFilter(notification.type, notificationFilter));
   const sourceLabelForHistory = (sourceId: number, entryId?: number | null) => {
     const sourceLabel = sources.find((source: any) => source.id === sourceId)?.label || `Nguồn #${sourceId}`;
     const entryLabel = entryId ? entries.find((entry: any) => entry.id === entryId)?.title || `Chyusen #${entryId}` : null;
@@ -558,13 +542,6 @@ export default function Chyusen() {
       <Card className="border-red-500/70 bg-red-950/70 shadow-[0_0_0_1px_rgba(239,68,68,0.16)]">
         <CardContent className="flex gap-3 p-4 text-sm text-red-100"><FileSearch className="mt-0.5 h-5 w-5 shrink-0 text-red-400" /><p><strong className="text-red-300">Tự động tối đa, không tự đoán.</strong> Hệ thống chỉ đọc nguồn công khai được hỗ trợ. Thông tin lấy từ link luôn cần bạn kiểm tra và xác nhận trước khi lưu; website yêu cầu đăng nhập hoặc CAPTCHA sẽ không bị vượt qua.</p></CardContent>
       </Card>
-
-      {(unreadNotifications.length > 0 || readNotifications.length > 0) && (
-        <Card className="border-amber-200 bg-amber-50/60">
-          <CardHeader className="gap-3 pb-3 sm:flex sm:flex-row sm:items-start sm:justify-between"><div><CardTitle className="flex items-center gap-2 text-base text-amber-950"><BellRing className="h-4 w-4 text-amber-700" />Thông báo Chyusen ({unreadNotifications.length})</CardTitle><CardDescription className="mt-1 text-amber-900">Nhắc hạn đăng ký, ngày công bố kết quả hoặc thay đổi từ nguồn công khai.</CardDescription></div><div className="flex flex-wrap items-center gap-2"><Select value={notificationFilter} onValueChange={(value) => setNotificationFilter(value as ChyusenNotificationFilter)}><SelectTrigger className="h-8 w-[144px] border-amber-300 bg-white text-xs text-amber-950"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả</SelectItem><SelectItem value="deadline">Hạn đăng ký</SelectItem><SelectItem value="result">Kết quả</SelectItem></SelectContent></Select>{unreadNotifications.length > 0 && <Button size="sm" disabled={markAllNotificationsRead.isPending} className="border border-red-500 bg-red-600 text-white shadow-sm shadow-red-950/30 hover:bg-red-700" onClick={() => markAllNotificationsRead.mutate()}><CheckCheck className="mr-1.5 h-3.5 w-3.5" /><span className="rgb-action-label">Đã xem tất cả</span></Button>}</div></CardHeader>
-          <CardContent className="space-y-2"><div className="flex w-full gap-1 rounded-lg border border-amber-200 bg-white/70 p-1"><Button size="sm" variant={notificationReadTab === "unread" ? "default" : "ghost"} className={`flex-1 ${notificationReadTab === "unread" ? "bg-red-600 hover:bg-red-700" : "text-amber-950 hover:bg-amber-100"}`} onClick={() => setNotificationReadTab("unread")}>Chưa xem ({unreadNotifications.length})</Button><Button size="sm" variant={notificationReadTab === "read" ? "default" : "ghost"} className={`flex-1 ${notificationReadTab === "read" ? "bg-red-600 hover:bg-red-700" : "text-amber-950 hover:bg-amber-100"}`} onClick={() => setNotificationReadTab("read")}>Đã xem ({readNotifications.length})</Button></div>{visibleNotificationTabItems.length ? visibleNotificationTabItems.slice(0, 8).map((notification: any) => <div key={notification.id} className={`flex flex-col gap-2 rounded-lg border border-amber-200 bg-white/80 p-3 sm:flex-row sm:items-center sm:justify-between ${notificationReadTab === "read" ? "opacity-75" : ""}`}><div><p className="text-sm font-semibold text-amber-950">{notification.title}</p><p className="mt-0.5 text-xs text-amber-900">{notification.message}</p>{notificationReadTab === "read" && notification.readAt && <p className="mt-1 text-[11px] text-amber-800">Đã xem: {new Date(notification.readAt).toLocaleString("vi-VN")}</p>}</div>{notificationReadTab === "unread" && <Button size="sm" className="border border-red-500 bg-red-600 text-white shadow-sm shadow-red-950/30 hover:bg-red-700" onClick={() => markNotificationRead.mutate({ id: notification.id, isRead: true })}><span className="rgb-action-label">Đã xem</span></Button>}</div>) : <p className="rounded-lg border border-dashed border-amber-300/80 bg-white/60 px-3 py-4 text-center text-sm text-amber-900">Không có thông báo phù hợp với bộ lọc này.</p>}</CardContent>
-        </Card>
-      )}
 
       {resultAnnouncementToday.length > 0 && (
         <Card className="border-violet-300 bg-violet-500/10 shadow-[0_0_0_1px_rgba(196,181,253,0.18)]">
