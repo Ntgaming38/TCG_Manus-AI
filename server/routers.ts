@@ -407,6 +407,9 @@ export const appRouter = router({
     syncAllSnkrdunk: protectedProcedure
       .mutation(({ ctx }) => db.syncAllSnkrdunkPrices(ctx.user.id)),
 
+    syncErrorHistory: protectedProcedure
+      .query(({ ctx }) => db.getMarketplaceSyncErrorHistory(ctx.user.id)),
+
     autoSyncStatus: protectedProcedure
       .query(() => db.getMarketplaceAutoSyncStatus()),
 

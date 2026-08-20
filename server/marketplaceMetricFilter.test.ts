@@ -8,6 +8,7 @@ describe("marketplaceMetricFilter", () => {
       synced: "synced",
       pending: "pending",
       unlinked: "unlinked",
+      error: "error",
     });
   });
 
@@ -19,6 +20,7 @@ describe("marketplaceMetricFilter", () => {
 
   it("hiển thị nhãn trạng thái và khôi phục từ khóa tìm kiếm an toàn", () => {
     expect(marketplaceFilterLabel("pending")).toBe("Chờ đồng bộ");
+    expect(marketplaceFilterLabel("error")).toBe("Lỗi đồng bộ");
     expect(parseMarketplaceSearch("  Pikachu  ")).toBe("Pikachu");
     expect(parseMarketplaceSearch(null)).toBe("");
   });

@@ -1,13 +1,14 @@
-export const MARKETPLACE_FILTERS = ["all", "synced", "pending", "unlinked"] as const;
+export const MARKETPLACE_FILTERS = ["all", "synced", "pending", "unlinked", "error"] as const;
 
 export type MarketplaceFilter = typeof MARKETPLACE_FILTERS[number];
-export type MarketplaceMetric = "total" | "synced" | "pending" | "unlinked";
+export type MarketplaceMetric = "total" | "synced" | "pending" | "unlinked" | "error";
 
 export const marketplaceMetricFilter: Record<MarketplaceMetric, MarketplaceFilter> = {
   total: "all",
   synced: "synced",
   pending: "pending",
   unlinked: "unlinked",
+  error: "error",
 };
 
 export const MARKETPLACE_FILTER_STORAGE_KEY = "tcg-marketplace-filter";
@@ -18,6 +19,7 @@ const MARKETPLACE_FILTER_LABELS: Record<MarketplaceFilter, string> = {
   synced: "Đã đồng bộ",
   pending: "Chờ đồng bộ",
   unlinked: "Chưa gắn link",
+  error: "Lỗi đồng bộ",
 };
 
 export function parseMarketplaceFilter(value: string | null | undefined): MarketplaceFilter {

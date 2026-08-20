@@ -1,0 +1,14 @@
+import { ExternalLink, TriangleAlert } from "lucide-react";
+
+type SyncErrorHistoryEntry = { id: number; productName: string; sourceUrl: string; cardRank: string | null; errorMessage: string; occurredAt: Date; resolvedAt: Date | null };
+
+export function SyncErrorHistory({ history }: { history: SyncErrorHistoryEntry[] }) {
+  return <section className="rounded-2xl border border-red-500/25 bg-card/80 p-4 shadow-sm sm:p-5"><div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="flex items-center gap-2 font-semibold text-foreground"><TriangleAlert className="h-4 w-4 text-red-400" />Ghi chú URL lỗi đồng bộ</h2><p className="mt-1 text-xs text-muted-foreground">Các URL lỗi được lưu để kiểm tra lại. Đồng bộ thành công sẽ tự đánh dấu đã xử lý.</p></div><span className="text-xs text-muted-foreground">Lưu tối đa 50 lần gần nhất</span></div>{history.length === 0 ? <p className="mt-4 rounded-lg border border-dashed border-border bg-background/50 p-4 text-sm text-muted-foreground">Chưa ghi nhận URL SNKRDUNK bị lỗi.</p> : <div className="mt-4 max-h-72 overflow-auto rounded-xl border border-border"><table className="w-full min-w-[680px] text-left text-xs"><thead className="bg-muted/60 text-muted-foreground"><tr><th className="px-3 py-2 font-semibold">Sản phẩm</th><th className="px-3 py-2 font-semibold">URL</th><th className="px-3 py-2 font-semibold">Ghi chú lỗi</th><th className="px-3 py-2 font-semibold">Thời điểm</th><th className="px-3 py-2 font-semibold">Trạng thái</th></tr></thead><tbody className="divide-y divide-border">{history.map((entry) => <tr key={entry.id}><td className="px-3 py-2 font-medium text-foreground">{entry.productName}{entry.cardRank ? ` · Rank ${entry.cardRank}` : ""}</td><td className="px-3 py-2"><a href={entry.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex max-w-[180px] items-center gap-1 text-red-400 hover:underline"><span className="truncate">Mở URL</span><ExternalLink className="h-3 w-3 shrink-0" /></a></td><td className="max-w-[260px] px-3 py-2 text-red-300">{entry.errorMessage}</td><td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{new Date(entry.occurredAt).toLocaleString("vi-VN")}</td><td className="px-3 py-2"><span className={entry.resolvedAt ? "rounded-full bg-emerald-500/15 px-2 py-1 font-semibold text-emerald-300" : "rounded-full bg-red-500/15 px-2 py-1 font-semibold text-red-300"}>{entry.resolvedAt ? "Đã xử lý" : "Cần xử lý"}</span></td></tr>)}</tbody></table></div>}</section>;
+}
+
+export function formatDuration(seconds: number) {
+  if (seconds <= 0) return "vài giây";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return minutes > 0 ? `${minutes} phút ${remainingSeconds} giây` : `${remainingSeconds} giây`;
+}

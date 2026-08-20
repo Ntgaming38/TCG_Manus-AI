@@ -10,6 +10,7 @@ import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { marketplaceFilterLabel, marketplaceMetricFilter, MARKETPLACE_FILTER_STORAGE_KEY, MARKETPLACE_SEARCH_STORAGE_KEY, parseMarketplaceFilter, parseMarketplaceSearch, shouldClearMarketplaceFiltersOnKey, type MarketplaceFilter } from "@shared/marketplaceMetricFilter";
 import { getMarketplacePriceChange, getMarketplacePriceTrend, marketplacePriceSourceLabel, parseMarketplaceHistoryPeriod, type MarketplaceHistoryPeriod, type MarketplacePriceHistoryPoint, type MarketplacePriceMovement24h } from "@shared/marketplacePriceHistory";
 import { RankBadge } from "@/components/RankBadge";
+import { SyncErrorHistory, formatDuration } from "@/components/SyncErrorHistory";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -33,6 +34,7 @@ import { toast } from "sonner";
 
 type PriceUpdatePayload = { id: number; marketPrice: number };
 type BulkResult = { updatedCount: number; skippedCount: number; errors: Array<{ productName: string; message: string }> };
+type SyncErrorHistoryEntry = { id: number; productId: number; productName: string; sourceUrl: string; cardRank: string | null; errorMessage: string; occurredAt: Date; resolvedAt: Date | null };
 
 const historyChartConfig = { price: { label: "Giá thị trường", color: "#ef4444" } } satisfies ChartConfig;
 
@@ -43,12 +45,14 @@ export default function Marketplace() {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkElapsedSeconds, setBulkElapsedSeconds] = useState(0);
   const [syncErrors, setSyncErrors] = useState<Record<number, string>>({});
   const [historyProduct, setHistoryProduct] = useState<any | null>(null);
   const [historyPeriod, setHistoryPeriod] = useState<MarketplaceHistoryPeriod>(30);
   const utils = trpc.useUtils();
   const { data: products } = trpc.products.list.useQuery({ status: "in_stock", search: search || undefined });
   const { data: autoSyncStatus } = trpc.products.autoSyncStatus.useQuery();
+  const { data: syncErrorHistory } = trpc.products.syncErrorHistory.useQuery();
   const historyProductId = historyProduct?.id ?? 0;
   const historyQueryInput = useMemo(() => ({ productId: historyProductId, days: historyPeriod }), [historyProductId, historyPeriod]);
   const priceHistoryQuery = trpc.products.priceHistory.useQuery(historyQueryInput, { enabled: historyProductId > 0 });
@@ -58,13 +62,18 @@ export default function Marketplace() {
   const linkedProducts = productList.filter((product: any) => Boolean(product.snkrdunkUrl));
   const syncedProducts = linkedProducts.filter((product: any) => Boolean(product.snkrdunkLastSyncedAt));
   const pendingProducts = linkedProducts.filter((product: any) => !product.snkrdunkLastSyncedAt);
+  const persistentSyncErrors = useMemo(() => Object.fromEntries((syncErrorHistory?.history ?? []).filter((entry: SyncErrorHistoryEntry) => !entry.resolvedAt).map((entry: SyncErrorHistoryEntry) => [entry.productId, entry.errorMessage])), [syncErrorHistory]);
+  const activeSyncErrors = { ...persistentSyncErrors, ...syncErrors };
+  const activeSyncErrorIds = useMemo(() => new Set(Object.keys(activeSyncErrors).map(Number)), [activeSyncErrors]);
+  const syncErrorCount = syncErrorHistory?.activeCount ?? activeSyncErrorIds.size;
   const visibleProducts = useMemo(() => productList.filter((product: any) => {
     if (filter === "synced") return Boolean(product.snkrdunkUrl && product.snkrdunkLastSyncedAt);
     if (filter === "pending") return Boolean(product.snkrdunkUrl && !product.snkrdunkLastSyncedAt);
     if (filter === "unlinked") return !product.snkrdunkUrl;
+    if (filter === "error") return activeSyncErrorIds.has(product.id);
     return true;
-  }), [filter, productList]);
-  const refreshProducts = () => utils.products.list.invalidate();
+  }), [activeSyncErrorIds, filter, productList]);
+  const refreshProducts = () => { utils.products.list.invalidate(); utils.products.syncErrorHistory.invalidate(); };
 
   const updatePrice = trpc.products.updateMarketPrice.useMutation({
     onSuccess: () => { toast.success("Đã cập nhật giá thị trường thủ công!"); refreshProducts(); },
@@ -76,11 +85,11 @@ export default function Marketplace() {
   });
   const syncPrice = trpc.products.syncSnkrdunkPrice.useMutation({
     onSuccess: (result, variables) => { setSyncErrors((current) => { const next = { ...current }; delete next[variables.id]; return next; }); toast.success(`${result.productName}: giá SNKRDUNK ${formatYen(result.marketPrice)}`); refreshProducts(); },
-    onError: (err, variables) => { setSyncErrors((current) => ({ ...current, [variables.id]: err.message })); toast.error(err.message); },
+    onError: (err, variables) => { setSyncErrors((current) => ({ ...current, [variables.id]: err.message })); utils.products.syncErrorHistory.invalidate(); toast.error(err.message); },
   });
   const syncAll = trpc.products.syncAllSnkrdunk.useMutation({
     onSuccess: (result) => {
-      setBulkProgress(100); setBulkResult(result); setBulkError(null); setSyncErrors((current) => { const next = { ...current }; result.errors.forEach((error) => { const matchingProduct = productList.find((product: any) => product.name === error.productName); if (matchingProduct) next[matchingProduct.id] = error.message; }); return next; }); refreshProducts();
+      setBulkProgress(100); setBulkResult(result); setBulkError(null); setSyncErrors(() => { const next: Record<number, string> = {}; result.errors.forEach((error) => { const matchingProduct = productList.find((product: any) => product.name === error.productName); if (matchingProduct) next[matchingProduct.id] = error.message; }); return next; }); refreshProducts();
       if (result.updatedCount > 0) toast.success(`Đã đồng bộ ${result.updatedCount} sản phẩm SNKRDUNK. Bỏ qua ${result.skippedCount} sản phẩm.`);
       else if (result.errors.length === 0) toast.info(`Chưa có sản phẩm nào được gắn link SNKRDUNK. Đã bỏ qua ${result.skippedCount} sản phẩm.`);
       result.errors.forEach((error) => toast.error(`${error.productName}: ${error.message}`));
@@ -91,7 +100,9 @@ export default function Marketplace() {
   useEffect(() => {
     if (!syncAll.isPending) return;
     setBulkProgress(8);
-    const timer = window.setInterval(() => setBulkProgress((current) => Math.min(current + 6, 96)), 650);
+    const startedAt = Date.now();
+    setBulkElapsedSeconds(0);
+    const timer = window.setInterval(() => { setBulkProgress((current) => Math.min(current + 6, 96)); setBulkElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000)); }, 650);
     return () => window.clearInterval(timer);
   }, [syncAll.isPending]);
 
@@ -104,7 +115,7 @@ export default function Marketplace() {
   }, [search]);
 
   const startBulkSync = () => {
-    setBulkProgress(0); setBulkResult(null); setBulkError(null); setBulkOpen(true); syncAll.mutate();
+    setBulkProgress(0); setBulkResult(null); setBulkError(null); setBulkElapsedSeconds(0); setBulkOpen(true); syncAll.mutate();
   };
   const clearFilters = () => { setSearch(""); setFilter("all"); };
   const hasActiveFilters = filter !== "all" || Boolean(search.trim());
@@ -138,25 +149,28 @@ export default function Marketplace() {
         </Button>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <MetricCard icon={<Package className="h-5 w-5" />} label="Tổng sản phẩm" value={productList.length} tone="neutral" active={filter === marketplaceMetricFilter.total} onClick={() => setFilter(marketplaceMetricFilter.total)} />
         <MetricCard icon={<CheckCircle2 className="h-5 w-5" />} label="Đã đồng bộ" value={syncedProducts.length} tone="success" active={filter === marketplaceMetricFilter.synced} onClick={() => setFilter(marketplaceMetricFilter.synced)} />
         <MetricCard icon={<Clock3 className="h-5 w-5" />} label="Chờ đồng bộ" value={pendingProducts.length} tone="warning" active={filter === marketplaceMetricFilter.pending} onClick={() => setFilter(marketplaceMetricFilter.pending)} />
         <MetricCard icon={<Link2 className="h-5 w-5" />} label="Chưa gắn link" value={productList.length - linkedProducts.length} tone="danger" active={filter === marketplaceMetricFilter.unlinked} onClick={() => setFilter(marketplaceMetricFilter.unlinked)} />
+        <MetricCard icon={<TriangleAlert className="h-5 w-5" />} label="Lỗi đồng bộ" value={syncErrorCount} tone="danger" active={filter === marketplaceMetricFilter.error} onClick={() => setFilter(marketplaceMetricFilter.error)} />
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card/70 p-3 shadow-sm lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1 lg:max-w-xl"><div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs"><span className="inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2 py-1 font-medium text-red-300"><SlidersHorizontal className="h-3 w-3" />Đang xem: {marketplaceFilterLabel(filter)}</span>{search.trim() && <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-1 font-medium text-sky-200"><Search className="h-3 w-3 shrink-0" /><span className="truncate">Từ khóa: “{search.trim()}”</span></span>}{hasActiveFilters && <span className="text-muted-foreground">Nhấn <kbd className="rounded border border-border bg-background px-1 py-0.5 font-mono text-[10px] text-foreground">Esc</kbd> để xóa</span>}</div><div className="flex min-w-0 gap-2"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Tìm sản phẩm, series..." value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 border-border bg-background pl-10" aria-label="Tìm sản phẩm Marketplace" /></div><Button type="button" variant="outline" size="sm" onClick={clearFilters} disabled={!hasActiveFilters} className="h-10 shrink-0 border-border bg-background text-xs"><XCircle className="mr-1.5 h-3.5 w-3.5" />Xóa bộ lọc</Button></div></div>
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0"><SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" /><FilterButton active={filter === "all"} onClick={() => setFilter("all")}>Tất cả ({productList.length})</FilterButton><FilterButton active={filter === "synced"} onClick={() => setFilter("synced")}>Đã đồng bộ ({syncedProducts.length})</FilterButton><FilterButton active={filter === "pending"} onClick={() => setFilter("pending")}>Chờ đồng bộ ({pendingProducts.length})</FilterButton><FilterButton active={filter === "unlinked"} onClick={() => setFilter("unlinked")}>Chưa gắn link ({productList.length - linkedProducts.length})</FilterButton></div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0"><SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" /><FilterButton active={filter === "all"} onClick={() => setFilter("all")}>Tất cả ({productList.length})</FilterButton><FilterButton active={filter === "synced"} onClick={() => setFilter("synced")}>Đã đồng bộ ({syncedProducts.length})</FilterButton><FilterButton active={filter === "pending"} onClick={() => setFilter("pending")}>Chờ đồng bộ ({pendingProducts.length})</FilterButton><FilterButton active={filter === "unlinked"} onClick={() => setFilter("unlinked")}>Chưa gắn link ({productList.length - linkedProducts.length})</FilterButton><FilterButton active={filter === "error"} onClick={() => setFilter("error")}>Lỗi đồng bộ ({syncErrorCount})</FilterButton></div>
       </section>
 
-      {visibleProducts.length === 0 ? <EmptyMarketplace /> : <MarketplaceTable products={visibleProducts} syncErrors={syncErrors} priceChanges24hByProductId={priceChanges24hByProductId} onSaveUrl={(id: number, url: string) => updateUrl.mutate({ id, snkrdunkUrl: url })} onSync={(id: number) => syncPrice.mutate({ id })} onUpdatePrice={(payload: PriceUpdatePayload) => updatePrice.mutate(payload)} onOpenHistory={setHistoryProduct} isSavingUrl={updateUrl.isPending} isSyncing={syncPrice.isPending} isUpdatingPrice={updatePrice.isPending} />}
+      <SyncErrorHistory history={(syncErrorHistory?.history ?? []) as SyncErrorHistoryEntry[]} />
+
+      {visibleProducts.length === 0 ? <EmptyMarketplace /> : <MarketplaceTable products={visibleProducts} syncErrors={activeSyncErrors} priceChanges24hByProductId={priceChanges24hByProductId} onSaveUrl={(id: number, url: string) => updateUrl.mutate({ id, snkrdunkUrl: url })} onSync={(id: number) => syncPrice.mutate({ id })} onUpdatePrice={(payload: PriceUpdatePayload) => updatePrice.mutate(payload)} onOpenHistory={setHistoryProduct} isSavingUrl={updateUrl.isPending} isSyncing={syncPrice.isPending} isUpdatingPrice={updatePrice.isPending} />}
 
       <PriceHistoryDialog product={historyProduct} history={(priceHistoryQuery.data ?? []) as MarketplacePriceHistoryPoint[]} period={historyPeriod} loading={priceHistoryQuery.isLoading} error={priceHistoryQuery.error?.message} onPeriodChange={(days) => setHistoryPeriod(parseMarketplaceHistoryPeriod(days))} onOpenChange={(open) => !open && setHistoryProduct(null)} />
 
       <Dialog open={bulkOpen} onOpenChange={(open) => !syncAll.isPending && setBulkOpen(open)}>
         <DialogContent className="border-border bg-card sm:max-w-lg">
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-foreground">{syncAll.isPending ? <Loader2 className="h-5 w-5 animate-spin text-red-600" /> : bulkError ? <XCircle className="h-5 w-5 text-red-600" /> : <CheckCircle2 className="h-5 w-5 text-green-600" />} Đồng bộ giá SNKRDUNK hàng loạt</DialogTitle><DialogDescription>{syncAll.isPending ? `Đang xử lý ${linkedProducts.length} sản phẩm đã gắn link. Vui lòng chờ phản hồi từ SNKRDUNK.` : bulkError ? "Yêu cầu đồng bộ chưa hoàn tất. Dữ liệu giá cũ vẫn được giữ nguyên." : "Đã nhận kết quả đồng bộ. Các sản phẩm không có giá hợp lệ không bị ghi đè."}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-foreground">{syncAll.isPending ? <Loader2 className="h-5 w-5 animate-spin text-red-600" /> : bulkError ? <XCircle className="h-5 w-5 text-red-600" /> : <CheckCircle2 className="h-5 w-5 text-green-600" />} Đồng bộ giá SNKRDUNK hàng loạt</DialogTitle><DialogDescription>{syncAll.isPending ? `Đang xử lý ${linkedProducts.length} sản phẩm đã gắn link. Ước tính còn khoảng ${formatDuration(Math.max(0, Math.ceil(linkedProducts.length / 3) * 8 - bulkElapsedSeconds))}.` : bulkError ? "Yêu cầu đồng bộ chưa hoàn tất. Dữ liệu giá cũ vẫn được giữ nguyên." : "Đã nhận kết quả đồng bộ. Các sản phẩm không có giá hợp lệ không bị ghi đè."}</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2"><div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Tiến trình yêu cầu</span><span className="font-semibold text-foreground">{bulkProgress}%</span></div><Progress value={bulkProgress} className="h-3" />{syncAll.isPending && <p className="text-xs text-muted-foreground">Đang kiểm tra giá đúng Rank Card theo từng URL. URL lỗi hoặc chậm sẽ được ghi nhận riêng, không chặn các sản phẩm còn lại.</p>}{bulkError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{bulkError}</p>}{bulkResult && <div className="grid grid-cols-3 gap-2 text-center"><ResultStat label="Đã cập nhật" value={bulkResult.updatedCount} tone="success" /><ResultStat label="Bỏ qua" value={bulkResult.skippedCount} tone="warning" /><ResultStat label="Lỗi" value={bulkResult.errors.length} tone="danger" /></div>}{bulkResult?.errors.length ? <div className="max-h-36 space-y-2 overflow-y-auto rounded-lg border border-red-100 bg-red-50 p-3 text-xs text-red-700">{bulkResult.errors.map((error, index) => <p key={`${error.productName}-${index}`}><strong>{error.productName}:</strong> {error.message}</p>)}</div> : null}</div>
           {!syncAll.isPending && <Button className="w-full bg-primary text-primary-foreground" onClick={() => setBulkOpen(false)}>Đóng</Button>}
         </DialogContent>

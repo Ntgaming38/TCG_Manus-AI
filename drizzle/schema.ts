@@ -133,6 +133,24 @@ export const marketplaceSyncConfig = mysqlTable("marketplace_sync_config", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Per-user history of failed SNKRDUNK URLs, retained for later review and retry. */
+export const marketplaceSyncErrors = mysqlTable("marketplace_sync_errors", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  productId: int("productId").notNull(),
+  productName: varchar("productName", { length: 255 }).notNull(),
+  sourceUrl: varchar("sourceUrl", { length: 2048 }).notNull(),
+  cardRank: varchar("cardRank", { length: 8 }),
+  errorMessage: varchar("errorMessage", { length: 1000 }).notNull(),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+}, (table) => [
+  index("marketplace_sync_errors_user_occurred_idx").on(table.userId, table.occurredAt),
+  index("marketplace_sync_errors_user_product_resolved_idx").on(table.userId, table.productId, table.resolvedAt),
+]);
+
+export type MarketplaceSyncError = typeof marketplaceSyncErrors.$inferSelect;
+
 /**
  * Purchases - buy transaction history
  */

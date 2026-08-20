@@ -1,6 +1,6 @@
-import { eq, and, like, sql, desc, inArray, asc, isNotNull, lt, ne, or, gte } from "drizzle-orm";
+import { eq, and, like, sql, desc, inArray, asc, isNotNull, isNull, lt, ne, or, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, purchases, sales, priceHistory, shops, saleLocations, activityLogs, chyusenEntries, marketplaceSyncConfig, loginEvents } from "../drizzle/schema";
+import { InsertUser, users, products, purchases, sales, priceHistory, shops, saleLocations, activityLogs, chyusenEntries, marketplaceSyncConfig, marketplaceSyncErrors, loginEvents } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
@@ -350,41 +350,48 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
   }
 
   const cardRank = product.type === "card" ? normalizeCardRank(product.condition) : undefined;
-  const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack", cardRank);
-  const priceDecision = resolveMarketplacePriceUpdate(product.marketPrice, result.price);
-  const persisted = await persistMarketplacePriceIfValid(product.marketPrice, result.price, async (nextPrice) => {
-    await db.update(products)
-      .set({ marketPrice: nextPrice, snkrdunkLastSyncedAt: new Date() })
-      .where(and(eq(products.id, id), eq(products.userId, userId)));
-  });
-  if (!persisted.updated) throw new Error("SNKRDUNK không trả về giá JPY hợp lệ. Giá cũ được giữ nguyên.");
-  const newPrice = persisted.marketPrice;
-  const syncedAt = new Date();
-
-  if (Number(product.marketPrice || 0) !== result.price) {
-    await db.insert(priceHistory).values({
-      productId: id,
-      oldPrice: product.marketPrice,
-      newPrice,
-      source: "snkrdunk_auto",
+  try {
+    const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack", cardRank);
+    const priceDecision = resolveMarketplacePriceUpdate(product.marketPrice, result.price);
+    const persisted = await persistMarketplacePriceIfValid(product.marketPrice, result.price, async (nextPrice) => {
+      await db.update(products)
+        .set({ marketPrice: nextPrice, snkrdunkLastSyncedAt: new Date() })
+        .where(and(eq(products.id, id), eq(products.userId, userId)));
     });
+    if (!persisted.updated) throw new Error("SNKRDUNK không trả về giá JPY hợp lệ. Giá cũ được giữ nguyên.");
+    const newPrice = persisted.marketPrice;
+    const syncedAt = new Date();
+
+    if (Number(product.marketPrice || 0) !== result.price) {
+      await db.insert(priceHistory).values({ productId: id, oldPrice: product.marketPrice, newPrice, source: "snkrdunk_auto" });
+    }
+
+    await db.update(marketplaceSyncErrors)
+      .set({ resolvedAt: syncedAt })
+      .where(and(eq(marketplaceSyncErrors.userId, userId), eq(marketplaceSyncErrors.productId, id), isNull(marketplaceSyncErrors.resolvedAt)));
+    await db.insert(activityLogs).values({ userId, action: "snkrdunk_price_synced", description: `Đồng bộ giá SNKRDUNK: ${product.name}${cardRank ? ` · ${getCardRankLabel(cardRank)}` : ""} - ¥${result.price.toLocaleString("ja-JP")}`, entityType: "product", entityId: id });
+
+    return { productId: id, productName: product.name, marketPrice: result.price, snkrdunkLastSyncedAt: syncedAt, snkrdunkUrl: product.snkrdunkUrl };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Không thể đồng bộ giá SNKRDUNK.";
+    try {
+      await db.insert(marketplaceSyncErrors).values({ userId, productId: id, productName: product.name, sourceUrl: product.snkrdunkUrl, cardRank: cardRank ?? null, errorMessage: message });
+      await db.insert(activityLogs).values({ userId, action: "snkrdunk_price_sync_failed", description: `Lỗi đồng bộ SNKRDUNK: ${product.name} - ${message}`, entityType: "product", entityId: id });
+    } catch (historyError) {
+      console.warn("[Marketplace sync] Cannot persist sync error", historyError);
+    }
+    throw error;
   }
+}
 
-  await db.insert(activityLogs).values({
-    userId,
-    action: "snkrdunk_price_synced",
-    description: `Đồng bộ giá SNKRDUNK: ${product.name}${cardRank ? ` · ${getCardRankLabel(cardRank)}` : ""} - ¥${result.price.toLocaleString("ja-JP")}`,
-    entityType: "product",
-    entityId: id,
-  });
-
-  return {
-    productId: id,
-    productName: product.name,
-    marketPrice: result.price,
-    snkrdunkLastSyncedAt: syncedAt,
-    snkrdunkUrl: product.snkrdunkUrl,
-  };
+export async function getMarketplaceSyncErrorHistory(userId: number) {
+  const db = await getDb();
+  if (!db) return { activeCount: 0, history: [] };
+  const [countRow, history] = await Promise.all([
+    db.select({ count: sql<number>`COUNT(*)`.mapWith(Number) }).from(marketplaceSyncErrors).where(and(eq(marketplaceSyncErrors.userId, userId), isNull(marketplaceSyncErrors.resolvedAt))),
+    db.select().from(marketplaceSyncErrors).where(eq(marketplaceSyncErrors.userId, userId)).orderBy(desc(marketplaceSyncErrors.occurredAt), desc(marketplaceSyncErrors.id)).limit(50),
+  ]);
+  return { activeCount: countRow[0]?.count ?? 0, history };
 }
 
 export async function syncAllSnkrdunkPrices(userId: number) {

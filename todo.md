@@ -1075,3 +1075,9 @@
 - [x] Bảo đảm lỗi hoặc hết thời gian chờ của một URL không chặn các mục còn lại
 - [x] Hiển thị trạng thái hoàn tất và lỗi rõ ràng sau đồng bộ hàng loạt
 - [x] Kiểm thử đồng bộ Rank Card và lưu checkpoint
+
+## Theo dõi lỗi đồng bộ Marketplace
+- [x] Hiển thị thời gian ước tính hoàn thành trong tiến trình đồng bộ
+- [x] Thêm ô Lỗi đồng bộ sau Chưa gắn link và lọc danh sách theo ô này
+- [x] Lưu và hiển thị lịch sử URL đồng bộ lỗi theo từng tài khoản
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint

@@ -225,6 +225,13 @@
       "when": 1787096679886,
       "tag": "0031_funny_mimic",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1787185516591,
+      "tag": "0032_aromatic_the_captain",
+      "breakpoints": true
     }
   ]
 }
