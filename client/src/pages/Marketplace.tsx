@@ -87,6 +87,10 @@ export default function Marketplace() {
     onSuccess: (result, variables) => { setSyncErrors((current) => { const next = { ...current }; delete next[variables.id]; return next; }); toast.success(`${result.productName}: giá SNKRDUNK ${formatYen(result.marketPrice)}`); refreshProducts(); },
     onError: (err, variables) => { setSyncErrors((current) => ({ ...current, [variables.id]: err.message })); utils.products.syncErrorHistory.invalidate(); toast.error(err.message); },
   });
+  const retrySyncError = trpc.products.retrySyncError.useMutation({
+    onSuccess: (result) => { setSyncErrors((current) => { const next = { ...current }; delete next[result.productId]; return next; }); toast.success(`Đã thử lại ${result.productName}: ${formatYen(result.marketPrice)}`); refreshProducts(); },
+    onError: (err) => { utils.products.syncErrorHistory.invalidate(); toast.error(`Thử lại không thành công: ${err.message}`); },
+  });
   const syncAll = trpc.products.syncAllSnkrdunk.useMutation({
     onSuccess: (result) => {
       setBulkProgress(100); setBulkResult(result); setBulkError(null); setSyncErrors(() => { const next: Record<number, string> = {}; result.errors.forEach((error) => { const matchingProduct = productList.find((product: any) => product.name === error.productName); if (matchingProduct) next[matchingProduct.id] = error.message; }); return next; }); refreshProducts();
@@ -162,7 +166,7 @@ export default function Marketplace() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0"><SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" /><FilterButton active={filter === "all"} onClick={() => setFilter("all")}>Tất cả ({productList.length})</FilterButton><FilterButton active={filter === "synced"} onClick={() => setFilter("synced")}>Đã đồng bộ ({syncedProducts.length})</FilterButton><FilterButton active={filter === "pending"} onClick={() => setFilter("pending")}>Chờ đồng bộ ({pendingProducts.length})</FilterButton><FilterButton active={filter === "unlinked"} onClick={() => setFilter("unlinked")}>Chưa gắn link ({productList.length - linkedProducts.length})</FilterButton><FilterButton active={filter === "error"} onClick={() => setFilter("error")}>Lỗi đồng bộ ({syncErrorCount})</FilterButton></div>
       </section>
 
-      <SyncErrorHistory history={(syncErrorHistory?.history ?? []) as SyncErrorHistoryEntry[]} />
+      <SyncErrorHistory history={(syncErrorHistory?.history ?? []) as SyncErrorHistoryEntry[]} onRetry={(id) => retrySyncError.mutate({ id })} retryingId={retrySyncError.isPending ? retrySyncError.variables?.id : undefined} />
 
       {visibleProducts.length === 0 ? <EmptyMarketplace /> : <MarketplaceTable products={visibleProducts} syncErrors={activeSyncErrors} priceChanges24hByProductId={priceChanges24hByProductId} onSaveUrl={(id: number, url: string) => updateUrl.mutate({ id, snkrdunkUrl: url })} onSync={(id: number) => syncPrice.mutate({ id })} onUpdatePrice={(payload: PriceUpdatePayload) => updatePrice.mutate(payload)} onOpenHistory={setHistoryProduct} isSavingUrl={updateUrl.isPending} isSyncing={syncPrice.isPending} isUpdatingPrice={updatePrice.isPending} />}
 

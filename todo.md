@@ -1081,3 +1081,9 @@
 - [x] Thêm ô Lỗi đồng bộ sau Chưa gắn link và lọc danh sách theo ô này
 - [x] Lưu và hiển thị lịch sử URL đồng bộ lỗi theo từng tài khoản
 - [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Thử lại URL lỗi Marketplace
+- [x] Thêm API thử lại đồng bộ an toàn cho một URL lỗi theo tài khoản
+- [x] Thêm nút Thử lại đồng bộ và trạng thái đang xử lý trong bảng lịch sử
+- [x] Làm mới lịch sử lỗi, giá và thống kê sau kết quả thử lại
+- [x] Kiểm thử API, giao diện và lưu checkpoint

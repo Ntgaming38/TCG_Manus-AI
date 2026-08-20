@@ -410,6 +410,10 @@ export const appRouter = router({
     syncErrorHistory: protectedProcedure
       .query(({ ctx }) => db.getMarketplaceSyncErrorHistory(ctx.user.id)),
 
+    retrySyncError: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => db.retryMarketplaceSyncError(input.id, ctx.user.id)),
+
     autoSyncStatus: protectedProcedure
       .query(() => db.getMarketplaceAutoSyncStatus()),
 

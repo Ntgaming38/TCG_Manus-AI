@@ -375,7 +375,17 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Không thể đồng bộ giá SNKRDUNK.";
     try {
-      await db.insert(marketplaceSyncErrors).values({ userId, productId: id, productName: product.name, sourceUrl: product.snkrdunkUrl, cardRank: cardRank ?? null, errorMessage: message });
+      const [activeError] = await db.select({ id: marketplaceSyncErrors.id })
+        .from(marketplaceSyncErrors)
+        .where(and(eq(marketplaceSyncErrors.userId, userId), eq(marketplaceSyncErrors.productId, id), isNull(marketplaceSyncErrors.resolvedAt)))
+        .limit(1);
+      if (activeError) {
+        await db.update(marketplaceSyncErrors)
+          .set({ productName: product.name, sourceUrl: product.snkrdunkUrl, cardRank: cardRank ?? null, errorMessage: message, occurredAt: new Date() })
+          .where(eq(marketplaceSyncErrors.id, activeError.id));
+      } else {
+        await db.insert(marketplaceSyncErrors).values({ userId, productId: id, productName: product.name, sourceUrl: product.snkrdunkUrl, cardRank: cardRank ?? null, errorMessage: message });
+      }
       await db.insert(activityLogs).values({ userId, action: "snkrdunk_price_sync_failed", description: `Lỗi đồng bộ SNKRDUNK: ${product.name} - ${message}`, entityType: "product", entityId: id });
     } catch (historyError) {
       console.warn("[Marketplace sync] Cannot persist sync error", historyError);
@@ -392,6 +402,17 @@ export async function getMarketplaceSyncErrorHistory(userId: number) {
     db.select().from(marketplaceSyncErrors).where(eq(marketplaceSyncErrors.userId, userId)).orderBy(desc(marketplaceSyncErrors.occurredAt), desc(marketplaceSyncErrors.id)).limit(50),
   ]);
   return { activeCount: countRow[0]?.count ?? 0, history };
+}
+
+export async function retryMarketplaceSyncError(errorId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [syncError] = await db.select().from(marketplaceSyncErrors)
+    .where(and(eq(marketplaceSyncErrors.id, errorId), eq(marketplaceSyncErrors.userId, userId)))
+    .limit(1);
+  if (!syncError) throw new Error("Không tìm thấy URL lỗi đồng bộ.");
+  if (syncError.resolvedAt) throw new Error("URL này đã được xử lý. Hãy làm mới danh sách.");
+  return syncSnkrdunkPriceForProduct(syncError.productId, userId);
 }
 
 export async function syncAllSnkrdunkPrices(userId: number) {
