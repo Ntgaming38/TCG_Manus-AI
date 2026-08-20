@@ -1069,3 +1069,9 @@
 - [x] Thu gọn mặc định các khối AI và QR dài
 - [x] Thêm nút quay lại trường lỗi đầu tiên sau khi lưu
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Khắc phục đồng bộ giá Rank Card
+- [x] Xác định URL hoặc luồng Rank Card khiến đồng bộ hàng loạt dừng ở 88%
+- [x] Bảo đảm lỗi hoặc hết thời gian chờ của một URL không chặn các mục còn lại
+- [x] Hiển thị trạng thái hoàn tất và lỗi rõ ràng sau đồng bộ hàng loạt
+- [x] Kiểm thử đồng bộ Rank Card và lưu checkpoint

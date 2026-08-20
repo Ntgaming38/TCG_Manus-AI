@@ -1,4 +1,5 @@
 const SNKRDUNK_HOSTS = new Set(["snkrdunk.com", "www.snkrdunk.com"]);
+export const SNKRDUNK_FETCH_TIMEOUT_MS = 8_000;
 
 export class SnkrdunkSyncError extends Error {
   constructor(message: string) {
@@ -210,7 +211,7 @@ async function fetchPublicHtml(sourceUrl: string): Promise<string> {
         "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
         "User-Agent": "Mozilla/5.0 (compatible; TCGManager/1.0; +https://snkrdunk.com)",
       },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(SNKRDUNK_FETCH_TIMEOUT_MS),
     });
   } catch {
     throw new SnkrdunkSyncError("Không thể truy cập trang sản phẩm SNKRDUNK.");
@@ -232,7 +233,7 @@ async function fetchFirstSizePrice(productCode: string): Promise<number> {
         "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
         "User-Agent": "Mozilla/5.0 (compatible; TCGManager/1.0; +https://snkrdunk.com)",
       },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(SNKRDUNK_FETCH_TIMEOUT_MS),
     });
   } catch {
     throw new SnkrdunkSyncError("Không thể truy cập API giá SNKRDUNK.");

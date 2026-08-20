@@ -11,5 +11,6 @@ describe("Marketplace rank synchronization", () => {
     expect(source).toContain('fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack", cardRank)');
     expect(source).toContain('data.snkrdunkLastSyncedAt = null');
     expect(source).toContain("await syncSnkrdunkPriceForProduct(product.id, product.userId)");
+    expect(source).toContain("processMarketplaceManualSyncBatch");
   });
 });

@@ -8,6 +8,7 @@ import { summarizeCardRarityQuantities } from '../shared/cardRarity';
 import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './chyusenUtils';
 import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
 import { processMarketplaceAutoSyncBatch } from './marketplaceAutoSyncBatch';
+import { processMarketplaceManualSyncBatch } from './marketplaceManualSyncBatch';
 import { persistMarketplacePriceIfValid } from './marketplacePricePersistence';
 import { getNearestExpiringChyusen, getNearestRegistrableChyusen, summarizeChyusenDashboard } from '../shared/chyusenDashboardStats';
 import { getChyusenDaysRemaining } from '../shared/chyusenDate';
@@ -394,11 +395,20 @@ export async function syncAllSnkrdunkPrices(userId: number) {
   const errors: Array<{ productId: number; productName: string; message: string }> = [];
   let updatedCount = 0;
 
-  for (const product of linkedProducts) {
-    try {
+  const outcomes = await processMarketplaceManualSyncBatch(
+    linkedProducts,
+    async (product) => {
       await syncSnkrdunkPriceForProduct(product.id, userId);
+    },
+    3,
+  );
+
+  for (const outcome of outcomes) {
+    if (outcome.status === "fulfilled") {
       updatedCount += 1;
-    } catch (error) {
+    } else {
+      const product = outcome.item;
+      const error = outcome.error;
       errors.push({
         productId: product.id,
         productName: product.name,

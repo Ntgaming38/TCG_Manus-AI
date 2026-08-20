@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice } from "./snkrdunk";
+import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
 
 describe("SNKRDUNK adapter", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("uses a bounded timeout so a slow product cannot stall a bulk sync", () => {
+    expect(SNKRDUNK_FETCH_TIMEOUT_MS).toBe(8_000);
   });
 
   it("parses a JPY price from JSON-LD", () => {
