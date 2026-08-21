@@ -1101,3 +1101,9 @@
 - [x] Tự trích xuất và lưu hình đại diện cùng tên sản phẩm từ URL SNKRDUNK khi có dữ liệu công khai
 - [x] Hiển thị thẻ sản phẩm Shop SNKR đầy đủ hình, tên, giá và trạng thái đồng bộ
 - [x] Kiểm thử đồng bộ hàng loạt, dữ liệu URL và lưu checkpoint
+
+## Chỉnh sửa và lọc Shop SNKR
+- [x] Cho phép sửa trực tiếp tên và URL SNKRDUNK trên từng thẻ theo dõi
+- [x] Đồng bộ lại metadata URL sau khi người dùng đổi liên kết
+- [x] Thêm bộ lọc nhanh Tất cả, Box, Card và Pack cho Shop SNKR
+- [x] Kiểm thử chỉnh sửa, lọc và lưu checkpoint

@@ -32,5 +32,8 @@ describe("Shop SNKR bulk sync UI", () => {
     expect(source).toContain("bulkSyncEtaSeconds");
     expect(source).toContain("item.imageUrl");
     expect(source).toContain("Tên sản phẩm (tùy chọn)");
+    expect(source).toContain("Sửa sản phẩm Shop SNKR");
+    expect(source).toContain("setTypeFilter");
+    expect(source).toContain("Tất cả (${watchItems.length})");
   });
 });

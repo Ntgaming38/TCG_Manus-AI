@@ -77,16 +77,32 @@ export async function updateSnkrShopItem(itemId: number, userId: number, input: 
   const { db, item } = await getOwnedItem(itemId, userId);
   const productType = input.productType ?? (item.productType as SnkrShopProductType);
   const nextUrl = input.sourceUrl === undefined ? item.sourceUrl : validateSourceUrl(input.sourceUrl.trim());
-  if (nextUrl !== item.sourceUrl) {
+  const sourceChanged = nextUrl !== item.sourceUrl;
+  if (sourceChanged) {
     const [duplicate] = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
       .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.sourceUrl, nextUrl)))
       .limit(1);
     if (duplicate) throw new Error("URL SNKRDUNK này đã có trong Shop SNKR của bạn.");
   }
-  const name = input.name === undefined ? item.name : input.name.trim();
+  let metadata: { title: string | null; imageUrl: string | null } = { title: item.sourceTitle, imageUrl: item.imageUrl };
+  if (sourceChanged) {
+    try { metadata = await fetchSnkrdunkProductMetadata(nextUrl); } catch { /* URL vẫn được cập nhật để người dùng thử đồng bộ giá sau. */ }
+  }
+  const name = input.name === undefined ? (sourceChanged ? metadata.title || item.name : item.name) : input.name.trim() || metadata.title || item.name;
   const cardRank = getCardRank(productType, input.cardRank ?? item.cardRank);
-  await db.update(snkrShopItems).set({ name, productType, cardRank, sourceUrl: nextUrl })
+  await db.update(snkrShopItems).set({
+    name,
+    productType,
+    cardRank,
+    sourceUrl: nextUrl,
+    sourceTitle: sourceChanged ? metadata.title : item.sourceTitle,
+    imageUrl: sourceChanged ? metadata.imageUrl : item.imageUrl,
+    currentPrice: sourceChanged ? "0" : item.currentPrice,
+    lastSyncedAt: sourceChanged ? null : item.lastSyncedAt,
+    lastSyncError: sourceChanged ? null : item.lastSyncError,
+  })
     .where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+  if (sourceChanged) await db.delete(snkrShopPriceHistory).where(eq(snkrShopPriceHistory.itemId, itemId));
   const [updated] = await db.select().from(snkrShopItems).where(eq(snkrShopItems.id, itemId)).limit(1);
   return updated;
 }
