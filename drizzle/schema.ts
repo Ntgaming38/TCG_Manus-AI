@@ -152,6 +152,42 @@ export const marketplaceSyncErrors = mysqlTable("marketplace_sync_errors", {
 export type MarketplaceSyncError = typeof marketplaceSyncErrors.$inferSelect;
 
 /**
+ * Shop SNKR is a private, standalone SNKRDUNK watchlist. It intentionally has
+ * no relationship to products, purchases, sales, inventory, or financial totals.
+ */
+export const snkrShopItems = mysqlTable("snkr_shop_items", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  productType: mysqlEnum("productType", ["card", "box", "pack"]).notNull().default("box"),
+  cardRank: varchar("cardRank", { length: 8 }),
+  sourceUrl: varchar("sourceUrl", { length: 2048 }).notNull(),
+  currentPrice: decimal("currentPrice", { precision: 12, scale: 2 }).notNull().default("0"),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("snkr_shop_items_user_url_unique").on(table.userId, table.sourceUrl),
+  index("snkr_shop_items_user_updated_idx").on(table.userId, table.updatedAt),
+]);
+
+export type SnkrShopItem = typeof snkrShopItems.$inferSelect;
+export type InsertSnkrShopItem = typeof snkrShopItems.$inferInsert;
+
+/** Price observations recorded only for Shop SNKR watch items. */
+export const snkrShopPriceHistory = mysqlTable("snkr_shop_price_history", {
+  id: int("id").autoincrement().primaryKey(),
+  itemId: int("itemId").notNull(),
+  price: decimal("price", { precision: 12, scale: 2 }).notNull(),
+  source: varchar("source", { length: 100 }).notNull().default("snkrdunk"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("snkr_shop_price_history_item_created_idx").on(table.itemId, table.createdAt, table.id),
+]);
+
+export type SnkrShopPriceHistory = typeof snkrShopPriceHistory.$inferSelect;
+
+/**
  * Purchases - buy transaction history
  */
 export const purchases = mysqlTable("purchases", {

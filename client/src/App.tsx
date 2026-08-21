@@ -11,6 +11,7 @@ import Purchases from "./pages/Purchases";
 import Sales from "./pages/Sales";
 import Inventory from "./pages/Inventory";
 import Marketplace from "./pages/Marketplace";
+import SnkrShop from "./pages/SnkrShop";
 import Reports from "./pages/Reports";
 import Chyusen from "./pages/Chyusen";
 import Notifications from "./pages/Notifications";
@@ -55,6 +56,9 @@ function Router() {
       </Route>
       <Route path={"/marketplace"}>
         <ProtectedRoute component={Marketplace} />
+      </Route>
+      <Route path={"/shop-snkr"}>
+        <ProtectedRoute component={SnkrShop} />
       </Route>
       <Route path={"/chyusen"}>
         <ProtectedRoute component={Chyusen} />

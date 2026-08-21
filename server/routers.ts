@@ -28,6 +28,7 @@ import { createMonthlyReport } from "@shared/monthlyReport";
 import { createManualStoredBackup, getAutoBackupSettings, listBackupArchives, listBackupRestoreHistory, AUTO_BACKUP_CRON, saveAutoBackupSettings, setAutoBackupTask, type AutoBackupFrequency } from "./backupScheduler";
 import { getReportBranding, saveReportBranding, uploadReportLogo } from "./reportBranding";
 import { findExistingAutoBackupTask } from "@shared/autoBackupSchedule";
+import * as snkrShopDb from "./snkrShopDb";
 
 const chyusenEntryBase = z.object({
   title: z.string().trim().min(1).max(255),
@@ -434,6 +435,41 @@ export const appRouter = router({
 
     damaged: protectedProcedure
       .query(({ ctx }) => db.getDamagedProducts(ctx.user.id)),
+  }),
+
+  snkrShop: router({
+    list: protectedProcedure
+      .input(z.object({ search: z.string().trim().max(255).optional() }).optional())
+      .query(({ ctx, input }) => snkrShopDb.listSnkrShopItems(ctx.user.id, input?.search)),
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().trim().min(1).max(255),
+        productType: z.enum(["card", "box", "pack"]),
+        cardRank: z.enum(["A", "B", "C", "D"]).optional(),
+        sourceUrl: z.string().trim().url().max(2048),
+      }))
+      .mutation(({ ctx, input }) => snkrShopDb.createSnkrShopItem(ctx.user.id, input)),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number().int().positive(),
+        name: z.string().trim().min(1).max(255).optional(),
+        productType: z.enum(["card", "box", "pack"]).optional(),
+        cardRank: z.enum(["A", "B", "C", "D"]).optional(),
+        sourceUrl: z.string().trim().url().max(2048).optional(),
+      }))
+      .mutation(({ ctx, input }) => {
+        const { id, ...changes } = input;
+        return snkrShopDb.updateSnkrShopItem(id, ctx.user.id, changes);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => snkrShopDb.deleteSnkrShopItem(input.id, ctx.user.id)),
+    sync: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => snkrShopDb.syncSnkrShopItem(input.id, ctx.user.id)),
+    priceHistory: protectedProcedure
+      .input(z.object({ id: z.number().int().positive(), days: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional() }))
+      .query(({ ctx, input }) => snkrShopDb.getSnkrShopPriceHistory(input.id, ctx.user.id, input.days)),
   }),
 
   purchases: router({

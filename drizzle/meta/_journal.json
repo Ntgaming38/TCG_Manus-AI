@@ -232,6 +232,13 @@
       "when": 1787185516591,
       "tag": "0032_aromatic_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1787325264395,
+      "tag": "0033_mature_shadow_king",
+      "breakpoints": true
     }
   ]
 }

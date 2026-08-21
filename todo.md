@@ -1087,3 +1087,11 @@
 - [x] Thêm nút Thử lại đồng bộ và trạng thái đang xử lý trong bảng lịch sử
 - [x] Làm mới lịch sử lỗi, giá và thống kê sau kết quả thử lại
 - [x] Kiểm thử API, giao diện và lưu checkpoint
+
+## Shop SNKR theo dõi giá độc lập
+- [x] Tạo mục điều hướng Shop SNKR riêng, không dùng dữ liệu Kho Hàng
+- [x] Lưu sản phẩm theo dõi Box/Card/Pack và URL SNKRDUNK theo tài khoản
+- [x] Thêm tìm kiếm, thêm sản phẩm, gắn URL và cập nhật giá theo dõi
+- [x] Hiển thị giá hiện tại cùng lịch sử biến động riêng của Shop SNKR
+- [x] Bảo đảm dữ liệu Shop SNKR không cộng vào vốn, tồn kho, doanh thu hoặc lợi nhuận
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
