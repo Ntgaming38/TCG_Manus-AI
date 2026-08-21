@@ -2,12 +2,13 @@ import { and, asc, desc, eq, gte } from "drizzle-orm";
 import { activityLogs, snkrShopItems, snkrShopPriceHistory } from "../drizzle/schema";
 import { normalizeCardRank } from "../shared/cardRank";
 import { getDb } from "./db";
-import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from "./snkrdunk";
+import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isValidSnkrdunkUrl } from "./snkrdunk";
+import { processMarketplaceManualSyncBatch } from "./marketplaceManualSyncBatch";
 
 export type SnkrShopProductType = "card" | "box" | "pack";
 
 type CreateSnkrShopItemInput = {
-  name: string;
+  name?: string;
   productType: SnkrShopProductType;
   cardRank?: string;
   sourceUrl: string;
@@ -50,14 +51,20 @@ export async function listSnkrShopItems(userId: number, search?: string) {
 export async function createSnkrShopItem(userId: number, input: CreateSnkrShopItemInput) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const name = input.name.trim();
   const sourceUrl = validateSourceUrl(input.sourceUrl.trim());
   const [existing] = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
     .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.sourceUrl, sourceUrl)))
     .limit(1);
   if (existing) throw new Error("URL SNKRDUNK này đã có trong Shop SNKR của bạn.");
   const cardRank = getCardRank(input.productType, input.cardRank);
-  await db.insert(snkrShopItems).values({ userId, name, productType: input.productType, cardRank, sourceUrl });
+  let metadata: { title: string | null; imageUrl: string | null } = { title: null, imageUrl: null };
+  try {
+    metadata = await fetchSnkrdunkProductMetadata(sourceUrl);
+  } catch {
+    // Metadata is a convenience only; a public price sync can still be attempted after creation.
+  }
+  const name = input.name?.trim() || metadata.title || "Sản phẩm SNKRDUNK";
+  await db.insert(snkrShopItems).values({ userId, name, productType: input.productType, cardRank, sourceUrl, sourceTitle: metadata.title, imageUrl: metadata.imageUrl });
   const [item] = await db.select().from(snkrShopItems)
     .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.sourceUrl, sourceUrl)))
     .limit(1);
@@ -96,15 +103,35 @@ export async function syncSnkrShopItem(itemId: number, userId: number) {
   const { db, item } = await getOwnedItem(itemId, userId);
   const productType = item.productType as SnkrShopProductType;
   const cardRank = getCardRank(productType, item.cardRank);
-  const result = await fetchSnkrdunkPrice(item.sourceUrl, productType, cardRank ?? "A");
-  const syncedAt = new Date();
-  await db.update(snkrShopItems).set({ currentPrice: String(result.price), lastSyncedAt: syncedAt })
-    .where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
-  if (Number(item.currentPrice || 0) !== result.price) {
-    await db.insert(snkrShopPriceHistory).values({ itemId, price: String(result.price), source: "snkrdunk" });
+  try {
+    const result = await fetchSnkrdunkPrice(item.sourceUrl, productType, cardRank ?? "A");
+    const syncedAt = new Date();
+    let metadata: { title: string | null; imageUrl: string | null } = { title: item.sourceTitle, imageUrl: item.imageUrl };
+    if (!metadata.title || !metadata.imageUrl) {
+      try { metadata = await fetchSnkrdunkProductMetadata(item.sourceUrl); } catch { /* Keep saved display metadata when the page is temporarily unavailable. */ }
+    }
+    await db.update(snkrShopItems).set({ currentPrice: String(result.price), lastSyncedAt: syncedAt, lastSyncError: null, sourceTitle: metadata.title, imageUrl: metadata.imageUrl })
+      .where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+    if (Number(item.currentPrice || 0) !== result.price) {
+      await db.insert(snkrShopPriceHistory).values({ itemId, price: String(result.price), source: "snkrdunk" });
+    }
+    await db.insert(activityLogs).values({ userId, action: "snkr_shop_price_synced", description: `Cập nhật Shop SNKR: ${item.name} - ¥${result.price.toLocaleString("ja-JP")}`, entityType: "snkr_shop_item", entityId: itemId });
+    return { itemId, name: metadata.title || item.name, currentPrice: result.price, lastSyncedAt: syncedAt, sourceUrl: item.sourceUrl };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Không thể đồng bộ URL SNKRDUNK này.";
+    await db.update(snkrShopItems).set({ lastSyncError: message }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+    throw error;
   }
-  await db.insert(activityLogs).values({ userId, action: "snkr_shop_price_synced", description: `Cập nhật Shop SNKR: ${item.name} - ¥${result.price.toLocaleString("ja-JP")}`, entityType: "snkr_shop_item", entityId: itemId });
-  return { itemId, name: item.name, currentPrice: result.price, lastSyncedAt: syncedAt, sourceUrl: item.sourceUrl };
+}
+
+/** Updates every private Shop SNKR watch item with bounded concurrency and isolated failures. */
+export async function syncAllSnkrShopItems(userId: number) {
+  const items = await listSnkrShopItems(userId);
+  const outcomes = await processMarketplaceManualSyncBatch(items, async (item) => {
+    await syncSnkrShopItem(item.id, userId);
+  }, 3);
+  const failures = outcomes.flatMap((outcome) => outcome.status === "rejected" ? [{ id: outcome.item.id, name: outcome.item.name, error: outcome.error instanceof Error ? outcome.error.message : "Không thể đồng bộ." }] : []);
+  return { totalCount: items.length, syncedCount: outcomes.length - failures.length, failedCount: failures.length, failures };
 }
 
 export async function getSnkrShopPriceHistory(itemId: number, userId: number, days = 30) {

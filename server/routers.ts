@@ -443,7 +443,7 @@ export const appRouter = router({
       .query(({ ctx, input }) => snkrShopDb.listSnkrShopItems(ctx.user.id, input?.search)),
     create: protectedProcedure
       .input(z.object({
-        name: z.string().trim().min(1).max(255),
+        name: z.string().trim().min(1).max(255).optional(),
         productType: z.enum(["card", "box", "pack"]),
         cardRank: z.enum(["A", "B", "C", "D"]).optional(),
         sourceUrl: z.string().trim().url().max(2048),
@@ -467,6 +467,8 @@ export const appRouter = router({
     sync: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.syncSnkrShopItem(input.id, ctx.user.id)),
+    syncAll: protectedProcedure
+      .mutation(({ ctx }) => snkrShopDb.syncAllSnkrShopItems(ctx.user.id)),
     priceHistory: protectedProcedure
       .input(z.object({ id: z.number().int().positive(), days: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional() }))
       .query(({ ctx, input }) => snkrShopDb.getSnkrShopPriceHistory(input.id, ctx.user.id, input.days)),

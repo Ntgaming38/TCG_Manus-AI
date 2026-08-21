@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RankBadge } from "@/components/RankBadge";
 import { trpc } from "@/lib/trpc";
 import { formatYen } from "@shared/formatYen";
-import { BarChart3, Box, ExternalLink, Link2, Loader2, Package, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { BarChart3, Box, ExternalLink, ImageOff, Link2, Loader2, Package, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -20,8 +20,11 @@ type WatchItem = {
   productType: ShopType;
   cardRank: string | null;
   sourceUrl: string;
+  sourceTitle: string | null;
+  imageUrl: string | null;
   currentPrice: string | number;
   lastSyncedAt: Date | null;
+  lastSyncError: string | null;
   createdAt: Date;
 };
 type PricePoint = { id: number; price: string | number; source: string; createdAt: Date };
@@ -56,6 +59,13 @@ export default function SnkrShop() {
     onSuccess: (result) => { toast.success(`${result.name}: ${formatYen(result.currentPrice)}`); refresh(); },
     onError: (error) => toast.error(error.message),
   });
+  const syncAll = trpc.snkrShop.syncAll.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Đã đồng bộ ${result.syncedCount}/${result.totalCount} mục${result.failedCount ? ` · ${result.failedCount} lỗi` : ""}`);
+      refresh();
+    },
+    onError: (error) => toast.error(error.message),
+  });
   const createItem = trpc.snkrShop.create.useMutation({
     onSuccess: (item) => {
       toast.success("Đã thêm vào Shop SNKR. Đang lấy giá đầu tiên...");
@@ -74,9 +84,10 @@ export default function SnkrShop() {
   const watchItems = items as WatchItem[];
   const syncedCount = watchItems.filter((item) => Boolean(item.lastSyncedAt)).length;
   const pendingCount = watchItems.length - syncedCount;
+  const bulkSyncEtaSeconds = Math.max(8, Math.ceil(watchItems.length / 3) * 8);
   const submitAdd = () => {
-    if (!form.name.trim() || !form.sourceUrl.trim()) { toast.error("Hãy nhập tên sản phẩm và URL SNKRDUNK."); return; }
-    createItem.mutate({ name: form.name.trim(), productType: form.productType, cardRank: form.productType === "card" ? form.cardRank : undefined, sourceUrl: form.sourceUrl.trim() });
+    if (!form.sourceUrl.trim()) { toast.error("Hãy nhập URL SNKRDUNK."); return; }
+    createItem.mutate({ name: form.name.trim() || undefined, productType: form.productType, cardRank: form.productType === "card" ? form.cardRank : undefined, sourceUrl: form.sourceUrl.trim() });
   };
 
   return (
@@ -88,7 +99,7 @@ export default function SnkrShop() {
             <h1 className="text-2xl font-black tracking-tight text-white md:text-3xl">Shop SNKR</h1>
             <p className="mt-2 text-sm leading-6 text-slate-300">Theo dõi giá Box, Card và Pack trên SNKRDUNK bằng URL riêng. Dữ liệu tại đây <strong className="font-semibold text-teal-200">không cộng vào Kho Hàng, vốn, doanh thu hoặc lợi nhuận</strong>.</p>
           </div>
-          <Button onClick={() => setAddOpen(true)} className="h-11 shrink-0 bg-teal-500 font-semibold text-slate-950 shadow-lg shadow-teal-500/20 hover:bg-teal-400"><Plus className="mr-2 h-4 w-4" />Thêm sản phẩm theo dõi</Button>
+          <div className="flex flex-wrap gap-2"><Button onClick={() => syncAll.mutate()} disabled={watchItems.length === 0 || syncAll.isPending} variant="outline" className="h-11 border-teal-400/40 bg-slate-950/30 text-teal-100 hover:bg-teal-500/15"><RefreshCw className={`mr-2 h-4 w-4 ${syncAll.isPending ? "animate-spin" : ""}`} />{syncAll.isPending ? `Đang đồng bộ · ~${bulkSyncEtaSeconds}s` : "Đồng bộ tất cả"}</Button><Button onClick={() => setAddOpen(true)} className="h-11 shrink-0 bg-teal-500 font-semibold text-slate-950 shadow-lg shadow-teal-500/20 hover:bg-teal-400"><Plus className="mr-2 h-4 w-4" />Thêm sản phẩm theo dõi</Button></div>
         </div>
       </section>
 
@@ -109,10 +120,10 @@ export default function SnkrShop() {
         <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-4 sm:max-w-xl sm:p-6">
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-foreground"><Link2 className="h-5 w-5 text-teal-400" />Thêm sản phẩm Shop SNKR</DialogTitle><DialogDescription>Gắn URL trang sản phẩm SNKRDUNK để theo dõi giá riêng. Không tạo hàng trong Kho Hàng.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <Field label="Tên sản phẩm"><Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Ví dụ: Pokémon 30th Anniversary Box" /></Field>
+            <Field label="Tên sản phẩm (tùy chọn)"><Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Để trống để tự lấy từ URL SNKRDUNK" /></Field>
             <div className="grid gap-3 sm:grid-cols-2"><Field label="Loại sản phẩm"><Select value={form.productType} onValueChange={(value) => setForm((current) => ({ ...current, productType: value as ShopType }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="card">Card</SelectItem></SelectContent></Select></Field>{form.productType === "card" && <Field label="Rank Card"><Select value={form.cardRank} onValueChange={(value) => setForm((current) => ({ ...current, cardRank: value as "A" | "B" | "C" | "D" }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="A">Rank A</SelectItem><SelectItem value="B">Rank B</SelectItem><SelectItem value="C">Rank C</SelectItem><SelectItem value="D">Rank D</SelectItem></SelectContent></Select></Field>}</div>
             <Field label="URL SNKRDUNK"><Input value={form.sourceUrl} onChange={(event) => setForm((current) => ({ ...current, sourceUrl: event.target.value }))} placeholder="https://snkrdunk.com/..." inputMode="url" /></Field>
-            <p className="rounded-lg border border-teal-500/20 bg-teal-500/10 p-3 text-xs leading-5 text-teal-100">Sau khi thêm, Shop SNKR sẽ lấy giá đầu tiên từ URL. Giá này chỉ nằm trong mục theo dõi, không ảnh hưởng bất kỳ số liệu kinh doanh nào.</p>
+            <p className="rounded-lg border border-teal-500/20 bg-teal-500/10 p-3 text-xs leading-5 text-teal-100">Sau khi thêm, Shop SNKR sẽ tự lấy tên, hình đại diện công khai (nếu có) và giá đầu tiên từ URL. Giá này chỉ nằm trong mục theo dõi, không ảnh hưởng bất kỳ số liệu kinh doanh nào.</p>
           </div>
           <Button onClick={submitAdd} disabled={createItem.isPending || syncItem.isPending} className="w-full bg-teal-500 font-semibold text-slate-950 hover:bg-teal-400">{createItem.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}Thêm và theo dõi giá</Button>
         </DialogContent>
@@ -134,7 +145,16 @@ function EmptyWatchlist({ onAdd }: { onAdd: () => void }) { return <div classNam
 
 function WatchItemCard({ item, onSync, onOpenHistory, onDelete, syncing, deleting }: { item: WatchItem; onSync: () => void; onOpenHistory: () => void; onDelete: () => void; syncing: boolean; deleting: boolean }) {
   const price = Number(item.currentPrice) || 0;
-  return <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"><div className="border-b border-border bg-gradient-to-r from-teal-500/10 via-transparent to-transparent p-4"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><div className="rounded-xl bg-teal-500/15 p-2.5 text-teal-300">{getTypeIcon(item.productType)}</div><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h2 className="min-w-0 break-words text-base font-bold leading-6 text-foreground">{item.name}</h2>{item.productType === "card" && <RankBadge rank={item.cardRank} marketPrice={price} />}</div><div className="mt-1 flex flex-wrap gap-1.5"><Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-200">{getTypeLabel(item.productType)}</Badge>{item.lastSyncedAt ? <span className="text-xs text-muted-foreground">Cập nhật {new Date(item.lastSyncedAt).toLocaleString("vi-VN")}</span> : <span className="text-xs text-amber-300">Chưa lấy giá</span>}</div></div></div><a href={item.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Mở SNKRDUNK cho ${item.name}`} className="shrink-0 rounded-lg p-2 text-teal-300 transition-colors hover:bg-teal-500/10"><ExternalLink className="h-4 w-4" /></a></div></div><div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto]"><div><p className="text-xs text-muted-foreground">Giá SNKRDUNK hiện tại</p><p className="mt-1 text-3xl font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "—"}</p><p className="mt-1 text-xs text-muted-foreground">Theo dõi độc lập · không tính vào Kho Hàng</p></div><div className="flex flex-wrap items-end gap-2 sm:justify-end"><Button size="sm" variant="outline" onClick={onOpenHistory} className="border-border bg-background text-xs"><BarChart3 className="mr-1.5 h-3.5 w-3.5" />Lịch sử</Button><Button size="sm" onClick={onSync} disabled={syncing} className="bg-teal-500 text-xs text-slate-950 hover:bg-teal-400">{syncing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}Cập nhật</Button><Button size="icon" variant="ghost" onClick={onDelete} disabled={deleting} className="h-8 w-8 text-muted-foreground hover:bg-red-500/10 hover:text-red-400" aria-label={`Xóa ${item.name}`}><Trash2 className="h-4 w-4" /></Button></div></div></article>;
+  const displayName = item.sourceTitle || item.name;
+  return <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className="grid min-w-0 grid-cols-[112px_minmax(0,1fr)] border-b border-border bg-gradient-to-r from-teal-500/10 via-transparent to-transparent">
+      <div className="flex aspect-square items-center justify-center overflow-hidden border-r border-border bg-slate-950/25 p-2">
+        {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-contain" loading="lazy" /> : <div className="flex flex-col items-center gap-2 text-teal-300/70">{getTypeIcon(item.productType)}<ImageOff className="h-5 w-5" /></div>}
+      </div>
+      <div className="min-w-0 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h2 className="min-w-0 break-words text-base font-bold leading-6 text-foreground">{displayName}</h2>{item.productType === "card" && <RankBadge rank={item.cardRank} marketPrice={price} />}</div><div className="mt-1 flex flex-wrap gap-1.5"><Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-200">{getTypeLabel(item.productType)}</Badge>{item.lastSyncedAt ? <span className="text-xs text-muted-foreground">Cập nhật {new Date(item.lastSyncedAt).toLocaleString("vi-VN")}</span> : <span className="text-xs text-amber-300">Chưa lấy giá</span>}</div></div><a href={item.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Mở SNKRDUNK cho ${displayName}`} className="shrink-0 rounded-lg p-2 text-teal-300 transition-colors hover:bg-teal-500/10"><ExternalLink className="h-4 w-4" /></a></div></div>
+    </div>
+    <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto]"><div><p className="text-xs text-muted-foreground">Giá SNKRDUNK hiện tại</p><p className="mt-1 text-3xl font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "—"}</p><p className="mt-1 text-xs text-muted-foreground">Theo dõi độc lập · không tính vào Kho Hàng</p>{item.lastSyncError && <p className="mt-2 text-xs leading-5 text-red-300">Lỗi đồng bộ: {item.lastSyncError}</p>}</div><div className="flex flex-wrap items-end gap-2 sm:justify-end"><Button size="sm" variant="outline" onClick={onOpenHistory} className="border-border bg-background text-xs"><BarChart3 className="mr-1.5 h-3.5 w-3.5" />Lịch sử</Button><Button size="sm" onClick={onSync} disabled={syncing} className="bg-teal-500 text-xs text-slate-950 hover:bg-teal-400">{syncing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}Cập nhật</Button><Button size="icon" variant="ghost" onClick={onDelete} disabled={deleting} className="h-8 w-8 text-muted-foreground hover:bg-red-500/10 hover:text-red-400" aria-label={`Xóa ${displayName}`}><Trash2 className="h-4 w-4" /></Button></div></div>
+  </article>;
 }
 
 function HistoryDialog({ item, history, loading, days, onDaysChange, onOpenChange }: { item: WatchItem | null; history: PricePoint[]; loading: boolean; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void; onOpenChange: (open: boolean) => void }) {

@@ -13,6 +13,11 @@ export type SnkrdunkPriceResult = {
   sourceUrl: string;
 };
 
+export type SnkrdunkProductMetadata = {
+  title: string | null;
+  imageUrl: string | null;
+};
+
 export type SnkrdunkProductType = "card" | "box" | "pack";
 
 type SnkrdunkSize = {
@@ -53,6 +58,31 @@ function decodeHtmlEntities(value: string): string {
     .replace(/&#45;/gi, "-")
     .replace(/&#x2D;/gi, "-")
     .replace(/&amp;/gi, "&");
+}
+
+function findMetaContent(html: string, key: string): string | null {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(`<meta[^>]+(?:property|name)=["']${escapedKey}["'][^>]+content=["']([^"']+)["']`, "i"),
+    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escapedKey}["']`, "i"),
+  ];
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) return decodeHtmlEntities(match[1]).trim();
+  }
+  return null;
+}
+
+/** Extracts public display metadata only; it never invents a product image or title. */
+export function parseSnkrdunkProductMetadata(html: string): SnkrdunkProductMetadata {
+  const decoded = decodeHtmlEntities(html);
+  const rawTitle = findMetaContent(decoded, "og:title")
+    ?? findMetaContent(decoded, "twitter:title")
+    ?? decoded.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, " ").trim()
+    ?? null;
+  const title = rawTitle?.replace(/\s*[|｜]\s*SNKRDUNK\s*$/i, "").replace(/\s+/g, " ").trim() || null;
+  const imageUrl = findMetaContent(decoded, "og:image") ?? findMetaContent(decoded, "twitter:image");
+  return { title, imageUrl };
 }
 
 function parseJpyNumber(value: unknown): number | null {
@@ -221,6 +251,13 @@ async function fetchPublicHtml(sourceUrl: string): Promise<string> {
     throw new SnkrdunkSyncError(`SNKRDUNK trả về lỗi HTTP ${response.status}.`);
   }
   return response.text();
+}
+
+export async function fetchSnkrdunkProductMetadata(sourceUrl: string): Promise<SnkrdunkProductMetadata> {
+  if (!isValidSnkrdunkUrl(sourceUrl)) {
+    throw new SnkrdunkSyncError("Link phải là trang sản phẩm https://snkrdunk.com, không phải link danh mục.");
+  }
+  return parseSnkrdunkProductMetadata(await fetchPublicHtml(sourceUrl));
 }
 
 async function fetchFirstSizePrice(productCode: string): Promise<number> {

@@ -162,8 +162,11 @@ export const snkrShopItems = mysqlTable("snkr_shop_items", {
   productType: mysqlEnum("productType", ["card", "box", "pack"]).notNull().default("box"),
   cardRank: varchar("cardRank", { length: 8 }),
   sourceUrl: varchar("sourceUrl", { length: 2048 }).notNull(),
+  sourceTitle: varchar("sourceTitle", { length: 500 }),
+  imageUrl: varchar("imageUrl", { length: 2048 }),
   currentPrice: decimal("currentPrice", { precision: 12, scale: 2 }).notNull().default("0"),
   lastSyncedAt: timestamp("lastSyncedAt"),
+  lastSyncError: varchar("lastSyncError", { length: 1000 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [

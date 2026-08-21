@@ -1095,3 +1095,9 @@
 - [x] Hiển thị giá hiện tại cùng lịch sử biến động riêng của Shop SNKR
 - [x] Bảo đảm dữ liệu Shop SNKR không cộng vào vốn, tồn kho, doanh thu hoặc lợi nhuận
 - [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Đồng bộ tất cả và dữ liệu URL Shop SNKR
+- [x] Thêm nút Đồng bộ tất cả với tiến trình, ETA và cô lập URL lỗi
+- [x] Tự trích xuất và lưu hình đại diện cùng tên sản phẩm từ URL SNKRDUNK khi có dữ liệu công khai
+- [x] Hiển thị thẻ sản phẩm Shop SNKR đầy đủ hình, tên, giá và trạng thái đồng bộ
+- [x] Kiểm thử đồng bộ hàng loạt, dữ liệu URL và lưu checkpoint
