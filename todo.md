@@ -1123,3 +1123,22 @@
 - [x] Xác định vì sao metadata ảnh đang rơi về ảnh bìa SNKRDUNK thay vì ảnh Box/Card/Pack thật
 - [x] Trích xuất và lưu URL ảnh sản phẩm chính xác, không chấp nhận ảnh bìa marketplace
 - [x] Làm mới metadata sản phẩm hiện có, kiểm thử mobile và lưu checkpoint
+
+## Nhãn ảnh Shop SNKR
+- [x] Áp dụng hiệu ứng RGB cho nhãn loại Box/Card/Pack ở góc ảnh
+- [x] Hiển thị tên tùy chỉnh của người dùng ở góc phải ảnh sản phẩm
+- [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
+
+## Đồng bộ giá tự động mỗi giờ
+- [ ] Rà soát cấu hình tác vụ đồng bộ giá tự động hiện có
+- [ ] Đặt chu kỳ chạy tự động thành mỗi 1 giờ
+- [ ] Xác minh lịch chạy, kiểm thử và lưu checkpoint
+
+## Thao tác thẻ Shop SNKR
+- [x] Sắp xếp nút theo thứ tự Đồng bộ, Sửa và Xóa
+- [x] Thêm nút Xóa màu đỏ với xác nhận an toàn
+- [x] Kiểm thử thao tác và lưu checkpoint
+
+## Sửa lỗi AlertDialog Shop SNKR
+- [x] Bổ sung khai báo AlertDialog bị thiếu trong trang Shop SNKR
+- [x] Kiểm thử hiển thị trang và xác nhận xóa, sau đó lưu checkpoint

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +47,7 @@ export default function SnkrShop() {
   const [addOpen, setAddOpen] = useState(false);
   const [historyItem, setHistoryItem] = useState<WatchItem | null>(null);
   const [editItem, setEditItem] = useState<WatchItem | null>(null);
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState<WatchItem | null>(null);
   const [historyDays, setHistoryDays] = useState<7 | 30 | 90>(30);
   const [form, setForm] = useState<{ name: string; productType: ShopType; cardRank: "A" | "B" | "C" | "D"; sourceUrl: string }>({ name: "", productType: "box", cardRank: "A", sourceUrl: "" });
   const [editForm, setEditForm] = useState({ name: "", sourceUrl: "" });
@@ -82,7 +84,7 @@ export default function SnkrShop() {
     onError: (error) => toast.error(error.message),
   });
   const deleteItem = trpc.snkrShop.delete.useMutation({
-    onSuccess: () => { toast.success("Đã bỏ sản phẩm khỏi Shop SNKR."); refresh(); },
+    onSuccess: () => { setDeleteConfirmItem(null); toast.success("Đã bỏ sản phẩm khỏi Shop SNKR."); refresh(); },
     onError: (error) => toast.error(error.message),
   });
   const updateItem = trpc.snkrShop.update.useMutation({
@@ -137,7 +139,7 @@ export default function SnkrShop() {
         <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap gap-1.5">{(["all", "box", "card", "pack"] as const).map((type) => <Button key={type} size="sm" variant={typeFilter === type ? "default" : "outline"} onClick={() => setTypeFilter(type)} className={typeFilter === type ? "bg-teal-500 text-slate-950 hover:bg-teal-400" : "border-border bg-background text-muted-foreground"}>{type === "all" ? `Tất cả (${watchItems.length})` : `${getTypeLabel(type)} (${watchItems.filter((item) => item.productType === type).length})`}</Button>)}</div><span className="text-xs text-muted-foreground">Giá theo ¥ · dữ liệu độc lập với Marketplace</span></div>
       </section>
 
-      {isLoading ? <div className="flex h-52 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div> : watchItems.length === 0 ? <EmptyWatchlist onAdd={() => setAddOpen(true)} /> : displayedItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">Không có sản phẩm loại {getTypeLabel(typeFilter as ShopType)} khớp bộ lọc.</div> : <section className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{displayedItems.map((item) => <ShopGridCard key={item.id} item={item} onOpen={() => setLocation(`/shop-snkr/${item.id}`)} onSync={() => syncItem.mutate({ id: item.id })} onEdit={() => openEdit(item)} syncing={syncItem.isPending && syncItem.variables?.id === item.id} />)}</section>}
+      {isLoading ? <div className="flex h-52 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div> : watchItems.length === 0 ? <EmptyWatchlist onAdd={() => setAddOpen(true)} /> : displayedItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">Không có sản phẩm loại {getTypeLabel(typeFilter as ShopType)} khớp bộ lọc.</div> : <section className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{displayedItems.map((item) => <ShopGridCard key={item.id} item={item} onOpen={() => setLocation(`/shop-snkr/${item.id}`)} onSync={() => syncItem.mutate({ id: item.id })} onEdit={() => openEdit(item)} onDelete={() => setDeleteConfirmItem(item)} syncing={syncItem.isPending && syncItem.variables?.id === item.id} deleting={deleteItem.isPending && deleteItem.variables?.id === item.id} />)}</section>}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-4 sm:max-w-xl sm:p-6">
@@ -160,6 +162,13 @@ export default function SnkrShop() {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={Boolean(deleteConfirmItem)} onOpenChange={(open) => !open && setDeleteConfirmItem(null)}>
+        <AlertDialogContent className="max-w-[calc(100%-1rem)] border-border bg-card sm:max-w-md">
+          <AlertDialogHeader><AlertDialogTitle>Xóa sản phẩm theo dõi?</AlertDialogTitle><AlertDialogDescription>Bạn sẽ ngừng theo dõi giá của <strong className="text-foreground">{deleteConfirmItem?.name}</strong>. Lịch sử giá riêng của mục này cũng sẽ bị xóa và không ảnh hưởng Kho Hàng hay dữ liệu tài chính.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel disabled={deleteItem.isPending}>Hủy</AlertDialogCancel><AlertDialogAction disabled={deleteItem.isPending} onClick={(event) => { event.preventDefault(); if (deleteConfirmItem) deleteItem.mutate({ id: deleteConfirmItem.id }); }} className="bg-red-600 text-white hover:bg-red-700">{deleteItem.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}Xóa theo dõi</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <HistoryDialog item={historyItem} history={(historyQuery.data ?? []) as PricePoint[]} loading={historyQuery.isLoading} days={historyDays} onDaysChange={setHistoryDays} onOpenChange={(open) => !open && setHistoryItem(null)} />
     </div>
   );
@@ -174,13 +183,14 @@ function SummaryCard({ label, value, icon, tone }: { label: string; value: numbe
 
 function EmptyWatchlist({ onAdd }: { onAdd: () => void }) { return <div className="rounded-2xl border border-dashed border-teal-500/30 bg-card/60 py-16 text-center"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-300"><Box className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-bold text-foreground">Chưa có sản phẩm theo dõi</h2><p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Thêm URL Box, Card hoặc Pack từ SNKRDUNK để tạo biểu đồ giá riêng, không ảnh hưởng dữ liệu kho hàng.</p><Button onClick={onAdd} className="mt-5 bg-teal-500 text-slate-950 hover:bg-teal-400"><Plus className="mr-2 h-4 w-4" />Thêm sản phẩm đầu tiên</Button></div>; }
 
-function ShopGridCard({ item, onOpen, onSync, onEdit, syncing }: { item: WatchItem; onOpen: () => void; onSync: () => void; onEdit: () => void; syncing: boolean }) {
+function ShopGridCard({ item, onOpen, onSync, onEdit, onDelete, syncing, deleting }: { item: WatchItem; onOpen: () => void; onSync: () => void; onEdit: () => void; onDelete: () => void; syncing: boolean; deleting: boolean }) {
   const price = Number(item.currentPrice) || 0;
   const displayName = item.sourceTitle || item.name;
+  const customImageLabel = item.name.trim() !== (item.sourceTitle ?? "").trim() ? item.name.trim() : null;
   return <article role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onOpen(); } }} className="group min-w-0 cursor-pointer rounded-2xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-teal-400/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
-    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-950/45 p-2"><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur">{getTypeLabel(item.productType)}</span></div>
+    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-950/45 p-2"><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur"><span className="rgb-action-label">{getTypeLabel(item.productType)}</span></span>{customImageLabel && <span className="absolute right-2 top-2 max-w-[62%] truncate rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm backdrop-blur" title={customImageLabel}>{customImageLabel}</span>}</div>
     <div className="min-w-0 px-1 pt-3"><p className="line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 text-foreground">{displayName}</p>{item.productType === "card" && <div className="mt-1"><RankBadge rank={item.cardRank} marketPrice={price} /></div>}<p className="mt-2 text-lg font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "Chưa có giá"}</p><p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.lastSyncedAt ? `Cập nhật ${new Date(item.lastSyncedAt).toLocaleDateString("vi-VN")}` : "Chờ đồng bộ"}</p>
-      <div className="mt-2 flex gap-1.5 border-t border-border pt-2"><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onEdit(); }} className="h-7 w-7 border-border bg-background" aria-label={`Sửa ${displayName}`}><Pencil className="h-3.5 w-3.5" /></Button><Button size="icon" onClick={(event) => { event.stopPropagation(); onSync(); }} disabled={syncing} className="h-7 w-7 bg-teal-500 text-slate-950 hover:bg-teal-400" aria-label={`Cập nhật ${displayName}`}>{syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}</Button></div>
+      <div className="mt-2 flex gap-1.5 border-t border-border pt-2"><Button size="icon" onClick={(event) => { event.stopPropagation(); onSync(); }} disabled={syncing} className="h-7 w-7 bg-teal-500 text-slate-950 hover:bg-teal-400" aria-label={`Đồng bộ ${displayName}`}>{syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onEdit(); }} className="h-7 w-7 border-border bg-background" aria-label={`Sửa ${displayName}`}><Pencil className="h-3.5 w-3.5" /></Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onDelete(); }} disabled={deleting} className="h-7 w-7 border-red-500/55 bg-red-950/35 text-red-300 hover:bg-red-600 hover:text-white" aria-label={`Xóa ${displayName}`}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button></div>
     </div>
   </article>;
 }

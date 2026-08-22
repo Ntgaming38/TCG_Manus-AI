@@ -20,4 +20,22 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(detailSource).toContain("referrerPolicy=\"no-referrer\"");
     expect(detailSource).toContain("không được đưa vào Kho Hàng hoặc báo cáo tài chính");
   });
+
+  it("shows an RGB type label and a custom product name over the grid image", () => {
+    expect(homeSource).toContain("const customImageLabel");
+    expect(homeSource).toContain("rgb-action-label");
+    expect(homeSource).toContain("right-2 top-2");
+  });
+
+  it("orders grid controls as sync, edit, then a red delete action with confirmation", () => {
+    expect(homeSource).toContain("onDelete={() => setDeleteConfirmItem(item)}");
+    expect(homeSource).toContain("Xóa sản phẩm theo dõi?");
+    expect(homeSource).toContain("border-red-500/55 bg-red-950/35");
+    const syncControl = homeSource.indexOf("aria-label={`Đồng bộ ${displayName}`}");
+    const editControl = homeSource.indexOf("aria-label={`Sửa ${displayName}`}");
+    const deleteControl = homeSource.indexOf("aria-label={`Xóa ${displayName}`}");
+    expect(syncControl).toBeGreaterThan(-1);
+    expect(editControl).toBeGreaterThan(syncControl);
+    expect(deleteControl).toBeGreaterThan(editControl);
+  });
 });
