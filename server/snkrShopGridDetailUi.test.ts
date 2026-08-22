@@ -29,6 +29,12 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(detailSource).toContain("h-[170px]");
   });
 
+  it("offers a visible pin action on grid cards for prioritizing products", () => {
+    expect(homeSource).toContain("onTogglePin");
+    expect(homeSource).toContain("Ghim ưu tiên");
+    expect(homeSource).toContain("togglePin.mutate");
+  });
+
   it("shows an RGB type label and a custom product name over the grid image", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");

@@ -1151,3 +1151,14 @@
 
 ## Khôi phục máy chủ phát triển
 - [x] Khởi động lại máy chủ phát triển và xác minh Shop SNKR phản hồi ổn định
+
+## Ghim sản phẩm ưu tiên Shop SNKR
+- [x] Lưu trạng thái ghim riêng cho từng sản phẩm theo dõi
+- [x] Ưu tiên sản phẩm đã ghim lên đầu danh sách Shop SNKR
+- [x] Thêm thao tác ghim/bỏ ghim trực quan trên thẻ và kiểm thử
+
+## Sửa lỗi xóa tại Bán Hàng
+- [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
+- [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm
+- [x] Kiểm thử hồi quy luồng Bán Hàng và lưu checkpoint
+- [x] Cho phép xóa giao dịch mua 5 Pack Geo khi tồn kho còn đủ sau các giao dịch bán

@@ -253,6 +253,13 @@
       "when": 1787378806802,
       "tag": "0035_loose_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1787380032082,
+      "tag": "0036_flippant_thaddeus_ross",
+      "breakpoints": true
     }
   ]
 }

@@ -46,7 +46,7 @@ export async function listSnkrShopItems(userId: number, search?: string) {
   if (!db) return [];
   const items = await db.select().from(snkrShopItems)
     .where(eq(snkrShopItems.userId, userId))
-    .orderBy(desc(snkrShopItems.lastSyncedAt), desc(snkrShopItems.updatedAt), desc(snkrShopItems.id));
+    .orderBy(desc(snkrShopItems.isPinned), desc(snkrShopItems.lastSyncedAt), desc(snkrShopItems.updatedAt), desc(snkrShopItems.id));
   const keyword = search?.trim().toLocaleLowerCase();
   return keyword ? items.filter((item) => item.name.toLocaleLowerCase().includes(keyword)) : items;
 }
@@ -122,6 +122,17 @@ export async function deleteSnkrShopItem(itemId: number, userId: number) {
   await db.delete(snkrShopItems).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
   await db.insert(activityLogs).values({ userId, action: "snkr_shop_item_deleted", description: `Xóa theo dõi Shop SNKR: ${item.name}`, entityType: "snkr_shop_item", entityId: itemId });
   return { success: true } as const;
+}
+
+/** Toggles an account-private priority pin without affecting price, inventory, or finances. */
+export async function toggleSnkrShopItemPin(itemId: number, userId: number) {
+  const { db, item } = await getOwnedItem(itemId, userId);
+  const isPinned = item.isPinned ? 0 : 1;
+  await db.update(snkrShopItems).set({ isPinned }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+  await db.insert(activityLogs).values({ userId, action: isPinned ? "snkr_shop_item_pinned" : "snkr_shop_item_unpinned", description: `${isPinned ? "Ghim" : "Bỏ ghim"} Shop SNKR: ${item.name}`, entityType: "snkr_shop_item", entityId: itemId });
+  const [updated] = await db.select().from(snkrShopItems).where(eq(snkrShopItems.id, itemId)).limit(1);
+  if (!updated) throw new Error("Không thể cập nhật trạng thái ghim sản phẩm Shop SNKR.");
+  return updated;
 }
 
 export async function syncSnkrShopItem(itemId: number, userId: number) {

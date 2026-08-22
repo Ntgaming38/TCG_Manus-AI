@@ -467,6 +467,9 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.deleteSnkrShopItem(input.id, ctx.user.id)),
+    togglePin: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => snkrShopDb.toggleSnkrShopItemPin(input.id, ctx.user.id)),
     sync: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.syncSnkrShopItem(input.id, ctx.user.id)),

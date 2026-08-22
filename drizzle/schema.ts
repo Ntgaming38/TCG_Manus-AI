@@ -164,6 +164,7 @@ export const snkrShopItems = mysqlTable("snkr_shop_items", {
   sourceUrl: varchar("sourceUrl", { length: 2048 }).notNull(),
   sourceTitle: varchar("sourceTitle", { length: 500 }),
   imageUrl: varchar("imageUrl", { length: 2048 }),
+  isPinned: int("isPinned").notNull().default(0),
   currentPrice: decimal("currentPrice", { precision: 12, scale: 2 }).notNull().default("0"),
   lastSyncedAt: timestamp("lastSyncedAt"),
   lastSyncError: varchar("lastSyncError", { length: 1000 }),
@@ -172,6 +173,7 @@ export const snkrShopItems = mysqlTable("snkr_shop_items", {
 }, (table) => [
   uniqueIndex("snkr_shop_items_user_url_unique").on(table.userId, table.sourceUrl),
   index("snkr_shop_items_user_updated_idx").on(table.userId, table.updatedAt),
+  index("snkr_shop_items_user_pinned_idx").on(table.userId, table.isPinned, table.updatedAt),
 ]);
 
 export type SnkrShopItem = typeof snkrShopItems.$inferSelect;

@@ -127,11 +127,30 @@ describe("activity log writes", () => {
     expect(JSON.parse(updateLog.oldValue)).toMatchObject({ quantity: 2, totalPrice: 18000, shop: "Pokemon Center" });
     expect(JSON.parse(updateLog.newValue)).toMatchObject({ quantity: 3, totalPrice: 27000, shop: "Yodobashi" });
 
-    state.selectResponses = [[purchase], [], [product], [purchase]];
+    state.selectResponses = [[purchase], [product], [purchase]];
     await deletePurchase(1, purchase.id);
     const deleteLog = latestActivity("purchase_deleted");
     expect(JSON.parse(deleteLog.oldValue)).toMatchObject({ id: purchase.id, quantity: 2 });
     expect(deleteLog.newValue).toBeNull();
+  });
+
+  it("cho phép xóa một giao dịch mua nhập nhầm khi sản phẩm đã bán nhưng tồn kho còn đủ", async () => {
+    const geoPurchase = { ...purchase, id: 51, shop: "Geo", quantity: 5, totalPrice: "5000" };
+    const laterPurchase = { ...purchase, id: 52, shop: "Pokemon Center", quantity: 5, totalPrice: "6000" };
+    const productAfterSales = { ...product, quantity: 5, status: "in_stock" as const };
+    state.selectResponses = [[geoPurchase], [productAfterSales], [geoPurchase, laterPurchase]];
+
+    await expect(deletePurchase(1, geoPurchase.id)).resolves.toMatchObject({ success: true });
+    expect(state.updateValues).toContainEqual(expect.objectContaining({ quantity: 0, status: "sold" }));
+    expect(latestActivity("purchase_deleted")).toMatchObject({ entityId: geoPurchase.id });
+  });
+
+  it("chặn xóa giao dịch mua khi số lượng còn lại không đủ để bảo toàn lịch sử bán", async () => {
+    const geoPurchase = { ...purchase, id: 53, shop: "Geo", quantity: 5, totalPrice: "5000" };
+    const productWithInsufficientStock = { ...product, quantity: 4, status: "in_stock" as const };
+    state.selectResponses = [[geoPurchase], [productWithInsufficientStock]];
+
+    await expect(deletePurchase(1, geoPurchase.id)).rejects.toThrow("tồn kho hiện chỉ còn 4 sản phẩm");
   });
 
   it("ghi snapshot cho thao tác sửa và xóa giao dịch bán", async () => {

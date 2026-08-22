@@ -844,20 +844,16 @@ export async function deletePurchase(userId: number, purchaseId: number) {
     .limit(1);
   if (!purchase) throw new Error("Giao dịch mua không tồn tại");
 
-  // Check if product has any sales - if yes, cannot delete
-  const productSales = await db.select().from(sales)
-    .where(and(eq(sales.productId, purchase.productId), eq(sales.userId, userId)))
-    .limit(1);
-  if (productSales.length > 0) {
-    throw new Error("Không thể xóa vì sản phẩm đã phát sinh giao dịch bán.");
-  }
-
   // Get product
   const product = await getProductById(purchase.productId);
   if (!product) throw new Error("Sản phẩm không tồn tại");
 
-  // Reverse quantity from product
+  // A sale for the same product does not automatically block deleting one mistaken purchase.
+  // It is safe exactly when enough quantity remains after removing that purchase.
   const newQty = (product.quantity || 0) - purchase.quantity;
+  if (newQty < 0) {
+    throw new Error(`Không thể xóa giao dịch mua này vì tồn kho hiện chỉ còn ${product.quantity || 0} sản phẩm, thấp hơn ${purchase.quantity} sản phẩm của giao dịch cần xóa.`);
+  }
 
   // Check if this is the only purchase for this product
   const allPurchasesForProduct = await db.select().from(purchases)
