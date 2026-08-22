@@ -12,6 +12,7 @@ import { BarChart3, Box, ExternalLink, ImageOff, Link2, Loader2, Package, Pencil
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 type ShopType = "card" | "box" | "pack";
 type WatchItem = {
@@ -49,6 +50,7 @@ export default function SnkrShop() {
   const [form, setForm] = useState<{ name: string; productType: ShopType; cardRank: "A" | "B" | "C" | "D"; sourceUrl: string }>({ name: "", productType: "box", cardRank: "A", sourceUrl: "" });
   const [editForm, setEditForm] = useState({ name: "", sourceUrl: "" });
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
   const { data: items = [], isLoading } = trpc.snkrShop.list.useQuery({ search: search.trim() || undefined });
   const selectedId = historyItem?.id ?? 0;
   const historyInput = useMemo(() => ({ id: selectedId, days: historyDays }), [historyDays, selectedId]);
@@ -135,7 +137,7 @@ export default function SnkrShop() {
         <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap gap-1.5">{(["all", "box", "card", "pack"] as const).map((type) => <Button key={type} size="sm" variant={typeFilter === type ? "default" : "outline"} onClick={() => setTypeFilter(type)} className={typeFilter === type ? "bg-teal-500 text-slate-950 hover:bg-teal-400" : "border-border bg-background text-muted-foreground"}>{type === "all" ? `Tất cả (${watchItems.length})` : `${getTypeLabel(type)} (${watchItems.filter((item) => item.productType === type).length})`}</Button>)}</div><span className="text-xs text-muted-foreground">Giá theo ¥ · dữ liệu độc lập với Marketplace</span></div>
       </section>
 
-      {isLoading ? <div className="flex h-52 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div> : watchItems.length === 0 ? <EmptyWatchlist onAdd={() => setAddOpen(true)} /> : displayedItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">Không có sản phẩm loại {getTypeLabel(typeFilter as ShopType)} khớp bộ lọc.</div> : <section className="grid gap-4 xl:grid-cols-2">{displayedItems.map((item) => <WatchItemCard key={item.id} item={item} onSync={() => syncItem.mutate({ id: item.id })} onOpenHistory={() => setHistoryItem(item)} onEdit={() => openEdit(item)} onDelete={() => { if (window.confirm(`Bỏ “${item.name}” khỏi Shop SNKR?`)) deleteItem.mutate({ id: item.id }); }} syncing={syncItem.isPending && syncItem.variables?.id === item.id} deleting={deleteItem.isPending && deleteItem.variables?.id === item.id} />)}</section>}
+      {isLoading ? <div className="flex h-52 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div> : watchItems.length === 0 ? <EmptyWatchlist onAdd={() => setAddOpen(true)} /> : displayedItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">Không có sản phẩm loại {getTypeLabel(typeFilter as ShopType)} khớp bộ lọc.</div> : <section className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{displayedItems.map((item) => <ShopGridCard key={item.id} item={item} onOpen={() => setLocation(`/shop-snkr/${item.id}`)} onSync={() => syncItem.mutate({ id: item.id })} onEdit={() => openEdit(item)} syncing={syncItem.isPending && syncItem.variables?.id === item.id} />)}</section>}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-4 sm:max-w-xl sm:p-6">
@@ -172,18 +174,35 @@ function SummaryCard({ label, value, icon, tone }: { label: string; value: numbe
 
 function EmptyWatchlist({ onAdd }: { onAdd: () => void }) { return <div className="rounded-2xl border border-dashed border-teal-500/30 bg-card/60 py-16 text-center"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-300"><Box className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-bold text-foreground">Chưa có sản phẩm theo dõi</h2><p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Thêm URL Box, Card hoặc Pack từ SNKRDUNK để tạo biểu đồ giá riêng, không ảnh hưởng dữ liệu kho hàng.</p><Button onClick={onAdd} className="mt-5 bg-teal-500 text-slate-950 hover:bg-teal-400"><Plus className="mr-2 h-4 w-4" />Thêm sản phẩm đầu tiên</Button></div>; }
 
+function ShopGridCard({ item, onOpen, onSync, onEdit, syncing }: { item: WatchItem; onOpen: () => void; onSync: () => void; onEdit: () => void; syncing: boolean }) {
+  const price = Number(item.currentPrice) || 0;
+  const displayName = item.sourceTitle || item.name;
+  return <article role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onOpen(); } }} className="group min-w-0 cursor-pointer rounded-2xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-teal-400/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-950/45 p-2"><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur">{getTypeLabel(item.productType)}</span></div>
+    <div className="min-w-0 px-1 pt-3"><p className="line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 text-foreground">{displayName}</p>{item.productType === "card" && <div className="mt-1"><RankBadge rank={item.cardRank} marketPrice={price} /></div>}<p className="mt-2 text-lg font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "Chưa có giá"}</p><p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.lastSyncedAt ? `Cập nhật ${new Date(item.lastSyncedAt).toLocaleDateString("vi-VN")}` : "Chờ đồng bộ"}</p>
+      <div className="mt-2 flex gap-1.5 border-t border-border pt-2"><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onEdit(); }} className="h-7 w-7 border-border bg-background" aria-label={`Sửa ${displayName}`}><Pencil className="h-3.5 w-3.5" /></Button><Button size="icon" onClick={(event) => { event.stopPropagation(); onSync(); }} disabled={syncing} className="h-7 w-7 bg-teal-500 text-slate-950 hover:bg-teal-400" aria-label={`Cập nhật ${displayName}`}>{syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}</Button></div>
+    </div>
+  </article>;
+}
+
 function WatchItemCard({ item, onSync, onOpenHistory, onEdit, onDelete, syncing, deleting }: { item: WatchItem; onSync: () => void; onOpenHistory: () => void; onEdit: () => void; onDelete: () => void; syncing: boolean; deleting: boolean }) {
   const price = Number(item.currentPrice) || 0;
   const displayName = item.sourceTitle || item.name;
   return <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
     <div className="grid min-w-0 grid-cols-[112px_minmax(0,1fr)] border-b border-border bg-gradient-to-r from-teal-500/10 via-transparent to-transparent">
       <div className="flex aspect-square items-center justify-center overflow-hidden border-r border-border bg-slate-950/25 p-2">
-        {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-contain" loading="lazy" /> : <div className="flex flex-col items-center gap-2 text-teal-300/70">{getTypeIcon(item.productType)}<ImageOff className="h-5 w-5" /></div>}
+        <DirectProductImage item={item} />
       </div>
       <div className="min-w-0 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h2 className="min-w-0 break-words text-base font-bold leading-6 text-foreground">{displayName}</h2>{item.productType === "card" && <RankBadge rank={item.cardRank} marketPrice={price} />}</div><div className="mt-1 flex flex-wrap gap-1.5"><Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-200">{getTypeLabel(item.productType)}</Badge>{item.lastSyncedAt ? <span className="text-xs text-muted-foreground">Cập nhật {new Date(item.lastSyncedAt).toLocaleString("vi-VN")}</span> : <span className="text-xs text-amber-300">Chưa lấy giá</span>}</div></div><a href={item.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Mở SNKRDUNK cho ${displayName}`} className="shrink-0 rounded-lg p-2 text-teal-300 transition-colors hover:bg-teal-500/10"><ExternalLink className="h-4 w-4" /></a></div></div>
     </div>
     <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto]"><div><p className="text-xs text-muted-foreground">Giá SNKRDUNK hiện tại</p><p className="mt-1 text-3xl font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "—"}</p><p className="mt-1 text-xs text-muted-foreground">Theo dõi độc lập · không tính vào Kho Hàng</p>{item.lastSyncError && <p className="mt-2 text-xs leading-5 text-red-300">Lỗi đồng bộ: {item.lastSyncError}</p>}</div><div className="flex flex-wrap items-end gap-2 sm:justify-end"><Button size="sm" variant="outline" onClick={onOpenHistory} className="border-border bg-background text-xs"><BarChart3 className="mr-1.5 h-3.5 w-3.5" />Lịch sử</Button><Button size="sm" variant="outline" onClick={onEdit} className="border-border bg-background text-xs"><Pencil className="mr-1.5 h-3.5 w-3.5" />Sửa</Button><Button size="sm" onClick={onSync} disabled={syncing} className="bg-teal-500 text-xs text-slate-950 hover:bg-teal-400">{syncing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />}Cập nhật</Button><Button size="icon" variant="ghost" onClick={onDelete} disabled={deleting} className="h-8 w-8 text-muted-foreground hover:bg-red-500/10 hover:text-red-400" aria-label={`Xóa ${displayName}`}><Trash2 className="h-4 w-4" /></Button></div></div>
   </article>;
+}
+
+function DirectProductImage({ item }: { item: WatchItem }) {
+  const [failed, setFailed] = useState(false);
+  if (!item.imageUrl || failed) return <div className="flex flex-col items-center gap-2 text-teal-300/70">{getTypeIcon(item.productType)}<ImageOff className="h-5 w-5" /></div>;
+  return <img src={item.imageUrl} alt={item.sourceTitle || item.name} className="h-full w-full object-contain" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
 }
 
 function HistoryDialog({ item, history, loading, days, onDaysChange, onOpenChange }: { item: WatchItem | null; history: PricePoint[]; loading: boolean; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void; onOpenChange: (open: boolean) => void }) {

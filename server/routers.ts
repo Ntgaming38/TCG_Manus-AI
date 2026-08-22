@@ -441,6 +441,9 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ search: z.string().trim().max(255).optional() }).optional())
       .query(({ ctx, input }) => snkrShopDb.listSnkrShopItems(ctx.user.id, input?.search)),
+    get: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .query(({ ctx, input }) => snkrShopDb.getSnkrShopItem(input.id, ctx.user.id)),
     create: protectedProcedure
       .input(z.object({
         name: z.string().trim().min(1).max(255).optional(),

@@ -73,6 +73,32 @@ function findMetaContent(html: string, key: string): string | null {
   return null;
 }
 
+function normalizeProductImageUrl(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = decodeHtmlEntities(value).trim();
+  if (!trimmed || trimmed.startsWith("data:")) return null;
+  const candidate = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed.startsWith("/") ? `https://snkrdunk.com${trimmed}` : trimmed;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function findStructuredProductImage(html: string): string | null {
+  const jsonLdMatch = html.match(/"image"\s*:\s*(?:"([^"]+)"|\[\s*"([^"]+)")/i);
+  if (jsonLdMatch?.[1] || jsonLdMatch?.[2]) return jsonLdMatch[1] ?? jsonLdMatch[2];
+
+  const imageTags = html.match(/<img\b[^>]*>/gi) ?? [];
+  for (const tag of imageTags) {
+    const source = tag.match(/\b(?:data-src|data-original|src)=["']([^"']+)["']/i)?.[1];
+    if (!source || /(?:logo|icon|avatar|placeholder|blank)/i.test(source)) continue;
+    return source;
+  }
+  return null;
+}
+
 /** Extracts public display metadata only; it never invents a product image or title. */
 export function parseSnkrdunkProductMetadata(html: string): SnkrdunkProductMetadata {
   const decoded = decodeHtmlEntities(html);
@@ -81,7 +107,11 @@ export function parseSnkrdunkProductMetadata(html: string): SnkrdunkProductMetad
     ?? decoded.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, " ").trim()
     ?? null;
   const title = rawTitle?.replace(/\s*[|｜]\s*SNKRDUNK\s*$/i, "").replace(/\s+/g, " ").trim() || null;
-  const imageUrl = findMetaContent(decoded, "og:image") ?? findMetaContent(decoded, "twitter:image");
+  const imageUrl = normalizeProductImageUrl(
+    findMetaContent(decoded, "og:image")
+      ?? findMetaContent(decoded, "twitter:image")
+      ?? findStructuredProductImage(decoded),
+  );
   return { title, imageUrl };
 }
 

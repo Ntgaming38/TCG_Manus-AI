@@ -48,6 +48,12 @@ export async function listSnkrShopItems(userId: number, search?: string) {
   return keyword ? items.filter((item) => item.name.toLocaleLowerCase().includes(keyword)) : items;
 }
 
+/** Returns one private Shop SNKR item only; it remains isolated from inventory and financial tables. */
+export async function getSnkrShopItem(itemId: number, userId: number) {
+  const { item } = await getOwnedItem(itemId, userId);
+  return item;
+}
+
 export async function createSnkrShopItem(userId: number, input: CreateSnkrShopItemInput) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

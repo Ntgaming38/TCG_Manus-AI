@@ -1107,3 +1107,14 @@
 - [x] Đồng bộ lại metadata URL sau khi người dùng đổi liên kết
 - [x] Thêm bộ lọc nhanh Tất cả, Box, Card và Pack cho Shop SNKR
 - [x] Kiểm thử chỉnh sửa, lọc và lưu checkpoint
+
+## Ảnh trực tiếp Shop SNKR
+- [x] Ưu tiên trích xuất ảnh sản phẩm công khai trực tiếp từ trang SNKRDUNK
+- [x] Hiển thị ảnh trực tiếp ổn định trên thẻ Shop SNKR cùng phương án dự phòng
+- [x] Kiểm thử metadata ảnh và lưu checkpoint
+
+## Luồng lưới và chi tiết Shop SNKR
+- [x] Thiết kế trang chủ dạng lưới sản phẩm có ảnh, loại, tên và giá theo dõi
+- [x] Mở trang chi tiết khi chọn sản phẩm, hiển thị ảnh lớn, giá và lịch sử riêng
+- [x] Giữ thao tác đồng bộ, sửa và điều hướng dễ dùng trên desktop/mobile
+- [x] Kiểm thử điều hướng lưới đến chi tiết và lưu checkpoint

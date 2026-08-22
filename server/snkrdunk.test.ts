@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
+import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, parseSnkrdunkProductMetadata, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
 
 describe("SNKRDUNK adapter", () => {
   afterEach(() => {
@@ -8,6 +8,16 @@ describe("SNKRDUNK adapter", () => {
 
   it("uses a bounded timeout so a slow product cannot stall a bulk sync", () => {
     expect(SNKRDUNK_FETCH_TIMEOUT_MS).toBe(8_000);
+  });
+
+  it("prefers a direct public product image and normalizes protocol-relative image URLs", () => {
+    const metadata = parseSnkrdunkProductMetadata('<meta property="og:title" content="Box Test | SNKRDUNK"><meta property="og:image" content="//cdn.snkrdunk.com/products/box-test.jpg">');
+    expect(metadata).toEqual({ title: "Box Test", imageUrl: "https://cdn.snkrdunk.com/products/box-test.jpg" });
+  });
+
+  it("uses a public product image from structured page data when open graph metadata is unavailable", () => {
+    const metadata = parseSnkrdunkProductMetadata('<script type="application/ld+json">{"image":"https://cdn.snkrdunk.com/products/card.jpg"}</script>');
+    expect(metadata.imageUrl).toBe("https://cdn.snkrdunk.com/products/card.jpg");
   });
 
   it("parses a JPY price from JSON-LD", () => {
