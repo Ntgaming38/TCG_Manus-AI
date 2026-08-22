@@ -88,6 +88,13 @@ export default function SnkrShop() {
   });
   const createItem = trpc.snkrShop.create.useMutation({
     onSuccess: (item) => {
+      if (item.alreadyTracked) {
+        toast.info("Sản phẩm này đã được theo dõi. Đang mở chi tiết...");
+        setAddOpen(false);
+        setForm({ name: "", productType: "box", cardRank: "A", sourceUrl: "" });
+        setLocation(`/shop-snkr/${item.id}`);
+        return;
+      }
       toast.success("Đã thêm vào Shop SNKR. Đang lấy giá đầu tiên...");
       setAddOpen(false);
       setForm({ name: "", productType: "box", cardRank: "A", sourceUrl: "" });

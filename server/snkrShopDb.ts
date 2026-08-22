@@ -107,7 +107,13 @@ export async function createSnkrShopItem(userId: number, input: CreateSnkrShopIt
   const [existing] = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
     .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.sourceUrl, sourceUrl)))
     .limit(1);
-  if (existing) throw new Error("URL SNKRDUNK này đã có trong Shop SNKR của bạn.");
+  if (existing) {
+    const [trackedItem] = await db.select().from(snkrShopItems)
+      .where(and(eq(snkrShopItems.id, existing.id), eq(snkrShopItems.userId, userId)))
+      .limit(1);
+    if (!trackedItem) throw new Error("Không thể mở sản phẩm Shop SNKR đang theo dõi.");
+    return { ...trackedItem, alreadyTracked: true };
+  }
   const cardRank = getCardRank(input.productType, input.cardRank);
   let metadata: { title: string | null; imageUrl: string | null } = { title: null, imageUrl: null };
   try {
@@ -122,7 +128,7 @@ export async function createSnkrShopItem(userId: number, input: CreateSnkrShopIt
     .limit(1);
   if (!item) throw new Error("Không thể tạo sản phẩm theo dõi Shop SNKR.");
   await db.insert(activityLogs).values({ userId, action: "snkr_shop_item_created", description: `Thêm theo dõi Shop SNKR: ${name}`, entityType: "snkr_shop_item", entityId: item.id });
-  return item;
+  return { ...item, alreadyTracked: false };
 }
 
 export async function updateSnkrShopItem(itemId: number, userId: number, input: UpdateSnkrShopItemInput) {

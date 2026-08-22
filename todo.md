@@ -1189,6 +1189,11 @@
 - [x] Làm mới ảnh khi đồng bộ giá và tránh ảnh bìa marketplace không đúng sản phẩm
 - [x] Cập nhật sản phẩm có link hiện tại, kiểm thử hiển thị và lưu checkpoint
 
+## URL trùng Shop SNKR
+- [x] Trả về thông tin mục Shop SNKR đã theo dõi thay vì lỗi kỹ thuật khi URL trùng
+- [x] Điều hướng người dùng đến mục hiện có hoặc mở thao tác cập nhật phù hợp
+- [x] Kiểm thử luồng URL trùng và lưu checkpoint
+
 ## Sửa lỗi xóa tại Bán Hàng
 - [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm
