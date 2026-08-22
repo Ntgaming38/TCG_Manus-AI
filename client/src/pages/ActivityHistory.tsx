@@ -59,7 +59,7 @@ export function getActivityTone(action: string, entityType: string | null) {
 }
 
 export function isAutoSyncActivity(action: string) {
-  return action === "snkrdunk_price_synced" || (action.includes("snkrdunk") && action.includes("synced"));
+  return action === "snkrdunk_price_synced" || action === "snkr_shop_price_synced" || (action.includes("snkrdunk") && action.includes("synced"));
 }
 
 function getEntityIcon(entityType: string | null) {

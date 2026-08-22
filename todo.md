@@ -1174,6 +1174,10 @@
 - [x] Hiển thị biểu đồ mini xu hướng thật trực tiếp trên thẻ ghim
 - [x] Tối ưu biểu đồ cho desktop/mobile, kiểm thử và lưu checkpoint
 
+## Nhật ký Đồng Bộ Shop SNKR
+- [x] Đưa hoạt động đồng bộ tự động Shop SNKR vào bộ lọc Đồng Bộ của Lịch sử
+- [x] Kiểm thử lọc Đồng Bộ và lưu checkpoint
+
 ## Sửa lỗi xóa tại Bán Hàng
 - [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm

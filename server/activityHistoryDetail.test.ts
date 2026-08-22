@@ -32,8 +32,9 @@ describe("ActivityHistory detail changes", () => {
     expect(getActivityTone("sale_created", "sale").buttonClass).toContain("text-black");
   });
 
-  it("chỉ nhận diện các hoạt động đồng bộ giá SNKRDUNK vào bộ lọc Đồng Bộ Auto", () => {
+  it("nhận diện đồng bộ giá SNKRDUNK và Shop SNKR vào bộ lọc Đồng Bộ", () => {
     expect(isAutoSyncActivity("snkrdunk_price_synced")).toBe(true);
+    expect(isAutoSyncActivity("snkr_shop_price_synced")).toBe(true);
     expect(isAutoSyncActivity("product_updated")).toBe(false);
     expect(isAutoSyncActivity("market_price_updated")).toBe(false);
   });
