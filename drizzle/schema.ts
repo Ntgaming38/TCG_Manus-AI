@@ -177,6 +177,22 @@ export const snkrShopItems = mysqlTable("snkr_shop_items", {
 export type SnkrShopItem = typeof snkrShopItems.$inferSelect;
 export type InsertSnkrShopItem = typeof snkrShopItems.$inferInsert;
 
+/** Project-level schedule for the standalone Shop SNKR watchlist. */
+export const snkrShopSyncConfig = mysqlTable("snkr_shop_sync_config", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }).unique(),
+  cronExpression: varchar("cronExpression", { length: 100 }).notNull().default("0 0 * * * *"),
+  isEnabled: int("isEnabled").notNull().default(1),
+  batchSize: int("batchSize").notNull().default(12),
+  lastRunAt: timestamp("lastRunAt"),
+  lastRunStatus: varchar("lastRunStatus", { length: 30 }),
+  lastRunSummary: varchar("lastRunSummary", { length: 1000 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SnkrShopSyncConfig = typeof snkrShopSyncConfig.$inferSelect;
+
 /** Price observations recorded only for Shop SNKR watch items. */
 export const snkrShopPriceHistory = mysqlTable("snkr_shop_price_history", {
   id: int("id").autoincrement().primaryKey(),

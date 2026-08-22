@@ -13,6 +13,14 @@ export type SnkrdunkPriceResult = {
   sourceUrl: string;
 };
 
+/** A public JPY offer for a quantity/variant. No currency conversion is ever applied. */
+export type SnkrdunkQuantityPrice = {
+  quantity: number | null;
+  label: string;
+  price: number;
+  listingCount: number | null;
+};
+
 export type SnkrdunkProductMetadata = {
   title: string | null;
   imageUrl: string | null;
@@ -274,6 +282,35 @@ export function parseSnkrdunkPrice(html: string): number | null {
   );
 }
 
+/** Reads the public JPY quantity choices rendered in a product page. */
+export function parseSnkrdunkQuantityPrices(html: string, productType: SnkrdunkProductType = "box"): SnkrdunkQuantityPrice[] {
+  const decoded = decodeHtmlEntities(html);
+  const byQuantity = new Map<number, SnkrdunkQuantityPrice>();
+  const typeLabel = productType === "card" ? "Card" : productType === "pack" ? "Pack" : "Box";
+
+  const listingStatePattern = /quantity_(\d+)(?:\\?")?[\s\S]{0,260}?minNewListingPrice(?:\\?")?\s*:\s*"?(\d[\d,]*)/gi;
+  let listingMatch: RegExpExecArray | null;
+  while ((listingMatch = listingStatePattern.exec(decoded)) !== null) {
+    const quantity = Number(listingMatch[1]);
+    const price = parseJpyNumber(listingMatch[2]);
+    if (Number.isInteger(quantity) && quantity > 0 && quantity <= 10 && price !== null) {
+      byQuantity.set(quantity, { quantity, label: `${quantity} ${typeLabel}`, price, listingCount: null });
+    }
+  }
+
+  const markupPattern = /(?:^|>)\s*(\d+)\s*(?:個|boxes?|packs?|items?|cards?)[\s\S]{0,180}?(?:¥|円)\s*([\d,]+)/gi;
+  let markupMatch: RegExpExecArray | null;
+  while ((markupMatch = markupPattern.exec(decoded)) !== null) {
+    const quantity = Number(markupMatch[1]);
+    const price = parseJpyNumber(markupMatch[2]);
+    if (Number.isInteger(quantity) && quantity > 0 && quantity <= 10 && price !== null && !byQuantity.has(quantity)) {
+      byQuantity.set(quantity, { quantity, label: `${quantity} ${typeLabel}`, price, listingCount: null });
+    }
+  }
+
+  return Array.from(byQuantity.values()).sort((left, right) => (left.quantity ?? 99) - (right.quantity ?? 99));
+}
+
 function extractProductCode(sourceUrl: string, html: string): string | null {
   const decoded = decodeHtmlEntities(html);
   const productCodeMatch = decoded.match(/"productCode"\s*:\s*"([A-Za-z0-9_-]+)"/i);
@@ -413,6 +450,73 @@ async function fetchFirstSizePrice(productCode: string): Promise<number> {
   }
 
   return price;
+}
+
+async function fetchJpySizePrices(productCode: string, productType: SnkrdunkProductType, cardRank: CardRank): Promise<SnkrdunkQuantityPrice[]> {
+  const endpoint = `https://snkrdunk.com/en/v1/products/${encodeURIComponent(productCode)}/sizes?currency=JPY`;
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+        "User-Agent": "Mozilla/5.0 (compatible; TCGManager/1.0; +https://snkrdunk.com)",
+      },
+      signal: AbortSignal.timeout(SNKRDUNK_FETCH_TIMEOUT_MS),
+    });
+  } catch {
+    return [];
+  }
+  if (!response.ok) return [];
+
+  let payload: SnkrdunkSizesResponse;
+  try {
+    payload = (await response.json()) as SnkrdunkSizesResponse;
+  } catch {
+    return [];
+  }
+
+  const sizes = Array.isArray(payload.sizes) ? payload.sizes.filter(isSnkrdunkSize) : [];
+  const rankOptions = sizes.filter((size) => new RegExp(`(^|[^A-Z])${cardRank}(?:あり)?($|[^A-Z])`, "i").test(String(size.size?.text ?? "")));
+  const sourceSizes = productType === "card" && rankOptions.length > 0 ? rankOptions : sizes;
+  return sourceSizes.flatMap((size) => {
+    if (!isJpyCurrency(size.currency)) return [];
+    const price = parseJpyNumber(size.price ?? size.priceFormat);
+    if (price === null) return [];
+    const rawLabel = String(size.size?.text ?? "").trim();
+    const quantityMatch = rawLabel.match(/\b(\d+)\s*(?:box|boxes|pack|packs|item|items|card|cards)\b|^(\d+)\s*個/i);
+    const quantity = Number(quantityMatch?.[1] ?? quantityMatch?.[2]);
+    return [{
+      quantity: Number.isInteger(quantity) && quantity > 0 && quantity <= 10 ? quantity : null,
+      label: rawLabel || (productType === "card" ? `Rank ${cardRank}` : productType === "pack" ? "Pack" : "Box"),
+      price,
+      listingCount: typeof (size as { listingCount?: unknown }).listingCount === "number" ? (size as { listingCount: number }).listingCount : null,
+    }];
+  }).sort((left, right) => (left.quantity ?? 99) - (right.quantity ?? 99)).slice(0, 10);
+}
+
+/** Returns only publicly available JPY quantity prices; missing choices are never estimated. */
+export async function fetchSnkrdunkQuantityPrices(sourceUrl: string, productType: SnkrdunkProductType = "box", cardRank: CardRank = "A"): Promise<SnkrdunkQuantityPrice[]> {
+  if (!isValidSnkrdunkUrl(sourceUrl)) throw new SnkrdunkSyncError("Link phải là trang sản phẩm https://snkrdunk.com, không phải link danh mục.");
+  const html = await fetchPublicHtml(sourceUrl);
+  const renderedChoices = parseSnkrdunkQuantityPrices(html, productType);
+  if (renderedChoices.length > 0) return renderedChoices;
+
+  const productCode = extractProductCode(sourceUrl, html);
+  if (productCode) {
+    const apiChoices = await fetchJpySizePrices(productCode, productType, cardRank);
+    if (apiChoices.length > 0) return apiChoices;
+  }
+
+  const japaneseFallbackUrl = getJapaneseProductFallbackUrl(sourceUrl);
+  if (japaneseFallbackUrl) {
+    try {
+      return parseSnkrdunkQuantityPrices(await fetchPublicHtml(japaneseFallbackUrl), productType);
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }
 
 export async function fetchSnkrdunkPrice(sourceUrl: string, productType?: SnkrdunkProductType, cardRank: CardRank = "A"): Promise<SnkrdunkPriceResult> {

@@ -17,8 +17,16 @@ describe("Shop SNKR grid and detail navigation", () => {
   it("uses independent detail data, direct product image and price history", () => {
     expect(detailSource).toContain("trpc.snkrShop.get.useQuery");
     expect(detailSource).toContain("trpc.snkrShop.priceHistory.useQuery");
+    expect(detailSource).toContain("trpc.snkrShop.quantityPrices.useQuery");
     expect(detailSource).toContain("referrerPolicy=\"no-referrer\"");
     expect(detailSource).toContain("không được đưa vào Kho Hàng hoặc báo cáo tài chính");
+  });
+
+  it("renders a compact quantity-price grid and compact history for box, pack and card tracking", () => {
+    expect(detailSource).toContain("Giá theo số lượng");
+    expect(detailSource).toContain("tối đa 10");
+    expect(detailSource).toContain("Rank {item.cardRank}");
+    expect(detailSource).toContain("h-[170px]");
   });
 
   it("shows an RGB type label and a custom product name over the grid image", () => {

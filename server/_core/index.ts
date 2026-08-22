@@ -12,6 +12,7 @@ import { storagePut } from "../storage";
 import { sdk } from "./sdk";
 import { runChyusenMonitor } from "../chyusenMonitor";
 import { runMarketplaceAutoSync } from "../marketplaceMonitor";
+import { runSnkrShopAutoSync } from "../snkrShopDb";
 import { runTrashAutoCleanup } from "../trashAutoCleanup";
 import { runScheduledAutoBackup } from "../backupScheduler";
 import { runActivityLogCleanup } from "../activityLogCleanup";
@@ -66,6 +67,19 @@ async function startServer() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("[Marketplace auto sync]", message);
+      return res.status(500).json({ error: message, timestamp: new Date().toISOString() });
+    }
+  });
+
+  app.post("/api/scheduled/snkr-shop-auto-sync", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
+      const summary = await runSnkrShopAutoSync(user.taskUid);
+      return res.json({ ok: true, ...summary, timestamp: new Date().toISOString() });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[Shop SNKR auto sync]", message);
       return res.status(500).json({ error: message, timestamp: new Date().toISOString() });
     }
   });

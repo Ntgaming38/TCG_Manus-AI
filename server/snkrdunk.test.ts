@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, parseSnkrdunkProductApiMetadata, parseSnkrdunkProductMetadata, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
+import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, parseSnkrdunkProductApiMetadata, parseSnkrdunkProductMetadata, parseSnkrdunkQuantityPrices, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
 
 describe("SNKRDUNK adapter", () => {
   afterEach(() => {
@@ -63,6 +63,15 @@ describe("SNKRDUNK adapter", () => {
 
   it("chooses the first visible option before later quantities", () => {
     expect(parseSnkrdunkPrice("<div>1個 (99+) ¥13,300~</div><div>2個 (99+) ¥28,000~</div>")).toBe(13300);
+  });
+
+  it("parses public JPY quantity choices through ten units without estimating missing prices", () => {
+    const choices = parseSnkrdunkQuantityPrices('quantity_1\\",\\"minNewListingPrice\\":13300 quantity_2\\",\\"minNewListingPrice\\":28000 quantity_10\\",\\"minNewListingPrice\\":146500 quantity_11\\",\\"minNewListingPrice\\":160000', "box");
+    expect(choices).toEqual([
+      { quantity: 1, label: "1 Box", price: 13300, listingCount: null },
+      { quantity: 2, label: "2 Box", price: 28000, listingCount: null },
+      { quantity: 10, label: "10 Box", price: 146500, listingCount: null },
+    ]);
   });
 
   it("chooses the first JPY JSON offer before later offers", () => {

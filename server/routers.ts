@@ -475,6 +475,9 @@ export const appRouter = router({
     priceHistory: protectedProcedure
       .input(z.object({ id: z.number().int().positive(), days: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional() }))
       .query(({ ctx, input }) => snkrShopDb.getSnkrShopPriceHistory(input.id, ctx.user.id, input.days)),
+    quantityPrices: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .query(({ ctx, input }) => snkrShopDb.getSnkrShopQuantityPrices(input.id, ctx.user.id)),
   }),
 
   purchases: router({

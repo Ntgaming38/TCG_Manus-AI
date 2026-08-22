@@ -1,11 +1,14 @@
 import { and, asc, desc, eq, gte } from "drizzle-orm";
-import { activityLogs, snkrShopItems, snkrShopPriceHistory } from "../drizzle/schema";
+import { activityLogs, snkrShopItems, snkrShopPriceHistory, snkrShopSyncConfig } from "../drizzle/schema";
 import { normalizeCardRank } from "../shared/cardRank";
 import { getDb } from "./db";
-import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl } from "./snkrdunk";
+import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, fetchSnkrdunkQuantityPrices, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl } from "./snkrdunk";
 import { processMarketplaceManualSyncBatch } from "./marketplaceManualSyncBatch";
 
 export type SnkrShopProductType = "card" | "box" | "pack";
+export const SNKR_SHOP_AUTO_SYNC_CRON = "0 0 * * * *";
+
+export type SnkrShopAutoSyncSummary = { checkedCount: number; updatedCount: number; failedCount: number; skipped: boolean };
 
 type CreateSnkrShopItemInput = {
   name?: string;
@@ -165,4 +168,52 @@ export async function getSnkrShopPriceHistory(itemId: number, userId: number, da
     .where(and(eq(snkrShopPriceHistory.itemId, itemId), gte(snkrShopPriceHistory.createdAt, cutoff)))
     .orderBy(asc(snkrShopPriceHistory.createdAt), asc(snkrShopPriceHistory.id))
     .limit(180);
+}
+
+/** Retrieves current public quantity choices without persisting estimated or converted prices. */
+export async function getSnkrShopQuantityPrices(itemId: number, userId: number) {
+  const { item } = await getOwnedItem(itemId, userId);
+  return fetchSnkrdunkQuantityPrices(item.sourceUrl, item.productType as SnkrShopProductType, getCardRank(item.productType as SnkrShopProductType, item.cardRank) ?? "A");
+}
+
+export async function getSnkrShopAutoSyncConfig() {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [config] = await db.select().from(snkrShopSyncConfig).limit(1);
+  return config;
+}
+
+export async function setSnkrShopAutoSyncTask(taskUid: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const config = await getSnkrShopAutoSyncConfig();
+  if (config) {
+    await db.update(snkrShopSyncConfig).set({ scheduleCronTaskUid: taskUid, cronExpression: SNKR_SHOP_AUTO_SYNC_CRON, isEnabled: 1 }).where(eq(snkrShopSyncConfig.id, config.id));
+  } else {
+    await db.insert(snkrShopSyncConfig).values({ scheduleCronTaskUid: taskUid, cronExpression: SNKR_SHOP_AUTO_SYNC_CRON, isEnabled: 1, batchSize: 12 });
+  }
+}
+
+/** Runs a bounded, idempotent hourly batch. This never accesses inventory or finance tables. */
+export async function runSnkrShopAutoSync(taskUid: string): Promise<SnkrShopAutoSyncSummary> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const config = await getSnkrShopAutoSyncConfig();
+  if (!config?.isEnabled || !config.scheduleCronTaskUid || config.scheduleCronTaskUid !== taskUid) {
+    return { checkedCount: 0, updatedCount: 0, failedCount: 0, skipped: true };
+  }
+  const batchSize = Math.min(Math.max(config.batchSize || 12, 1), 20);
+  const items = await db.select().from(snkrShopItems).orderBy(asc(snkrShopItems.lastSyncedAt), asc(snkrShopItems.updatedAt), asc(snkrShopItems.id)).limit(batchSize);
+  const outcomes = await processMarketplaceManualSyncBatch(items, async (item) => {
+    await syncSnkrShopItem(item.id, item.userId);
+  }, 3);
+  const failedCount = outcomes.filter((outcome) => outcome.status === "rejected").length;
+  const updatedCount = outcomes.length - failedCount;
+  const status = failedCount === 0 ? "success" : updatedCount > 0 ? "partial" : "failed";
+  await db.update(snkrShopSyncConfig).set({
+    lastRunAt: new Date(),
+    lastRunStatus: status,
+    lastRunSummary: `Đã kiểm tra ${outcomes.length}; cập nhật ${updatedCount}; lỗi ${failedCount}.`,
+  }).where(eq(snkrShopSyncConfig.id, config.id));
+  return { checkedCount: outcomes.length, updatedCount, failedCount, skipped: false };
 }

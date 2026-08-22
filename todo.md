@@ -1142,3 +1142,12 @@
 ## Sửa lỗi AlertDialog Shop SNKR
 - [x] Bổ sung khai báo AlertDialog bị thiếu trong trang Shop SNKR
 - [x] Kiểm thử hiển thị trang và xác nhận xóa, sau đó lưu checkpoint
+
+## Bảng giá số lượng Shop SNKR
+- [ ] Lấy lựa chọn giá công khai theo số lượng từ SNKRDUNK cho Box, Pack và Card
+- [ ] Hiển thị bảng giá 1–10 đơn vị, giữ đúng Rank Card đã chọn
+- [ ] Thu gọn biểu đồ lịch sử giá và tối ưu giao diện chi tiết desktop/mobile
+- [ ] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Khôi phục máy chủ phát triển
+- [x] Khởi động lại máy chủ phát triển và xác minh Shop SNKR phản hồi ổn định
