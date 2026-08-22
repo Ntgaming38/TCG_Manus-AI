@@ -1169,6 +1169,11 @@
 - [x] Thêm hiệu ứng và thông báo góc màn hình khi ghim hoặc bỏ ghim
 - [x] Kiểm thử giao diện, dữ liệu và lưu checkpoint
 
+## Biểu đồ mini 7 ngày Shop SNKR
+- [x] Lấy lịch sử giá 7 ngày của các sản phẩm đã ghim
+- [x] Hiển thị biểu đồ mini xu hướng thật trực tiếp trên thẻ ghim
+- [x] Tối ưu biểu đồ cho desktop/mobile, kiểm thử và lưu checkpoint
+
 ## Sửa lỗi xóa tại Bán Hàng
 - [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm

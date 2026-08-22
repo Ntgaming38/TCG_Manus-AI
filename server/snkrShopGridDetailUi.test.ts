@@ -49,6 +49,12 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(homeSource).toContain("Đã bỏ ghim");
   });
 
+  it("renders a compact seven-day sparkline from real pinned-item history", () => {
+    expect(homeSource).toContain("trpc.snkrShop.pinnedHistory7d.useQuery");
+    expect(homeSource).toContain("Xu hướng 7 ngày");
+    expect(homeSource).toContain("Biểu đồ giá bảy ngày");
+  });
+
   it("shows an RGB type label and a custom product name over the grid image", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");
