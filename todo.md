@@ -1194,6 +1194,11 @@
 - [x] Điều hướng người dùng đến mục hiện có hoặc mở thao tác cập nhật phù hợp
 - [x] Kiểm thử luồng URL trùng và lưu checkpoint
 
+## Thông tin thẻ Shop SNKR
+- [x] Hiển thị ngày bắt đầu theo dõi trên từng thẻ sản phẩm
+- [x] Thêm nút sao chép URL SNKRDUNK với phản hồi xác nhận
+- [x] Kiểm thử giao diện và lưu checkpoint
+
 ## Sửa lỗi xóa tại Bán Hàng
 - [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm
