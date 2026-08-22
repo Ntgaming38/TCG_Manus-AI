@@ -1130,9 +1130,9 @@
 - [x] Kiểm thử giao diện desktop/mobile và lưu checkpoint
 
 ## Đồng bộ giá tự động mỗi giờ
-- [ ] Rà soát cấu hình tác vụ đồng bộ giá tự động hiện có
-- [ ] Đặt chu kỳ chạy tự động thành mỗi 1 giờ
-- [ ] Xác minh lịch chạy, kiểm thử và lưu checkpoint
+- [x] Rà soát cấu hình tác vụ đồng bộ giá tự động hiện có
+- [x] Đặt chu kỳ chạy tự động thành mỗi 1 giờ
+- [x] Xác minh lịch chạy, kiểm thử và lưu checkpoint
 
 ## Thao tác thẻ Shop SNKR
 - [x] Sắp xếp nút theo thứ tự Đồng bộ, Sửa và Xóa
@@ -1144,10 +1144,10 @@
 - [x] Kiểm thử hiển thị trang và xác nhận xóa, sau đó lưu checkpoint
 
 ## Bảng giá số lượng Shop SNKR
-- [ ] Lấy lựa chọn giá công khai theo số lượng từ SNKRDUNK cho Box, Pack và Card
-- [ ] Hiển thị bảng giá 1–10 đơn vị, giữ đúng Rank Card đã chọn
-- [ ] Thu gọn biểu đồ lịch sử giá và tối ưu giao diện chi tiết desktop/mobile
-- [ ] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+- [x] Lấy lựa chọn giá công khai theo số lượng từ SNKRDUNK cho Box, Pack và Card
+- [x] Hiển thị bảng giá 1–10 đơn vị, giữ đúng Rank Card đã chọn
+- [x] Thu gọn biểu đồ lịch sử giá và tối ưu giao diện chi tiết desktop/mobile
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
 
 ## Khôi phục máy chủ phát triển
 - [x] Khởi động lại máy chủ phát triển và xác minh Shop SNKR phản hồi ổn định

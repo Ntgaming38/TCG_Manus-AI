@@ -15,3 +15,4 @@
 - Trang chi tiết hiển thị đúng nhãn loại, Rank Card, giá một đơn vị và biểu đồ lịch sử nhỏ gọn.
 - Với Card thử nghiệm đang chỉ có dữ liệu lựa chọn không phải JPY công khai, khu vực bảng giá hiển thị thông báo rõ ràng thay vì ước tính hay quy đổi giá; các mức giá JPY 1–10 đơn vị sẽ xuất hiện khi nguồn công khai cung cấp.
 - Truy vấn lựa chọn số lượng được tách khỏi lần tải chi tiết đầu tiên để ảnh, thông tin sản phẩm và biểu đồ lịch sử không bị chờ phản hồi nguồn công khai chậm.
+- Giao diện điện thoại xác nhận ảnh, bảng giá số lượng, nút đồng bộ và biểu đồ nhỏ xếp dọc không tràn chiều ngang; trạng thái đang đọc lựa chọn giá công khai được hiển thị riêng trong khung giá.
