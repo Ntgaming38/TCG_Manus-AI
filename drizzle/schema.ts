@@ -165,6 +165,7 @@ export const snkrShopItems = mysqlTable("snkr_shop_items", {
   sourceTitle: varchar("sourceTitle", { length: 500 }),
   imageUrl: varchar("imageUrl", { length: 2048 }),
   isPinned: int("isPinned").notNull().default(0),
+  pinnedOrder: int("pinnedOrder").notNull().default(0),
   currentPrice: decimal("currentPrice", { precision: 12, scale: 2 }).notNull().default("0"),
   lastSyncedAt: timestamp("lastSyncedAt"),
   lastSyncError: varchar("lastSyncError", { length: 1000 }),

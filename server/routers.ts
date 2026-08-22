@@ -470,6 +470,9 @@ export const appRouter = router({
     togglePin: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.toggleSnkrShopItemPin(input.id, ctx.user.id)),
+    reorderPinned: protectedProcedure
+      .input(z.object({ orderedIds: z.array(z.number().int().positive()).max(200) }))
+      .mutation(({ ctx, input }) => snkrShopDb.reorderPinnedSnkrShopItems(ctx.user.id, input.orderedIds)),
     sync: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.syncSnkrShopItem(input.id, ctx.user.id)),

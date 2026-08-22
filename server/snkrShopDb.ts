@@ -46,7 +46,7 @@ export async function listSnkrShopItems(userId: number, search?: string) {
   if (!db) return [];
   const items = await db.select().from(snkrShopItems)
     .where(eq(snkrShopItems.userId, userId))
-    .orderBy(desc(snkrShopItems.isPinned), desc(snkrShopItems.lastSyncedAt), desc(snkrShopItems.updatedAt), desc(snkrShopItems.id));
+    .orderBy(desc(snkrShopItems.isPinned), asc(snkrShopItems.pinnedOrder), desc(snkrShopItems.lastSyncedAt), desc(snkrShopItems.updatedAt), desc(snkrShopItems.id));
   const keyword = search?.trim().toLocaleLowerCase();
   return keyword ? items.filter((item) => item.name.toLocaleLowerCase().includes(keyword)) : items;
 }
@@ -128,11 +128,30 @@ export async function deleteSnkrShopItem(itemId: number, userId: number) {
 export async function toggleSnkrShopItemPin(itemId: number, userId: number) {
   const { db, item } = await getOwnedItem(itemId, userId);
   const isPinned = item.isPinned ? 0 : 1;
-  await db.update(snkrShopItems).set({ isPinned }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+  const items = isPinned ? await db.select().from(snkrShopItems).where(eq(snkrShopItems.userId, userId)) : [];
+  const pinnedOrder = isPinned ? Math.max(0, ...items.filter((row) => Boolean(row.isPinned)).map((row) => row.pinnedOrder || 0)) + 1 : 0;
+  await db.update(snkrShopItems).set({ isPinned, pinnedOrder }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
   await db.insert(activityLogs).values({ userId, action: isPinned ? "snkr_shop_item_pinned" : "snkr_shop_item_unpinned", description: `${isPinned ? "Ghim" : "Bỏ ghim"} Shop SNKR: ${item.name}`, entityType: "snkr_shop_item", entityId: itemId });
   const [updated] = await db.select().from(snkrShopItems).where(eq(snkrShopItems.id, itemId)).limit(1);
   if (!updated) throw new Error("Không thể cập nhật trạng thái ghim sản phẩm Shop SNKR.");
   return updated;
+}
+
+/** Persists a complete user-owned ordering for the currently pinned Shop SNKR items. */
+export async function reorderPinnedSnkrShopItems(userId: number, orderedIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const items = await db.select().from(snkrShopItems).where(eq(snkrShopItems.userId, userId));
+  const pinnedIds = items.filter((item) => Boolean(item.isPinned)).map((item) => item.id);
+  const expectedIds = new Set(pinnedIds);
+  if (orderedIds.length !== pinnedIds.length || new Set(orderedIds).size !== expectedIds.size || orderedIds.some((id) => !expectedIds.has(id))) {
+    throw new Error("Thứ tự sản phẩm ghim không hợp lệ.");
+  }
+  for (let index = 0; index < orderedIds.length; index += 1) {
+    await db.update(snkrShopItems).set({ pinnedOrder: index + 1 }).where(and(eq(snkrShopItems.id, orderedIds[index]), eq(snkrShopItems.userId, userId)));
+  }
+  await db.insert(activityLogs).values({ userId, action: "snkr_shop_pinned_reordered", description: `Sắp xếp ${orderedIds.length} sản phẩm ghim Shop SNKR`, entityType: "snkr_shop_item", entityId: null });
+  return { orderedIds };
 }
 
 export async function syncSnkrShopItem(itemId: number, userId: number) {

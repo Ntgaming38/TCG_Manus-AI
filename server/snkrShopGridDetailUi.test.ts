@@ -35,6 +35,13 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(homeSource).toContain("togglePin.mutate");
   });
 
+  it("filters pinned products and persists their custom drag-and-drop ordering", () => {
+    expect(homeSource).toContain("Đã ghim (");
+    expect(homeSource).toContain("reorderPinned.mutate");
+    expect(homeSource).toContain("draggable={reorderMode && Boolean(item.isPinned)}");
+    expect(homeSource).toContain("Kéo thẻ đã ghim để đổi thứ tự");
+  });
+
   it("shows an RGB type label and a custom product name over the grid image", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");

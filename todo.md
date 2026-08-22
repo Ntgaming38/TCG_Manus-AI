@@ -1157,6 +1157,12 @@
 - [x] Ưu tiên sản phẩm đã ghim lên đầu danh sách Shop SNKR
 - [x] Thêm thao tác ghim/bỏ ghim trực quan trên thẻ và kiểm thử
 
+## Lọc và sắp xếp ghim Shop SNKR
+- [x] Thêm bộ lọc chỉ hiển thị sản phẩm đã ghim
+- [x] Lưu thứ tự tùy chỉnh của các sản phẩm đã ghim
+- [x] Hỗ trợ kéo-thả sắp xếp trên desktop và thao tác phù hợp mobile
+- [x] Kiểm thử thứ tự, bộ lọc và lưu checkpoint
+
 ## Sửa lỗi xóa tại Bán Hàng
 - [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm
