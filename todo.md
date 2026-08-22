@@ -1178,6 +1178,17 @@
 - [x] Đưa hoạt động đồng bộ tự động Shop SNKR vào bộ lọc Đồng Bộ của Lịch sử
 - [x] Kiểm thử lọc Đồng Bộ và lưu checkpoint
 
+## Chi tiết Lịch sử Đồng Bộ Shop SNKR
+- [x] Phân biệt nhật ký đồng bộ thủ công và tự động bằng nhãn rõ ràng
+- [x] Ghi tóm tắt số sản phẩm đồng bộ thành công/thất bại theo từng lượt chạy
+- [x] Thêm liên kết nhanh từ nhật ký tới sản phẩm Shop SNKR tương ứng
+- [x] Kiểm thử dữ liệu, giao diện và lưu checkpoint
+
+## Ảnh SNKRDUNK cho Kho/Marketplace
+- [x] Tự lấy ảnh công khai SNKRDUNK khi Card, Box hoặc Pack được gắn link
+- [x] Làm mới ảnh khi đồng bộ giá và tránh ảnh bìa marketplace không đúng sản phẩm
+- [x] Cập nhật sản phẩm có link hiện tại, kiểm thử hiển thị và lưu checkpoint
+
 ## Sửa lỗi xóa tại Bán Hàng
 - [x] Xác định thao tác nào đang cố xóa sản phẩm đã có giao dịch bán
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm

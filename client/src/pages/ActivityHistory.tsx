@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardList,
+  ExternalLink,
   Loader2,
   Package,
   Pencil,
@@ -22,6 +23,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
+import { Link } from "wouter";
 
 type HistoryFilter = "all" | "auto_sync" | "product" | "purchase" | "sale" | "shop" | "chyusen";
 
@@ -59,7 +61,23 @@ export function getActivityTone(action: string, entityType: string | null) {
 }
 
 export function isAutoSyncActivity(action: string) {
-  return action === "snkrdunk_price_synced" || action === "snkr_shop_price_synced" || (action.includes("snkrdunk") && action.includes("synced"));
+  return action === "snkrdunk_price_synced" || action.startsWith("snkr_shop_") && action.includes("sync") || (action.includes("snkrdunk") && action.includes("synced"));
+}
+
+export function getSyncActivityDetails(action: string, newValue: string | null) {
+  const parsed = parseChangeValue(newValue);
+  const isShopSnkr = action.startsWith("snkr_shop_");
+  const syncMode = parsed.syncMode === "auto" || action.includes("_auto_") ? "auto" : parsed.syncMode === "manual" || action.includes("_manual_") ? "manual" : null;
+  const totalCount = Number(parsed.totalCount);
+  const syncedCount = Number(parsed.syncedCount);
+  const failedCount = Number(parsed.failedCount);
+  return {
+    isShopSnkr,
+    syncMode,
+    summary: Number.isFinite(totalCount) && Number.isFinite(syncedCount) && Number.isFinite(failedCount)
+      ? { totalCount, syncedCount, failedCount }
+      : null,
+  };
 }
 
 function getEntityIcon(entityType: string | null) {
@@ -187,12 +205,14 @@ export default function ActivityHistory() {
                 const EntityIcon = getEntityIcon(item.entityType);
                 const changes = getChangedFields(item.oldValue, item.newValue);
                 const isExpanded = expandedActivityId === item.id;
+                const syncDetails = getSyncActivityDetails(item.action, item.newValue);
                 return (
                   <div key={item.id} className="transition-colors hover:bg-secondary/40">
                     <div className="flex items-start gap-3 px-4 py-3.5">
                       <div className="mt-0.5 rounded-lg bg-background p-2 shadow-sm"><EntityIcon className="h-4 w-4 text-primary" /></div>
-                      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><p className="min-w-0 text-sm font-medium leading-5 text-foreground">{item.description || "Hoạt động trong hệ thống"}</p><Badge variant="outline" className={`inline-flex shrink-0 items-center gap-1 ${tone.buttonClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge></div><p className="mt-1 text-xs text-muted-foreground">{formatActivityTime(item.createdAt)}</p></div>
+                      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><p className="min-w-0 text-sm font-medium leading-5 text-foreground">{item.description || "Hoạt động trong hệ thống"}</p><Badge variant="outline" className={`inline-flex shrink-0 items-center gap-1 ${tone.buttonClass}`}><ActionIcon className="h-3 w-3" />{tone.label}</Badge>{syncDetails.syncMode && <Badge variant="outline" className={syncDetails.syncMode === "auto" ? "border-violet-400/40 bg-violet-500/15 text-violet-200" : "border-sky-400/40 bg-sky-500/15 text-sky-200"}>{syncDetails.syncMode === "auto" ? "Tự động" : "Thủ công"}</Badge>}</div>{syncDetails.summary && <p className="mt-1 text-xs text-muted-foreground">Thành công {syncDetails.summary.syncedCount}/{syncDetails.summary.totalCount} · Lỗi {syncDetails.summary.failedCount}</p>}<p className="mt-1 text-xs text-muted-foreground">{formatActivityTime(item.createdAt)}</p></div>
                       <div className="flex shrink-0 items-center gap-2">
+                        {syncDetails.isShopSnkr && item.entityType === "snkr_shop_item" && item.entityId && <Link href={`/shop-snkr/${item.entityId}`} className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-primary transition-colors hover:bg-primary/10 hover:text-primary"><span className="hidden md:inline">Mở</span><ExternalLink className="h-3.5 w-3.5" /></Link>}
                         {changes.length > 0 && <Button variant="ghost" size="sm" onClick={() => setExpandedActivityId(isExpanded ? null : item.id)} className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"><span className="hidden md:inline">Chi tiết</span>{isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</Button>}
                       </div>
                     </div>
