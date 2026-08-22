@@ -1118,3 +1118,8 @@
 - [x] Mở trang chi tiết khi chọn sản phẩm, hiển thị ảnh lớn, giá và lịch sử riêng
 - [x] Giữ thao tác đồng bộ, sửa và điều hướng dễ dùng trên desktop/mobile
 - [x] Kiểm thử điều hướng lưới đến chi tiết và lưu checkpoint
+
+## Khắc phục ảnh sản phẩm Shop SNKR
+- [x] Xác định vì sao metadata ảnh đang rơi về ảnh bìa SNKRDUNK thay vì ảnh Box/Card/Pack thật
+- [x] Trích xuất và lưu URL ảnh sản phẩm chính xác, không chấp nhận ảnh bìa marketplace
+- [x] Làm mới metadata sản phẩm hiện có, kiểm thử mobile và lưu checkpoint

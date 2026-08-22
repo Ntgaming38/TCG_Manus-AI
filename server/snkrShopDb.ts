@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gte } from "drizzle-orm";
 import { activityLogs, snkrShopItems, snkrShopPriceHistory } from "../drizzle/schema";
 import { normalizeCardRank } from "../shared/cardRank";
 import { getDb } from "./db";
-import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isValidSnkrdunkUrl } from "./snkrdunk";
+import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl } from "./snkrdunk";
 import { processMarketplaceManualSyncBatch } from "./marketplaceManualSyncBatch";
 
 export type SnkrShopProductType = "card" | "box" | "pack";
@@ -129,7 +129,7 @@ export async function syncSnkrShopItem(itemId: number, userId: number) {
     const result = await fetchSnkrdunkPrice(item.sourceUrl, productType, cardRank ?? "A");
     const syncedAt = new Date();
     let metadata: { title: string | null; imageUrl: string | null } = { title: item.sourceTitle, imageUrl: item.imageUrl };
-    if (!metadata.title || !metadata.imageUrl) {
+    if (!metadata.title || !metadata.imageUrl || isSnkrdunkGenericImageUrl(metadata.imageUrl)) {
       try { metadata = await fetchSnkrdunkProductMetadata(item.sourceUrl); } catch { /* Keep saved display metadata when the page is temporarily unavailable. */ }
     }
     await db.update(snkrShopItems).set({ currentPrice: String(result.price), lastSyncedAt: syncedAt, lastSyncError: null, sourceTitle: metadata.title, imageUrl: metadata.imageUrl })

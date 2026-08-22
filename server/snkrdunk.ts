@@ -80,9 +80,23 @@ function normalizeProductImageUrl(value: string | null): string | null {
   const candidate = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed.startsWith("/") ? `https://snkrdunk.com${trimmed}` : trimmed;
   try {
     const url = new URL(candidate);
-    return url.protocol === "https:" ? url.toString() : null;
+    if (url.protocol !== "https:") return null;
+    // This social banner is not a photo of the selected card, box, or pack.
+    if (isSnkrdunkGenericImageUrl(url.toString())) return null;
+    return url.toString();
   } catch {
     return null;
+  }
+}
+
+export function isSnkrdunkGenericImageUrl(value: string | null | undefined): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.hostname.toLowerCase() === "cdn.snkrdunk.com"
+      && /\/images\/ogp\/og-image\.png$/i.test(url.pathname);
+  } catch {
+    return false;
   }
 }
 
@@ -107,11 +121,35 @@ export function parseSnkrdunkProductMetadata(html: string): SnkrdunkProductMetad
     ?? decoded.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, " ").trim()
     ?? null;
   const title = rawTitle?.replace(/\s*[|｜]\s*SNKRDUNK\s*$/i, "").replace(/\s+/g, " ").trim() || null;
-  const imageUrl = normalizeProductImageUrl(
-    findMetaContent(decoded, "og:image")
-      ?? findMetaContent(decoded, "twitter:image")
-      ?? findStructuredProductImage(decoded),
-  );
+  const imageUrl = [
+    findMetaContent(decoded, "og:image"),
+    findMetaContent(decoded, "twitter:image"),
+    findStructuredProductImage(decoded),
+  ].map(normalizeProductImageUrl).find((image): image is string => Boolean(image)) ?? null;
+  return { title, imageUrl };
+}
+
+function findJsonStringField(payload: string, key: string): string | null {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = payload.match(new RegExp(`"${escapedKey}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"`, "i"));
+  if (!match?.[1]) return null;
+  try {
+    return JSON.parse(`"${match[1]}"`) as string;
+  } catch {
+    return decodeHtmlEntities(match[1]).trim() || null;
+  }
+}
+
+/** Parses the public product-detail response, including partial JSON from slow upstream connections. */
+export function parseSnkrdunkProductApiMetadata(payload: string): SnkrdunkProductMetadata {
+  const productStart = payload.search(/"product"\s*:/i);
+  const productPayload = productStart >= 0 ? payload.slice(productStart, productStart + 8_000) : payload;
+  const title = findJsonStringField(productPayload, "name");
+  const imageUrl = [
+    findJsonStringField(productPayload, "thumbnailUrl"),
+    findJsonStringField(productPayload, "imageUrl"),
+    findJsonStringField(productPayload, "primaryImageUrl"),
+  ].map(normalizeProductImageUrl).find((image): image is string => Boolean(image)) ?? null;
   return { title, imageUrl };
 }
 
@@ -255,6 +293,11 @@ function getNumericProductId(sourceUrl: string): string | null {
   return match?.[1] ?? null;
 }
 
+function getProductCodeFromUrl(sourceUrl: string): string | null {
+  const productId = getNumericProductId(sourceUrl);
+  return productId ? `SW---${productId}` : null;
+}
+
 function getJapaneseProductFallbackUrl(sourceUrl: string): string | null {
   const productId = getNumericProductId(sourceUrl);
   if (!productId) return null;
@@ -283,11 +326,43 @@ async function fetchPublicHtml(sourceUrl: string): Promise<string> {
   return response.text();
 }
 
+async function fetchPublicProductMetadata(productCode: string): Promise<SnkrdunkProductMetadata> {
+  const endpoint = `https://snkrdunk.com/en/v1/products/${encodeURIComponent(productCode)}`;
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+        "User-Agent": "Mozilla/5.0 (compatible; TCGManager/1.0; +https://snkrdunk.com)",
+      },
+      signal: AbortSignal.timeout(SNKRDUNK_FETCH_TIMEOUT_MS),
+    });
+  } catch {
+    throw new SnkrdunkSyncError("Không thể truy cập metadata sản phẩm SNKRDUNK.");
+  }
+  if (!response.ok) throw new SnkrdunkSyncError(`SNKRDUNK metadata trả về lỗi HTTP ${response.status}.`);
+  return parseSnkrdunkProductApiMetadata(await response.text());
+}
+
 export async function fetchSnkrdunkProductMetadata(sourceUrl: string): Promise<SnkrdunkProductMetadata> {
   if (!isValidSnkrdunkUrl(sourceUrl)) {
     throw new SnkrdunkSyncError("Link phải là trang sản phẩm https://snkrdunk.com, không phải link danh mục.");
   }
-  return parseSnkrdunkProductMetadata(await fetchPublicHtml(sourceUrl));
+  const html = await fetchPublicHtml(sourceUrl);
+  const pageMetadata = parseSnkrdunkProductMetadata(html);
+  const productCode = extractProductCode(sourceUrl, html) ?? getProductCodeFromUrl(sourceUrl);
+  if (!productCode) return pageMetadata;
+  try {
+    const apiMetadata = await fetchPublicProductMetadata(productCode);
+    return {
+      title: apiMetadata.title ?? pageMetadata.title,
+      imageUrl: apiMetadata.imageUrl ?? pageMetadata.imageUrl,
+    };
+  } catch {
+    // Public page metadata remains a safe fallback when the detail endpoint is unavailable.
+    return pageMetadata;
+  }
 }
 
 async function fetchFirstSizePrice(productCode: string): Promise<number> {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchSnkrdunkPrice, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, parseSnkrdunkProductMetadata, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
+import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl, parseCardRankPrice, parseFirstRankAPrice, parseSnkrdunkPrice, parseSnkrdunkProductApiMetadata, parseSnkrdunkProductMetadata, SNKRDUNK_FETCH_TIMEOUT_MS } from "./snkrdunk";
 
 describe("SNKRDUNK adapter", () => {
   afterEach(() => {
@@ -18,6 +18,36 @@ describe("SNKRDUNK adapter", () => {
   it("uses a public product image from structured page data when open graph metadata is unavailable", () => {
     const metadata = parseSnkrdunkProductMetadata('<script type="application/ld+json">{"image":"https://cdn.snkrdunk.com/products/card.jpg"}</script>');
     expect(metadata.imageUrl).toBe("https://cdn.snkrdunk.com/products/card.jpg");
+  });
+
+  it("ignores the generic SNKRDUNK social banner instead of saving it as a product image", () => {
+    const metadata = parseSnkrdunkProductMetadata('<meta property="og:image" content="https://cdn.snkrdunk.com/images/ogp/og-image.png"><script type="application/ld+json">{"image":"https://cdn.snkrdunk.com/products/real-box.webp"}</script>');
+    expect(metadata.imageUrl).toBe("https://cdn.snkrdunk.com/products/real-box.webp");
+    expect(isSnkrdunkGenericImageUrl("https://cdn.snkrdunk.com/images/ogp/og-image.png")).toBe(true);
+  });
+
+  it("parses the real product thumbnail from the public product-detail response", () => {
+    const metadata = parseSnkrdunkProductApiMetadata('{"product":{"name":"ONE PIECE Box","thumbnailUrl":"https://cdn.snkrdunk.com/upload_bg_removed/box.webp?size=s"}}');
+    expect(metadata).toEqual({ title: "ONE PIECE Box", imageUrl: "https://cdn.snkrdunk.com/upload_bg_removed/box.webp?size=s" });
+  });
+
+  it("prefers the product-detail thumbnail when the page provides only the generic banner", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '<meta property="og:title" content="Generic title | SNKRDUNK"><meta property="og:image" content="https://cdn.snkrdunk.com/images/ogp/og-image.png">',
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '{"product":{"name":"ONE PIECE Box","thumbnailUrl":"https://cdn.snkrdunk.com/upload_bg_removed/box.webp?size=s"}}',
+      } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSnkrdunkProductMetadata("https://snkrdunk.com/apparels/864495"))
+      .resolves.toEqual({ title: "ONE PIECE Box", imageUrl: "https://cdn.snkrdunk.com/upload_bg_removed/box.webp?size=s" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("parses a JPY price from JSON-LD", () => {
