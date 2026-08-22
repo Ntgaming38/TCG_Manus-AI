@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { activityLogs, snkrShopItems, snkrShopPriceHistory, snkrShopSyncConfig } from "../drizzle/schema";
 import { normalizeCardRank } from "../shared/cardRank";
 import { getDb } from "./db";
@@ -9,6 +9,7 @@ export type SnkrShopProductType = "card" | "box" | "pack";
 export const SNKR_SHOP_AUTO_SYNC_CRON = "0 0 * * * *";
 
 export type SnkrShopAutoSyncSummary = { checkedCount: number; updatedCount: number; failedCount: number; skipped: boolean };
+export type SnkrShopPriceMovement24h = { itemId: number; amount: number; percent: number; trend: "up" | "down" | "flat"; hasData: boolean };
 
 type CreateSnkrShopItemInput = {
   name?: string;
@@ -55,6 +56,30 @@ export async function listSnkrShopItems(userId: number, search?: string) {
 export async function getSnkrShopItem(itemId: number, userId: number) {
   const { item } = await getOwnedItem(itemId, userId);
   return item;
+}
+
+/** Returns real 24-hour price movements for pinned watchlist items only. */
+export async function getPinnedSnkrShop24hChanges(userId: number): Promise<SnkrShopPriceMovement24h[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const pinnedItems = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
+    .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.isPinned, 1)));
+  if (!pinnedItems.length) return [];
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const history = await db.select({ id: snkrShopPriceHistory.id, itemId: snkrShopPriceHistory.itemId, price: snkrShopPriceHistory.price, createdAt: snkrShopPriceHistory.createdAt })
+    .from(snkrShopPriceHistory)
+    .where(and(inArray(snkrShopPriceHistory.itemId, pinnedItems.map((item) => item.id)), gte(snkrShopPriceHistory.createdAt, cutoff)))
+    .orderBy(asc(snkrShopPriceHistory.createdAt), asc(snkrShopPriceHistory.id));
+  const entriesByItem = new Map<number, typeof history>();
+  history.forEach((entry) => entriesByItem.set(entry.itemId, [...(entriesByItem.get(entry.itemId) ?? []), entry]));
+  return pinnedItems.map(({ id: itemId }) => {
+    const entries = entriesByItem.get(itemId) ?? [];
+    if (entries.length < 2) return { itemId, amount: 0, percent: 0, trend: "flat", hasData: false };
+    const baseline = Number(entries[0].price) || 0;
+    const latest = Number(entries[entries.length - 1].price) || 0;
+    const amount = latest - baseline;
+    return { itemId, amount, percent: baseline > 0 ? (amount / baseline) * 100 : 0, trend: amount > 0 ? "up" : amount < 0 ? "down" : "flat", hasData: true };
+  });
 }
 
 export async function createSnkrShopItem(userId: number, input: CreateSnkrShopItemInput) {

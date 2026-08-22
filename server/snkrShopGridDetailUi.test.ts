@@ -42,6 +42,13 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(homeSource).toContain("Kéo thẻ đã ghim để đổi thứ tự");
   });
 
+  it("shows real 24-hour movement only on pinned cards and confirms pin actions visually", () => {
+    expect(homeSource).toContain("trpc.snkrShop.priceChanges24h.useQuery");
+    expect(homeSource).toContain("24h: đang thu thập");
+    expect(homeSource).toContain("Đã ghim ưu tiên");
+    expect(homeSource).toContain("Đã bỏ ghim");
+  });
+
   it("shows an RGB type label and a custom product name over the grid image", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");
