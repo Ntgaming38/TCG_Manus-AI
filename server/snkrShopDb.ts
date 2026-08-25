@@ -107,7 +107,13 @@ export async function createSnkrShopItem(userId: number, input: CreateSnkrShopIt
   const [existing] = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
     .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.sourceUrl, sourceUrl)))
     .limit(1);
-  if (existing) throw new Error("URL SNKRDUNK này đã có trong Shop SNKR của bạn.");
+  if (existing) {
+    const [trackedItem] = await db.select().from(snkrShopItems)
+      .where(and(eq(snkrShopItems.id, existing.id), eq(snkrShopItems.userId, userId)))
+      .limit(1);
+    if (!trackedItem) throw new Error("Không thể mở sản phẩm Shop SNKR đang theo dõi.");
+    return { ...trackedItem, alreadyTracked: true };
+  }
   const cardRank = getCardRank(input.productType, input.cardRank);
   let metadata: { title: string | null; imageUrl: string | null } = { title: null, imageUrl: null };
   try {
@@ -122,7 +128,7 @@ export async function createSnkrShopItem(userId: number, input: CreateSnkrShopIt
     .limit(1);
   if (!item) throw new Error("Không thể tạo sản phẩm theo dõi Shop SNKR.");
   await db.insert(activityLogs).values({ userId, action: "snkr_shop_item_created", description: `Thêm theo dõi Shop SNKR: ${name}`, entityType: "snkr_shop_item", entityId: item.id });
-  return item;
+  return { ...item, alreadyTracked: false };
 }
 
 export async function updateSnkrShopItem(itemId: number, userId: number, input: UpdateSnkrShopItemInput) {
@@ -197,7 +203,7 @@ export async function reorderPinnedSnkrShopItems(userId: number, orderedIds: num
   return { orderedIds };
 }
 
-export async function syncSnkrShopItem(itemId: number, userId: number) {
+export async function syncSnkrShopItem(itemId: number, userId: number, syncMode: "manual" | "auto" = "manual") {
   const { db, item } = await getOwnedItem(itemId, userId);
   const productType = item.productType as SnkrShopProductType;
   const cardRank = getCardRank(productType, item.cardRank);
@@ -213,7 +219,14 @@ export async function syncSnkrShopItem(itemId: number, userId: number) {
     if (Number(item.currentPrice || 0) !== result.price) {
       await db.insert(snkrShopPriceHistory).values({ itemId, price: String(result.price), source: "snkrdunk" });
     }
-    await db.insert(activityLogs).values({ userId, action: "snkr_shop_price_synced", description: `Cập nhật Shop SNKR: ${item.name} - ¥${result.price.toLocaleString("ja-JP")}`, entityType: "snkr_shop_item", entityId: itemId });
+    await db.insert(activityLogs).values({
+      userId,
+      action: syncMode === "auto" ? "snkr_shop_auto_price_synced" : "snkr_shop_manual_price_synced",
+      description: `Cập nhật Shop SNKR: ${item.name} - ¥${result.price.toLocaleString("ja-JP")}`,
+      entityType: "snkr_shop_item",
+      entityId: itemId,
+      newValue: JSON.stringify({ syncMode, totalCount: 1, syncedCount: 1, failedCount: 0 }),
+    });
     return { itemId, name: metadata.title || item.name, currentPrice: result.price, lastSyncedAt: syncedAt, sourceUrl: item.sourceUrl };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Không thể đồng bộ URL SNKRDUNK này.";
@@ -226,10 +239,19 @@ export async function syncSnkrShopItem(itemId: number, userId: number) {
 export async function syncAllSnkrShopItems(userId: number) {
   const items = await listSnkrShopItems(userId);
   const outcomes = await processMarketplaceManualSyncBatch(items, async (item) => {
-    await syncSnkrShopItem(item.id, userId);
+    await syncSnkrShopItem(item.id, userId, "manual");
   }, 3);
   const failures = outcomes.flatMap((outcome) => outcome.status === "rejected" ? [{ id: outcome.item.id, name: outcome.item.name, error: outcome.error instanceof Error ? outcome.error.message : "Không thể đồng bộ." }] : []);
-  return { totalCount: items.length, syncedCount: outcomes.length - failures.length, failedCount: failures.length, failures };
+  const summary = { totalCount: items.length, syncedCount: outcomes.length - failures.length, failedCount: failures.length, failures };
+  await (await getDb())?.insert(activityLogs).values({
+    userId,
+    action: "snkr_shop_manual_sync_completed",
+    description: `Đồng bộ thủ công Shop SNKR: ${summary.syncedCount}/${summary.totalCount} thành công, ${summary.failedCount} lỗi`,
+    entityType: "snkr_shop_sync",
+    entityId: null,
+    newValue: JSON.stringify({ syncMode: "manual", totalCount: summary.totalCount, syncedCount: summary.syncedCount, failedCount: summary.failedCount }),
+  });
+  return summary;
 }
 
 export async function getSnkrShopPriceHistory(itemId: number, userId: number, days = 30) {
@@ -278,7 +300,7 @@ export async function runSnkrShopAutoSync(taskUid: string): Promise<SnkrShopAuto
   const batchSize = Math.min(Math.max(config.batchSize || 12, 1), 20);
   const items = await db.select().from(snkrShopItems).orderBy(asc(snkrShopItems.lastSyncedAt), asc(snkrShopItems.updatedAt), asc(snkrShopItems.id)).limit(batchSize);
   const outcomes = await processMarketplaceManualSyncBatch(items, async (item) => {
-    await syncSnkrShopItem(item.id, item.userId);
+    await syncSnkrShopItem(item.id, item.userId, "auto");
   }, 3);
   const failedCount = outcomes.filter((outcome) => outcome.status === "rejected").length;
   const updatedCount = outcomes.length - failedCount;
@@ -288,5 +310,23 @@ export async function runSnkrShopAutoSync(taskUid: string): Promise<SnkrShopAuto
     lastRunStatus: status,
     lastRunSummary: `Đã kiểm tra ${outcomes.length}; cập nhật ${updatedCount}; lỗi ${failedCount}.`,
   }).where(eq(snkrShopSyncConfig.id, config.id));
+  const summariesByUser = new Map<number, { totalCount: number; syncedCount: number; failedCount: number }>();
+  outcomes.forEach((outcome) => {
+    const summary = summariesByUser.get(outcome.item.userId) ?? { totalCount: 0, syncedCount: 0, failedCount: 0 };
+    summary.totalCount += 1;
+    if (outcome.status === "fulfilled") summary.syncedCount += 1;
+    else summary.failedCount += 1;
+    summariesByUser.set(outcome.item.userId, summary);
+  });
+  for (const [userId, summary] of Array.from(summariesByUser.entries())) {
+    await db.insert(activityLogs).values({
+      userId,
+      action: "snkr_shop_auto_sync_completed",
+      description: `Đồng bộ tự động Shop SNKR: ${summary.syncedCount}/${summary.totalCount} thành công, ${summary.failedCount} lỗi`,
+      entityType: "snkr_shop_sync",
+      entityId: null,
+      newValue: JSON.stringify({ syncMode: "auto", ...summary }),
+    });
+  }
   return { checkedCount: outcomes.length, updatedCount, failedCount, skipped: false };
 }

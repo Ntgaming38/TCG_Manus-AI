@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getActivityTone, getChangedFields, isAutoSyncActivity } from "../client/src/pages/ActivityHistory";
+import { getActivityTone, getChangedFields, getSyncActivityDetails, isAutoSyncActivity } from "../client/src/pages/ActivityHistory";
 
 describe("ActivityHistory detail changes", () => {
   it("chỉ trả về các trường thực sự thay đổi để hiển thị trong Lịch sử", () => {
@@ -32,10 +32,20 @@ describe("ActivityHistory detail changes", () => {
     expect(getActivityTone("sale_created", "sale").buttonClass).toContain("text-black");
   });
 
-  it("chỉ nhận diện các hoạt động đồng bộ giá SNKRDUNK vào bộ lọc Đồng Bộ Auto", () => {
+  it("nhận diện đồng bộ giá SNKRDUNK và Shop SNKR vào bộ lọc Đồng Bộ", () => {
     expect(isAutoSyncActivity("snkrdunk_price_synced")).toBe(true);
+    expect(isAutoSyncActivity("snkr_shop_price_synced")).toBe(true);
     expect(isAutoSyncActivity("product_updated")).toBe(false);
     expect(isAutoSyncActivity("market_price_updated")).toBe(false);
+  });
+
+  it("phân biệt nguồn chạy và tóm tắt của đồng bộ Shop SNKR", () => {
+    expect(getSyncActivityDetails("snkr_shop_auto_sync_completed", JSON.stringify({ syncMode: "auto", totalCount: 8, syncedCount: 7, failedCount: 1 }))).toEqual({
+      isShopSnkr: true,
+      syncMode: "auto",
+      summary: { totalCount: 8, syncedCount: 7, failedCount: 1 },
+    });
+    expect(getSyncActivityDetails("snkr_shop_manual_price_synced", JSON.stringify({ syncMode: "manual", totalCount: 1, syncedCount: 1, failedCount: 0 })).syncMode).toBe("manual");
   });
 
   it("hiển thị nhãn phù hợp cho Chyusen đã khôi phục và đã chuyển Mua Hàng", () => {

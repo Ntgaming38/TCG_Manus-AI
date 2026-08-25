@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, products, purchases, sales, priceHistory, shops, saleLocations, activityLogs, chyusenEntries, marketplaceSyncConfig, marketplaceSyncErrors, loginEvents } from "../drizzle/schema";
 import type { InsertProduct, InsertPurchase, InsertSale, InsertShop } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { fetchSnkrdunkPrice, isValidSnkrdunkUrl } from './snkrdunk';
+import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl } from './snkrdunk';
 import { summarizeCardRarityQuantities } from '../shared/cardRarity';
 import { formatRemainingTime, getChyusenTimeState, getChyusenUrgency } from './chyusenUtils';
 import { resolveMarketplacePriceUpdate } from '../shared/marketplaceAutoSync';
@@ -326,8 +326,15 @@ export async function updateSnkrdunkUrl(id: number, userId: number, snkrdunkUrl:
   const product = await getProductById(id);
   if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
 
+  let sourceImage: string | null = null;
+  try {
+    sourceImage = (await fetchSnkrdunkProductMetadata(snkrdunkUrl)).imageUrl;
+  } catch {
+    // Giá và ảnh có thể được làm mới ở lần đồng bộ sau nếu nguồn công khai tạm thời không phản hồi.
+  }
+  const shouldReplaceImage = !product.image || product.image.includes("snkrdunk.com") || isSnkrdunkGenericImageUrl(product.image);
   await db.update(products)
-    .set({ snkrdunkUrl })
+    .set({ snkrdunkUrl, ...(sourceImage && shouldReplaceImage ? { image: sourceImage } : {}) })
     .where(and(eq(products.id, id), eq(products.userId, userId)));
   await db.insert(activityLogs).values({
     userId,
@@ -336,7 +343,7 @@ export async function updateSnkrdunkUrl(id: number, userId: number, snkrdunkUrl:
     entityType: "product",
     entityId: id,
   });
-  return { success: true, snkrdunkUrl };
+  return { success: true, snkrdunkUrl, image: sourceImage && shouldReplaceImage ? sourceImage : product.image };
 }
 
 export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
@@ -352,10 +359,19 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
   const cardRank = product.type === "card" ? normalizeCardRank(product.condition) : undefined;
   try {
     const result = await fetchSnkrdunkPrice(product.snkrdunkUrl, product.type as "card" | "box" | "pack", cardRank);
+    let sourceImage: string | null = null;
+    const shouldRefreshImage = !product.image || product.image.includes("snkrdunk.com") || isSnkrdunkGenericImageUrl(product.image);
+    if (shouldRefreshImage) {
+      try {
+        sourceImage = (await fetchSnkrdunkProductMetadata(product.snkrdunkUrl)).imageUrl;
+      } catch {
+        // Keep the current image when metadata is temporarily unavailable.
+      }
+    }
     const priceDecision = resolveMarketplacePriceUpdate(product.marketPrice, result.price);
     const persisted = await persistMarketplacePriceIfValid(product.marketPrice, result.price, async (nextPrice) => {
       await db.update(products)
-        .set({ marketPrice: nextPrice, snkrdunkLastSyncedAt: new Date() })
+        .set({ marketPrice: nextPrice, snkrdunkLastSyncedAt: new Date(), ...(sourceImage ? { image: sourceImage } : {}) })
         .where(and(eq(products.id, id), eq(products.userId, userId)));
     });
     if (!persisted.updated) throw new Error("SNKRDUNK không trả về giá JPY hợp lệ. Giá cũ được giữ nguyên.");
@@ -371,7 +387,7 @@ export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {
       .where(and(eq(marketplaceSyncErrors.userId, userId), eq(marketplaceSyncErrors.productId, id), isNull(marketplaceSyncErrors.resolvedAt)));
     await db.insert(activityLogs).values({ userId, action: "snkrdunk_price_synced", description: `Đồng bộ giá SNKRDUNK: ${product.name}${cardRank ? ` · ${getCardRankLabel(cardRank)}` : ""} - ¥${result.price.toLocaleString("ja-JP")}`, entityType: "product", entityId: id });
 
-    return { productId: id, productName: product.name, marketPrice: result.price, snkrdunkLastSyncedAt: syncedAt, snkrdunkUrl: product.snkrdunkUrl };
+    return { productId: id, productName: product.name, marketPrice: result.price, snkrdunkLastSyncedAt: syncedAt, snkrdunkUrl: product.snkrdunkUrl, image: sourceImage || product.image };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Không thể đồng bộ giá SNKRDUNK.";
     try {
