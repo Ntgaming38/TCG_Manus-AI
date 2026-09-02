@@ -158,6 +158,15 @@ describe("appRouter", () => {
       expect(db.listActivityLogs).toHaveBeenCalledWith(1, { entityType: "sale", syncScope: "only", search: "Pikachu", limit: 25, cursor });
     });
 
+    it("chấp nhận bộ lọc hoạt động Chūsen", async () => {
+      vi.mocked(db.listActivityLogs).mockResolvedValue({ items: [], nextCursor: null, totalCount: 0 });
+      const caller = appRouter.createCaller(createAuthContext());
+
+      await caller.activities.list({ entityType: "chyusen", limit: 25 });
+
+      expect(db.listActivityLogs).toHaveBeenCalledWith(1, { entityType: "chyusen", limit: 25 });
+    });
+
     it("yêu cầu đăng nhập trước khi xem nhật ký hoạt động", async () => {
       const caller = appRouter.createCaller(createUnauthContext());
       await expect(caller.activities.list()).rejects.toThrow();

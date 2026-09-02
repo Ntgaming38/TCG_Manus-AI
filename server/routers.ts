@@ -612,7 +612,7 @@ export const appRouter = router({
   activities: router({
     list: protectedProcedure
       .input(z.object({
-        entityType: z.enum(["product", "purchase", "sale", "shop"]).optional(),
+        entityType: z.enum(["product", "purchase", "sale", "shop", "chyusen"]).optional(),
         action: z.string().trim().min(1).max(100).optional(),
         syncScope: z.enum(["only", "exclude"]).optional(),
         search: z.string().trim().max(100).optional(),

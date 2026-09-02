@@ -1347,3 +1347,9 @@
 - [x] Đặt sắp xếp mặc định theo ngày công bố gần nhất
 - [x] Kiểm thử thứ tự mặc định và các lựa chọn khác
 - [x] Lưu checkpoint phiên bản mới nhất
+
+## Sửa lỗi entityType trang Lịch sử
+- [x] Rà soát bộ lọc Lịch sử và schema entityType hợp lệ
+- [x] Sửa giá trị mặc định/chuyển đổi entityType ở client
+- [x] Bổ sung kiểm thử hồi quy và xác minh trang Lịch sử
+- [x] Lưu checkpoint phiên bản sửa lỗi
