@@ -36,7 +36,7 @@ export function toChyusenDraft(data: Record<string, any>): ChyusenDraft {
   const savedShop = data.shop || "Khác";
   return {
     title: data.title || "", productName: data.productName || "", series: data.series || "Pokemon", productType: data.productType || "other",
-    shop: savedCustomShopName || (savedShop !== "Khác" ? savedShop : ""), customShopName: "", sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
+    shop: savedCustomShopName ? ADD_CUSTOM_CHYUSEN_SHOP_VALUE : (savedShop !== "Khác" ? savedShop : ""), customShopName: savedCustomShopName, sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
     price: data.price === undefined || data.price === null ? "" : String(data.price), quantityLimit: data.quantityLimit || "",
     applicationStart: formatChyusenDayMonth(data.applicationStart), applicationEnd: formatChyusenDayMonth(data.applicationEnd), resultDate: formatChyusenDayMonth(data.resultDate),
     pickupStart: formatChyusenDayMonth(data.pickupStart), pickupEnd: formatChyusenDayMonth(data.pickupEnd), pickupNote: data.pickupNote || "", requirements: data.requirements || "",

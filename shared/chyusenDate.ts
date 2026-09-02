@@ -7,7 +7,7 @@ export function formatChyusenDayMonth(value: Date | string | null | undefined) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   const parts = japanDateParts(date);
-  return `${parts.day}/${parts.month}`;
+  return `${parts.month}/${parts.day}`;
 }
 
 export function formatChyusenDayMonthInput(value: string) {
@@ -66,8 +66,8 @@ export function parseChyusenDayMonth(value: string, savedAt = new Date()) {
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})$/);
   if (!match) return null;
 
-  const day = Number(match[1]);
-  const month = Number(match[2]);
+  const month = Number(match[1]);
+  const day = Number(match[2]);
   const year = Number(japanDateParts(savedAt).year);
   const check = new Date(Date.UTC(year, month - 1, day));
   if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;

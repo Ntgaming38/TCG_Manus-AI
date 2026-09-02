@@ -2,6 +2,7 @@ export const DEFAULT_CHYUSEN_SHOPS = [
   "Geo",
   "Joshin",
   "Fruichi",
+  "COMG!",
   "Toysrus",
   "Family Mart",
   "Bandai Premium",

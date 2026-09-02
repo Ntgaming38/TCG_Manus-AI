@@ -8,15 +8,15 @@ describe("cửa hàng tùy chỉnh trong Chyusen", () => {
 
     expect(source).toContain("ADD_CUSTOM_CHYUSEN_SHOP_VALUE");
     expect(source).toContain("shopSuggestionDetails");
-    expect(source).toContain('list="chyusen-shop-options"');
+    expect(source).toContain('SelectItem value={ADD_CUSTOM_CHYUSEN_SHOP_VALUE}>Thêm cửa hàng mới</SelectItem>');
     expect(source).toContain("shopOptions.map");
-    expect(source).toContain("Tên mới sẽ tự xuất hiện trong gợi ý tại đây sau khi lưu Chūsen.");
+    expect(source).toContain("Tên sẽ tự lưu và xuất hiện trong danh sách cửa hàng sau khi lưu Chūsen.");
     expect(source).toContain("displayChyusenShop(entry)");
     expect(source).toContain("Đã nhận diện từ URL");
     expect(source).not.toContain("Cửa hàng bạn đã lưu");
     expect(source).not.toContain("Ghim cửa hàng yêu thích");
     expect(source).not.toContain("Cửa hàng dùng gần đây");
-    expect(source).not.toContain("Tên cửa hàng mới");
+    expect(source).toContain("Thêm cửa hàng mới");
     expect(source).not.toContain("saveShopSuggestion.mutate");
     expect(source).not.toContain("setShopSuggestionPinned.mutate");
     expect(source).not.toContain("reorderPinnedShopSuggestions.mutate");

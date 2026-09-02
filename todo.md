@@ -1320,3 +1320,10 @@
 - [x] Hiển thị tên cửa hàng tùy chỉnh thay cho “Khác” trên thẻ Chūsen
 - [x] Bỏ giao diện ghim, cửa hàng đã lưu và ô tên cửa hàng riêng gây tốn diện tích
 - [x] Bổ sung kiểm thử hồi quy, xác minh mobile và lưu checkpoint
+
+## Ngày Tháng/Ngày và cửa hàng Chūsen
+- [x] Kiểm kê nhãn, placeholder và hướng dẫn ngày còn ghi dd/mm
+- [x] Đổi cách ghi ngày sang Tháng/Ngày nhất quán trên toàn ứng dụng
+- [x] Khôi phục lựa chọn cửa hàng sẵn có, bổ sung COMG! và giữ ô Thêm cửa hàng mới
+- [x] Bảo toàn tự lưu và hiển thị đúng tên cửa hàng tùy chỉnh
+- [x] Bổ sung kiểm thử hồi quy, xác minh mobile và lưu checkpoint
