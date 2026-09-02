@@ -13,6 +13,10 @@ describe("cửa hàng tùy chỉnh trong Chyusen", () => {
     expect(source).toContain("Tên sẽ tự lưu và xuất hiện trong danh sách cửa hàng sau khi lưu Chūsen.");
     expect(source).toContain("displayChyusenShop(entry)");
     expect(source).toContain("Đã nhận diện từ URL");
+    expect(source).toContain("onPaste={(event) =>");
+    expect(source).toContain("const detectedShop = detectChyusenShopFromUrl(value)");
+    expect(source).toContain('placeholder="Tháng/Ngày"');
+    expect(source).toContain("Nhập ngày theo dạng <strong>Tháng/Ngày</strong>");
     expect(source).not.toContain("Cửa hàng bạn đã lưu");
     expect(source).not.toContain("Ghim cửa hàng yêu thích");
     expect(source).not.toContain("Cửa hàng dùng gần đây");

@@ -1329,8 +1329,8 @@
 - [x] Bổ sung kiểm thử hồi quy, xác minh mobile và lưu checkpoint
 
 ## Tự nhận diện cửa hàng và nhãn Tháng/Ngày
-- [ ] Rà soát detector URL và sự kiện dán URL trong Chūsen
-- [ ] Tự động nhận diện và điền tên cửa hàng khi dán URL sản phẩm
-- [ ] Đổi mọi hướng dẫn và placeholder ngày sang chữ “Tháng/Ngày”
-- [ ] Bổ sung kiểm thử URL, cửa hàng và định dạng ngày
-- [ ] Lưu checkpoint phiên bản mới nhất
+- [x] Rà soát detector URL và sự kiện dán URL trong Chūsen
+- [x] Tự động nhận diện và điền tên cửa hàng khi dán URL sản phẩm
+- [x] Đổi mọi hướng dẫn và placeholder ngày sang chữ “Tháng/Ngày”
+- [x] Bổ sung kiểm thử URL, cửa hàng và định dạng ngày
+- [x] Lưu checkpoint phiên bản mới nhất

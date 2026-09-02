@@ -13,7 +13,7 @@ export function buildChyusenSubmission(draft: ChyusenDraft, savedAt = new Date()
   const parsedDates = Object.fromEntries(dateFields.map(([label, key]) => {
     const value = draft[key] as string;
     const parsed = value ? parseChyusenDayMonth(value, savedAt) : null;
-    if (value && !parsed) throw new Error(`${label} phải có dạng Tháng/Ngày (MM/DD), ví dụ 09/03.`);
+    if (value && !parsed) throw new Error(`${label} phải có dạng Tháng/Ngày, ví dụ 09/03.`);
     return [key, parsed];
   }));
   const { sourceUrl, applicationStart, applicationEnd, resultDate, pickupStart, pickupEnd, ...otherFields } = draft;
