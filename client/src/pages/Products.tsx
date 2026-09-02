@@ -541,7 +541,7 @@ export default function Products() {
                 </div>
                 {/* Product image / shared fallback */}
                 <div className="mb-3 aspect-[4/3] overflow-hidden rounded-lg border border-white/80 bg-white">
-                  <img src={product.image || FALLBACK_PRODUCT_IMAGE_URL} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="h-full w-full object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_PRODUCT_IMAGE_URL; }} />
+                  <img src={product.image || FALLBACK_PRODUCT_IMAGE_URL} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="h-full w-full scale-[1.12] object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_PRODUCT_IMAGE_URL; }} />
                 </div>
                 <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>

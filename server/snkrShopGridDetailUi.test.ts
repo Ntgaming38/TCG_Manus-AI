@@ -19,7 +19,7 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(detailSource).toContain("trpc.snkrShop.priceHistory.useQuery");
     expect(detailSource).toContain("trpc.snkrShop.quantityPrices.useQuery");
     expect(detailSource).toContain("referrerPolicy=\"no-referrer\"");
-    expect(detailSource).toContain("border border-white/80 bg-white");
+    expect(detailSource).toContain("border border-white bg-white p-2 md:min-h-[390px] md:p-3");
     expect(detailSource).toContain("không được đưa vào Kho Hàng hoặc báo cáo tài chính");
   });
 
@@ -38,8 +38,8 @@ describe("Shop SNKR grid and detail navigation", () => {
   });
 
   it("uses white image frames in the grid and detail views", () => {
-    expect(homeSource).toContain("border-r border-white/80 bg-white");
-    expect(detailSource).toContain("border border-white/80 bg-white");
+    expect(homeSource).toContain("border-r border-white bg-white p-1");
+    expect(detailSource).toContain("border border-white bg-white p-2 md:min-h-[390px] md:p-3");
   });
 
   it("renders a compact seven-day sparkline from actual history for all products", () => {
@@ -50,7 +50,7 @@ describe("Shop SNKR grid and detail navigation", () => {
   it("shows an RGB type label and a custom product name over the grid image", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");
-    expect(homeSource).toContain("right-2 top-2");
+    expect(homeSource).toContain("scale-[1.12]");
   });
 
   it("orders grid controls as sync, edit, then a red delete action with confirmation", () => {

@@ -14,6 +14,8 @@ describe("ảnh fallback sản phẩm", () => {
       const source = readClientFile(fileName);
       expect(source).toContain("FALLBACK_PRODUCT_IMAGE_URL");
       expect(source).toContain("onError");
+      expect(source).toContain("object-contain");
+      expect(source).toContain("scale-[1.12]");
     }
   });
 

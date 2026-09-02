@@ -1353,3 +1353,17 @@
 - [x] Sửa giá trị mặc định/chuyển đổi entityType ở client
 - [x] Bổ sung kiểm thử hồi quy và xác minh trang Lịch sử
 - [x] Lưu checkpoint phiên bản sửa lỗi
+
+## Căn tỉ lệ khung ảnh Card/Box/Pack
+- [x] Rà soát khung ảnh và quy tắc fit hiện tại
+- [x] Căn nền trắng và tỉ lệ ảnh khớp toàn bộ khung
+- [x] Giữ ảnh sản phẩm không bị cắt hoặc méo theo từng loại
+- [x] Kiểm thử danh sách và trang chi tiết trên desktop/mobile
+- [x] Lưu checkpoint phiên bản mới nhất
+
+## Phóng to ảnh sản phẩm toàn ứng dụng
+- [x] Rà soát mọi component ảnh Card, Box và Pack
+- [x] Tăng kích thước nội dung ảnh trong khung
+- [x] Giữ nền trắng phủ kín toàn bộ khung, không méo hoặc cắt ảnh
+- [x] Kiểm thử danh sách/trang chi tiết trên desktop và mobile
+- [x] Lưu checkpoint phiên bản mới nhất
