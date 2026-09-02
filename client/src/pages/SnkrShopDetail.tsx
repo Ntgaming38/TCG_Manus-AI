@@ -4,6 +4,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { trpc } from "@/lib/trpc";
 import { formatYen } from "@shared/formatYen";
 import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
+import { useProductImageZoom } from "@/hooks/useProductImageZoom";
 import { ArrowLeft, BarChart3, ExternalLink, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
@@ -23,6 +24,7 @@ export default function SnkrShopDetail() {
   const itemId = Number(params?.id);
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [imageFailed, setImageFailed] = useState(false);
+  const productImageZoom = useProductImageZoom();
   const utils = trpc.useUtils();
   const queryEnabled = Number.isInteger(itemId) && itemId > 0;
   const itemQuery = trpc.snkrShop.get.useQuery({ id: itemId }, { enabled: queryEnabled });
@@ -52,7 +54,7 @@ export default function SnkrShopDetail() {
     <div className="flex items-center justify-between gap-3"><Button variant="ghost" onClick={() => setLocation("/shop-snkr")} className="-ml-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-2 h-5 w-5" />Shop SNKR</Button><a href={item.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-3 text-sm font-medium text-teal-200 hover:bg-teal-500/10"><ExternalLink className="mr-2 h-4 w-4" />Mở SNKRDUNK</a></div>
 
     <section className="grid gap-5 rounded-3xl border border-border bg-card p-4 shadow-sm md:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.25fr)] md:p-6">
-      <div className="flex min-h-64 items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-2 md:min-h-[390px] md:p-3"><img src={item.imageUrl && !imageFailed ? item.imageUrl : FALLBACK_PRODUCT_IMAGE_URL} alt={item.imageUrl && !imageFailed ? title : `${title} — chưa có ảnh`} className="h-full max-h-[460px] w-full scale-[1.12] object-contain" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; setImageFailed(true); }} /></div>
+      <div className="flex aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0 md:min-h-[390px]"><img src={item.imageUrl && !imageFailed ? item.imageUrl : FALLBACK_PRODUCT_IMAGE_URL} alt={item.imageUrl && !imageFailed ? title : `${title} — chưa có ảnh`} className="h-full max-h-[460px] w-full object-contain" style={{ transform: `scale(${productImageZoom})`, transformOrigin: "center" }} referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; setImageFailed(true); }} /></div>
       <div className="flex min-w-0 flex-col py-1">
         <div className="mb-3 flex flex-wrap gap-2"><Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-100">{typeLabel(item.productType)}</Badge>{item.productType === "card" && item.cardRank && <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-100">Rank {item.cardRank}</Badge>}<Badge variant="outline" className="border-border bg-background text-muted-foreground">Theo dõi giá độc lập</Badge></div>
         <h1 className="break-words text-xl font-black leading-tight text-foreground sm:text-2xl md:text-3xl">{title}</h1>

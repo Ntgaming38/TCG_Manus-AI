@@ -1367,3 +1367,10 @@
 - [x] Giữ nền trắng phủ kín toàn bộ khung, không méo hoặc cắt ảnh
 - [x] Kiểm thử danh sách/trang chi tiết trên desktop và mobile
 - [x] Lưu checkpoint phiên bản mới nhất
+
+## Zoom ảnh và khung trắng full
+- [x] Rà soát Cài đặt, các component ảnh và nguyên nhân khung chưa full
+- [x] Thêm tùy chọn điều chỉnh mức zoom và lưu lựa chọn người dùng
+- [x] Sửa khung ảnh để nền trắng phủ kín và ảnh cân đúng tỉ lệ
+- [x] Áp dụng thiết lập nhất quán cho Card, Box và Pack toàn app
+- [x] Bổ sung kiểm thử desktop/mobile và lưu checkpoint phiên bản mới

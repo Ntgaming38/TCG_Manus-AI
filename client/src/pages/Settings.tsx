@@ -15,6 +15,7 @@ import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFF
 import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyEligibleUrls, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyEligibleUrls, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 import { formatYen, readCurrencySymbolPosition, saveCurrencySymbolPosition, type CurrencySymbolPosition } from "@shared/formatYen";
+import { DEFAULT_PRODUCT_IMAGE_ZOOM, PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS, productImageZoomLabel, readProductImageZoom, saveProductImageZoomToWindow, type ProductImageZoom } from "@/lib/productImageDisplay";
 import { getDataBackupFileName, rowsToCsv, type DataBackupScope } from "@shared/dataBackupExport";
 import { dataBackupRestoreSchema, getDataBackupRestorePreview, type DataBackupRestorePayload } from "@shared/dataBackupRestore";
 import { getSensitiveActivityLabel } from "@shared/sensitiveActivityLog";
@@ -26,7 +27,7 @@ const BATCH_SIZES = [6, 12, 18, 20] as const;
 const TRASH_RETENTION_DAYS = [7, 14, 30, 60, 90, 180] as const;
 type SourceDraft = { label: string; sourceUrl: string; checkIntervalMinutes: string; isActive: boolean };
 type SourceFilter = "all" | "errors";
-type SettingsSection = "rgb" | "currency" | "saleLocations" | "backup" | "activity" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
+type SettingsSection = "rgb" | "currency" | "productImages" | "saleLocations" | "backup" | "activity" | "chyusen" | "sources" | "marketplace" | "trash" | "background" | "backgroundDaily" | "backgroundHistory";
 
 function statusStyle(status?: string | null) {
   if (status === "unavailable") return "border-red-200 bg-red-50 text-red-700";
@@ -58,6 +59,7 @@ export default function Settings() {
   const [rgbEffectsSpeed, setRgbEffectsSpeed] = useState<RgbEffectSpeed>(() => readRgbEffectsSpeed(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsColors, setRgbEffectsColors] = useState<RgbEffectColors>(() => readRgbEffectsColors(typeof window === "undefined" ? undefined : window.localStorage));
   const [currencySymbolPosition, setCurrencySymbolPosition] = useState<CurrencySymbolPosition>(() => readCurrencySymbolPosition(typeof window === "undefined" ? undefined : window.localStorage));
+  const [productImageZoom, setProductImageZoom] = useState<ProductImageZoom>(() => readProductImageZoom(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundUrl, setLoginBackgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundHistory, setLoginBackgroundHistory] = useState<LoginBackgroundHistoryItem[]>(() => readLoginBackgroundHistory(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundDailyRandom, setLoginBackgroundDailyRandom] = useState(() => readLoginBackgroundDailyRandom(typeof window === "undefined" ? undefined : window.localStorage));
@@ -69,7 +71,7 @@ export default function Settings() {
   const [restoreConfirmation, setRestoreConfirmation] = useState("");
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [reportAccentColor, setReportAccentColor] = useState("#DC2626");
-  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, saleLocations: true, backup: true, activity: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
+  const [collapsedSettingsSections, setCollapsedSettingsSections] = useState<Record<SettingsSection, boolean>>({ rgb: true, currency: true, productImages: true, saleLocations: true, backup: true, activity: true, chyusen: true, sources: true, marketplace: true, trash: true, background: true, backgroundDaily: true, backgroundHistory: true });
 
   const updateSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); } });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { utils.chyusen.sources.invalidate(); toast.success("Đã lưu thay đổi nguồn theo dõi."); } });
@@ -173,6 +175,16 @@ export default function Settings() {
     saveCurrencySymbolPosition(position, window.localStorage);
     setCurrencySymbolPosition(position);
     toast.success(`Đã đặt ký hiệu ¥ ${position === "suffix" ? "sau" : "trước"} số tiền trên thiết bị này.`);
+  };
+  const updateProductImageZoom = (zoom: ProductImageZoom) => {
+    saveProductImageZoomToWindow(zoom);
+    setProductImageZoom(zoom);
+    toast.success(`Đã đặt mức ảnh sản phẩm: ${productImageZoomLabel(zoom)}.`);
+  };
+  const resetProductImageZoom = () => {
+    saveProductImageZoomToWindow(DEFAULT_PRODUCT_IMAGE_ZOOM);
+    setProductImageZoom(DEFAULT_PRODUCT_IMAGE_ZOOM);
+    toast.success("Đã khôi phục mức ảnh sản phẩm mặc định.");
   };
   const uploadLoginBackgroundFile = (file?: File) => {
     if (!file) return;
@@ -313,6 +325,11 @@ export default function Settings() {
     <Card className="settings-collapsible-panel settings-currency-card" data-collapsed={collapsedSettingsSections.currency}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("currency", event)}><CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-emerald-400" />Định dạng tiền tệ</CardTitle><CardDescription>Chọn vị trí ký hiệu ¥ cho số tiền trên toàn ứng dụng. Lựa chọn được lưu riêng trên thiết bị này.</CardDescription></CardHeader>
       <CardContent className="space-y-3"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_190px] sm:items-center"><div><p className="text-sm font-semibold">Vị trí ký hiệu ¥</p><p className="mt-1 text-xs text-muted-foreground">Số âm luôn có dấu trừ ngay trước số tiền; phần Lợi nhuận âm vẫn dùng màu đỏ và animation.</p></div><Select value={currencySymbolPosition} onValueChange={(value) => updateCurrencySymbolPosition(value as CurrencySymbolPosition)}><SelectTrigger aria-label="Vị trí ký hiệu tiền tệ"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="suffix">Sau số tiền — 1,000 ¥</SelectItem><SelectItem value="prefix">Trước số tiền — ¥ 1,000</SelectItem></SelectContent></Select></div><div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Xem trước</p><div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1"><p className="text-base font-bold text-foreground">{formatYen(12800, "ja-JP", currencySymbolPosition)}</p><p className="text-base font-bold text-red-400">{formatYen(-12800, "ja-JP", currencySymbolPosition)}</p></div></div></CardContent>
+    </Card>
+
+    <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.productImages}>
+      <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("productImages", event)}><CardTitle className="flex items-center gap-2"><ImageUp className="h-5 w-5 text-teal-400" />Hiển thị ảnh sản phẩm</CardTitle><CardDescription>Điều chỉnh mức phóng to cho ảnh Card, Box và Pack trên toàn bộ ứng dụng. Nền trắng vẫn phủ kín khung và ảnh không bị méo.</CardDescription></CardHeader>
+      <CardContent className="space-y-3"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_210px] sm:items-center"><div><p className="text-sm font-semibold">Mức phóng to hình ảnh</p><p className="mt-1 text-xs text-muted-foreground">Hiện tại: <span className="font-semibold text-teal-300">{productImageZoomLabel(productImageZoom)}</span>. Thiết lập được lưu riêng trên thiết bị này.</p></div><Select value={String(productImageZoom)} onValueChange={(value) => updateProductImageZoom(Number(value) as ProductImageZoom)}><SelectTrigger aria-label="Mức phóng to ảnh sản phẩm"><SelectValue /></SelectTrigger><SelectContent>{PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}</SelectContent></Select></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-teal-500/20 bg-teal-500/5 p-3"><div className="flex items-center gap-3"><div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-white bg-white"><div className="h-12 w-12 scale-[var(--product-image-zoom)] rounded-md border-2 border-dashed border-slate-300 bg-slate-100" style={{ "--product-image-zoom": productImageZoom } as React.CSSProperties} /></div><div><p className="text-xs font-semibold">Xem trước khung trắng</p><p className="mt-0.5 text-[11px] text-muted-foreground">Ảnh được căn giữa và phóng to theo lựa chọn.</p></div></div><Button type="button" variant="outline" size="sm" onClick={resetProductImageZoom}>Đặt lại mặc định</Button></div></CardContent>
     </Card>
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.saleLocations}>
