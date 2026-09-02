@@ -1215,30 +1215,30 @@
 - [x] Chuẩn bị bản sao mã nguồn độc lập và repository riêng
 - [x] Xác nhận các bước xuất JSON toàn bộ dữ liệu từ project cũ
 - [x] Hướng dẫn đăng nhập đúng tài khoản đích và khôi phục JSON một lần
-- [ ] Kiểm tra số lượng bản ghi và ảnh sau khi khôi phục
+- [x] Kiểm tra số lượng bản ghi và ảnh sau khi khôi phục
 
 ## Thử checkpoint theo hướng dẫn hỗ trợ
-- [ ] Thử lưu checkpoint và xuất bản lại phiên bản mới nhất
-- [ ] Ghi nhận chính xác thời điểm và thông báo nếu merge conflict còn xuất hiện
+- [x] Thử lưu checkpoint và xuất bản lại phiên bản mới nhất
+- [x] Ghi nhận chính xác thời điểm và thông báo nếu merge conflict còn xuất hiện
 
 ## Kiểm tra lại sau phản hồi Manus Help
-- [ ] Đọc phản hồi hỗ trợ mới nhất về merge conflict
-- [ ] Thử checkpoint một lần theo hướng dẫn
-- [ ] Ghi nhận đã xuất bản hoặc vẫn bị chặn
+- [x] Đọc phản hồi hỗ trợ mới nhất về merge conflict
+- [x] Thử checkpoint một lần theo hướng dẫn
+- [x] Ghi nhận đã xuất bản hoặc vẫn bị chặn
 
 ## Hướng dẫn sử dụng bản sao project mới
 - [x] Hướng dẫn người dùng tự tạo project mới từ repository private hoặc gói mã nguồn
 - [x] Hướng dẫn sao lưu/khôi phục dữ liệu và xác minh ảnh sau khi chuyển
 
 ## Kiểm tra file bản sao project
-- [ ] Kiểm tra gói mã nguồn và tài liệu có tồn tại, đọc được và toàn vẹn
-- [ ] Tạo lại gói tải xuống nếu file cũ bị lỗi hoặc không còn truy cập
-- [ ] Cung cấp lại file và hướng dẫn mở trên máy tính
+- [x] Kiểm tra gói mã nguồn và tài liệu có tồn tại, đọc được và toàn vẹn
+- [x] Tạo lại gói tải xuống nếu file cũ bị lỗi hoặc không còn truy cập
+- [x] Cung cấp lại file và hướng dẫn mở trên máy tính
 
 ## Đối chiếu ảnh Shop SNKR còn nền đen
-- [ ] Kiểm kê các bản ghi Shop SNKR đang dùng URL CDN trực tiếp
-- [ ] Đối chiếu với bản xuất bản và bản xem trước để xác định nguồn khác nhau
-- [ ] Xác nhận cách xử lý lại ảnh cũ mà không thay đổi giá hoặc dữ liệu theo dõi
+- [x] Kiểm kê các bản ghi Shop SNKR đang dùng URL CDN trực tiếp
+- [x] Đối chiếu với bản xuất bản và bản xem trước để xác định nguồn khác nhau
+- [x] Xác nhận cách xử lý lại ảnh cũ mà không thay đổi giá hoặc dữ liệu theo dõi
 
 ## Ảnh mẫu nền trắng Shop SNKR
 - [x] Chọn một ảnh CDN Shop SNKR làm mẫu
@@ -1257,4 +1257,4 @@
 - [x] Commit thay đổi hiện có rồi hợp nhất origin/main mà không reset hoặc tạo project mới
 - [x] Hợp nhất thủ công ActivityHistory.tsx và todo.md, giữ lại cả hai phía
 - [x] Chạy test và kiểm tra TypeScript, chỉ sửa lỗi do merge
-- [ ] Commit kết quả và lưu checkpoint xuất bản phiên bản mới nhất
+- [x] Commit kết quả và lưu checkpoint xuất bản phiên bản mới nhất
