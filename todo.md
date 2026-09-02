@@ -1265,3 +1265,10 @@
 - [x] Thêm thông báo thành công và lỗi rõ ràng sau khi làm mới ảnh
 - [x] Bổ sung kiểm thử hồi quy và xác minh desktop/mobile
 - [x] Lưu checkpoint phiên bản mới nhất
+
+## Tiến trình xử lý ảnh AI
+- [x] Rà soát luồng xử lý ảnh AI và trạng thái loading hiện có
+- [x] Thêm tiến trình nhiều bước với phần trăm và mô tả bước hiện tại
+- [x] Hiển thị trạng thái hoàn tất, lỗi và khả năng thử lại rõ ràng
+- [x] Bổ sung kiểm thử hồi quy và xác minh desktop/mobile
+- [x] Lưu checkpoint phiên bản mới nhất

@@ -23,7 +23,9 @@ describe("Làm mới ảnh sản phẩm từ SNKRDUNK", () => {
   });
 
   it("hiển thị loading, vùng thông báo live và trạng thái thành công/lỗi", () => {
-    expect(productsPage).toContain("Đang kiểm tra SNKRDUNK và làm mới ảnh sản phẩm");
+    expect(productsPage).toContain("Đang xử lý ảnh AI");
+    expect(productsPage).toContain("IMAGE_REFRESH_STEPS");
+    expect(productsPage).toContain("progress: 100");
     expect(productsPage).toContain('role="status"');
     expect(productsPage).toContain("aria-busy");
     expect(productsPage).toContain("Làm mới ảnh từ SNKR");
@@ -31,5 +33,7 @@ describe("Làm mới ảnh sản phẩm từ SNKRDUNK", () => {
     expect(productsPage).toContain("Làm mới ảnh thất bại:");
     expect(productsPage).toContain("CheckCircle2");
     expect(productsPage).toContain("CircleAlert");
+    expect(productsPage).toContain("aria-label={`Tiến độ ${imageRefreshStatus.progress}%`}");
+    expect(productsPage).toContain("Đọc dữ liệu sản phẩm SNKRDUNK");
   });
 });
