@@ -1204,3 +1204,57 @@
 - [x] Bảo toàn lịch sử bán và cho phép thao tác xóa hợp lệ không bị chặn nhầm
 - [x] Kiểm thử hồi quy luồng Bán Hàng và lưu checkpoint
 - [x] Cho phép xóa giao dịch mua 5 Pack Geo khi tồn kho còn đủ sau các giao dịch bán
+
+## Project mới từ bản sao
+- [x] Tạo workspace project mới từ gói sao lưu hiện có
+- [x] Đăng ký repository riêng, mặc định private, cho project mới
+- [x] Viết hướng dẫn sao lưu và khôi phục dữ liệu ứng dụng sang project mới
+- [x] Kiểm thử build/test của bản sao và bàn giao đường dẫn
+
+## Bản sao lưu và chuyển dữ liệu sang project mới
+- [x] Chuẩn bị bản sao mã nguồn độc lập và repository riêng
+- [x] Xác nhận các bước xuất JSON toàn bộ dữ liệu từ project cũ
+- [x] Hướng dẫn đăng nhập đúng tài khoản đích và khôi phục JSON một lần
+- [ ] Kiểm tra số lượng bản ghi và ảnh sau khi khôi phục
+
+## Thử checkpoint theo hướng dẫn hỗ trợ
+- [ ] Thử lưu checkpoint và xuất bản lại phiên bản mới nhất
+- [ ] Ghi nhận chính xác thời điểm và thông báo nếu merge conflict còn xuất hiện
+
+## Kiểm tra lại sau phản hồi Manus Help
+- [ ] Đọc phản hồi hỗ trợ mới nhất về merge conflict
+- [ ] Thử checkpoint một lần theo hướng dẫn
+- [ ] Ghi nhận đã xuất bản hoặc vẫn bị chặn
+
+## Hướng dẫn sử dụng bản sao project mới
+- [x] Hướng dẫn người dùng tự tạo project mới từ repository private hoặc gói mã nguồn
+- [x] Hướng dẫn sao lưu/khôi phục dữ liệu và xác minh ảnh sau khi chuyển
+
+## Kiểm tra file bản sao project
+- [ ] Kiểm tra gói mã nguồn và tài liệu có tồn tại, đọc được và toàn vẹn
+- [ ] Tạo lại gói tải xuống nếu file cũ bị lỗi hoặc không còn truy cập
+- [ ] Cung cấp lại file và hướng dẫn mở trên máy tính
+
+## Đối chiếu ảnh Shop SNKR còn nền đen
+- [ ] Kiểm kê các bản ghi Shop SNKR đang dùng URL CDN trực tiếp
+- [ ] Đối chiếu với bản xuất bản và bản xem trước để xác định nguồn khác nhau
+- [ ] Xác nhận cách xử lý lại ảnh cũ mà không thay đổi giá hoặc dữ liệu theo dõi
+
+## Ảnh mẫu nền trắng Shop SNKR
+- [x] Chọn một ảnh CDN Shop SNKR làm mẫu
+- [x] Tạo ảnh nền trắng thật và lưu bản mẫu
+- [x] Gửi ảnh mẫu để người dùng kiểm tra trước khi xử lý hàng loạt
+
+## Xử lý hàng loạt ảnh nền trắng Shop SNKR
+- [x] Lập danh sách và lưu bản đối chiếu 12 sản phẩm CDN còn ảnh nền đen
+- [x] Tải ảnh nguồn và tạo 12 ảnh nền trắng theo ảnh mẫu đã duyệt
+- [x] Kiểm tra chất lượng và đối chiếu đúng sản phẩm trước khi cập nhật
+- [x] Cập nhật URL ảnh nền trắng cho 12 sản phẩm, giữ nguyên giá và dữ liệu theo dõi
+- [x] Xác minh dữ liệu sau migration và hoàn tất báo cáo
+
+## Hợp nhất Git và lưu checkpoint phiên bản mới nhất
+- [ ] Kiểm tra trạng thái Git, nhánh và vùng xung đột hiện tại
+- [ ] Commit thay đổi hiện có rồi hợp nhất origin/main mà không reset hoặc tạo project mới
+- [ ] Hợp nhất thủ công ActivityHistory.tsx và todo.md, giữ lại cả hai phía
+- [ ] Chạy test và kiểm tra TypeScript, chỉ sửa lỗi do merge
+- [ ] Commit kết quả và lưu checkpoint xuất bản phiên bản mới nhất
