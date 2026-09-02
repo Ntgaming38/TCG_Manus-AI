@@ -17,10 +17,16 @@ import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type Product
 import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { getAutoCreateProductType } from "@shared/productCreateType";
 import { getCardRankLabel, normalizeCardRank } from "@shared/cardRank";
-import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus } from "lucide-react";
+import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+
+type ImageRefreshStatus = {
+  id: number;
+  state: "loading" | "success" | "error";
+  message: string;
+};
 
 export default function Products() {
   const [location] = useLocation();
@@ -42,6 +48,7 @@ export default function Products() {
   const [deleteCandidate, setDeleteCandidate] = useState<{ id: number; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [imageRefreshStatus, setImageRefreshStatus] = useState<ImageRefreshStatus | null>(null);
   const [newProduct, setNewProduct] = useState({
     name: "", type: "box" as "card" | "box" | "pack", series: "Pokemon",
     setName: "", quantity: 1, buyPrice: 0, marketPrice: 0, description: "",
@@ -60,6 +67,11 @@ export default function Products() {
 
   useEffect(() => { window.localStorage.setItem("tcg-products-view-mode", viewMode); }, [viewMode]);
   useEffect(() => { window.localStorage.setItem("tcg-products-list-columns", JSON.stringify(visibleListColumns)); }, [visibleListColumns]);
+  useEffect(() => {
+    if (!imageRefreshStatus || imageRefreshStatus.state === "loading") return;
+    const timeoutId = window.setTimeout(() => setImageRefreshStatus(null), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [imageRefreshStatus]);
 
   const addProduct = trpc.products.create.useMutation({
     onSuccess: () => {
@@ -89,6 +101,26 @@ export default function Products() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const refreshImage = trpc.products.refreshImageFromSnkrdunk.useMutation({
+    onMutate: ({ id }) => {
+      setImageRefreshStatus({ id, state: "loading", message: "Đang kiểm tra SNKRDUNK và làm mới ảnh sản phẩm…" });
+    },
+    onSuccess: (result) => {
+      setImageRefreshStatus({ id: result.productId, state: "success", message: result.message });
+      toast.success(`${result.productName}: ${result.message}`);
+      refetch();
+    },
+    onError: (error, variables) => {
+      setImageRefreshStatus({ id: variables.id, state: "error", message: error.message });
+      toast.error(`Làm mới ảnh thất bại: ${error.message}`);
+    },
+  });
+
+  const handleRefreshImage = (product: any) => {
+    if (refreshImage.isPending) return;
+    refreshImage.mutate({ id: product.id });
+  };
 
   const handleImageUpload = async (productId: number, file: File) => {
     setUploadingId(productId);
@@ -196,6 +228,7 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
+      {imageRefreshStatus && <div role="status" aria-live="polite" aria-busy={imageRefreshStatus.state === "loading"} className={`flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm ${imageRefreshStatus.state === "loading" ? "border-sky-400/40 bg-sky-500/10 text-sky-200" : imageRefreshStatus.state === "success" ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200" : "border-red-400/40 bg-red-500/10 text-red-200"}`}><span className="mt-0.5 shrink-0">{imageRefreshStatus.state === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : imageRefreshStatus.state === "success" ? <CheckCircle2 className="h-4 w-4" /> : <CircleAlert className="h-4 w-4" />}</span><span>{imageRefreshStatus.message}</span></div>}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{getTypeLabel()}</h1>
@@ -460,7 +493,7 @@ export default function Products() {
                     <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
                       {product.status === 'in_stock' ? 'Trong kho' : product.status === 'sold' ? 'Đã bán' : product.status}
                     </Badge>
-                    <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onDelete={handleDelete} />
+                    <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onRefreshImage={handleRefreshImage} refreshingImageId={refreshImage.isPending ? (refreshImage.variables?.id ?? null) : null} onDelete={handleDelete} />
                   </div>
                 </div>
                 {/* Product image */}
@@ -503,7 +536,7 @@ export default function Products() {
             return <Card key={product.id} className="bg-card transition-colors hover:border-primary/30"><CardContent className="flex items-center gap-2 p-2.5 sm:gap-3 sm:p-3">
               <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}<Badge variant="secondary" className="text-[10px] capitalize">{product.type}</Badge>{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}</div>
               {metricColumns.length > 0 && <div className="grid shrink-0 grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] sm:flex sm:items-center sm:gap-x-3">{metricColumns.map((column) => <ProductListMetric key={column} product={product} column={column} />)}</div>}
-              <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onDelete={handleDelete} />
+              <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onRefreshImage={handleRefreshImage} refreshingImageId={refreshImage.isPending ? (refreshImage.variables?.id ?? null) : null} onDelete={handleDelete} />
             </CardContent></Card>;
           })}
         </div>
@@ -518,8 +551,10 @@ export default function Products() {
   );
 }
 
-function ProductActionMenu({ product, onEdit, onUpload, onDelete }: { product: any; onEdit: (product: any) => void; onUpload: (id: number) => void; onDelete: (id: number, name: string) => void }) {
-  return <div className="group relative shrink-0"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Tùy chọn" className="h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 sm:h-8 sm:w-8"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => onEdit(product)}><Pencil className="mr-2 h-3 w-3" />Sửa</DropdownMenuItem><DropdownMenuItem onClick={() => onUpload(product.id)}><ImagePlus className="mr-2 h-3 w-3" />Upload ảnh</DropdownMenuItem><DropdownMenuItem className="text-red-400" onClick={() => onDelete(product.id, product.name)}><Trash2 className="mr-2 h-3 w-3" />Xóa</DropdownMenuItem></DropdownMenuContent></DropdownMenu><span role="tooltip" className="pointer-events-none absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded bg-black/85 px-2 py-1 text-[11px] text-white opacity-0 shadow transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Tùy chọn</span></div>;
+function ProductActionMenu({ product, onEdit, onUpload, onRefreshImage, refreshingImageId, onDelete }: { product: any; onEdit: (product: any) => void; onUpload: (id: number) => void; onRefreshImage: (product: any) => void; refreshingImageId: number | null; onDelete: (id: number, name: string) => void }) {
+  const isRefreshing = refreshingImageId === product.id;
+  const hasSnkrdunkUrl = Boolean(product.snkrdunkUrl);
+  return <div className="group relative shrink-0"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Tùy chọn" className="h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 sm:h-8 sm:w-8"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => onEdit(product)}><Pencil className="mr-2 h-3 w-3" />Sửa</DropdownMenuItem><DropdownMenuItem onClick={() => onUpload(product.id)}><ImagePlus className="mr-2 h-3 w-3" />Upload ảnh</DropdownMenuItem>{hasSnkrdunkUrl && <DropdownMenuItem onClick={() => onRefreshImage(product)} disabled={refreshingImageId !== null}><RefreshCw className={`mr-2 h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />{isRefreshing ? "Đang làm mới ảnh…" : "Làm mới ảnh từ SNKR"}</DropdownMenuItem>}<DropdownMenuItem className="text-red-400" onClick={() => onDelete(product.id, product.name)}><Trash2 className="mr-2 h-3 w-3" />Xóa</DropdownMenuItem></DropdownMenuContent></DropdownMenu><span role="tooltip" className="pointer-events-none absolute right-0 top-full z-20 mt-1 whitespace-nowrap rounded bg-black/85 px-2 py-1 text-[11px] text-white opacity-0 shadow transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Tùy chọn</span></div>;
 }
 
 function ProductListMetric({ product, column }: { product: any; column: ProductListColumnKey }) {

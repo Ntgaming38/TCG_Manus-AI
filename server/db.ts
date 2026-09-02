@@ -343,7 +343,47 @@ export async function updateSnkrdunkUrl(id: number, userId: number, snkrdunkUrl:
     entityType: "product",
     entityId: id,
   });
-  return { success: true, snkrdunkUrl, image: sourceImage && shouldReplaceImage ? sourceImage : product.image };
+    return { success: true, snkrdunkUrl, image: sourceImage && shouldReplaceImage ? sourceImage : product.image };
+}
+
+export async function refreshProductImageFromSnkrdunk(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const product = await getProductById(id);
+  if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+  if (!product.snkrdunkUrl) {
+    throw new Error("Sản phẩm chưa có link SNKRDUNK để làm mới ảnh.");
+  }
+
+  const metadata = await fetchSnkrdunkProductMetadata(product.snkrdunkUrl);
+  if (!metadata.imageUrl) {
+    throw new Error("SNKRDUNK chưa cung cấp ảnh sản phẩm cho link này.");
+  }
+
+  // Storage images are approved white-background or user-uploaded variants.
+  // Keep them instead of replacing them with a raw CDN image on refresh.
+  const keepsCurrentStorageImage = Boolean(product.image?.startsWith("/manus-storage/"));
+  const nextImage = keepsCurrentStorageImage ? product.image : metadata.imageUrl;
+  await db.update(products)
+    .set({ image: nextImage })
+    .where(and(eq(products.id, id), eq(products.userId, userId)));
+  await db.insert(activityLogs).values({
+    userId,
+    action: "snkrdunk_image_refreshed",
+    description: `Làm mới ảnh SNKRDUNK: ${product.name}${keepsCurrentStorageImage ? " · giữ bản ảnh storage hiện tại" : ""}`,
+    entityType: "product",
+    entityId: id,
+  });
+
+  return {
+    productId: id,
+    productName: product.name,
+    image: nextImage,
+    replaced: !keepsCurrentStorageImage,
+    message: keepsCurrentStorageImage
+      ? "Ảnh nền trắng hiện tại đã được giữ nguyên sau khi kiểm tra SNKRDUNK."
+      : "Đã làm mới ảnh sản phẩm từ SNKRDUNK.",
+  };
 }
 
 export async function syncSnkrdunkPriceForProduct(id: number, userId: number) {

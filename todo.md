@@ -1258,3 +1258,10 @@
 - [x] Hợp nhất thủ công ActivityHistory.tsx và todo.md, giữ lại cả hai phía
 - [x] Chạy test và kiểm tra TypeScript, chỉ sửa lỗi do merge
 - [x] Commit kết quả và lưu checkpoint xuất bản phiên bản mới nhất
+
+## Loading và trạng thái làm mới ảnh Shop SNKR
+- [x] Xác định nút làm mới ảnh và mutation liên quan
+- [x] Thêm trạng thái loading trực quan, khóa thao tác lặp và thông báo đang xử lý
+- [x] Thêm thông báo thành công và lỗi rõ ràng sau khi làm mới ảnh
+- [x] Bổ sung kiểm thử hồi quy và xác minh desktop/mobile
+- [ ] Lưu checkpoint phiên bản mới nhất

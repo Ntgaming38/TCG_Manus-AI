@@ -401,6 +401,10 @@ export const appRouter = router({
       .input(z.object({ id: z.number(), snkrdunkUrl: z.string().url() }))
       .mutation(({ ctx, input }) => db.updateSnkrdunkUrl(input.id, ctx.user.id, input.snkrdunkUrl)),
 
+    refreshImageFromSnkrdunk: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => db.refreshProductImageFromSnkrdunk(input.id, ctx.user.id)),
+
     syncSnkrdunkPrice: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => db.syncSnkrdunkPriceForProduct(input.id, ctx.user.id)),
