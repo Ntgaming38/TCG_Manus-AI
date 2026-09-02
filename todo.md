@@ -1341,3 +1341,9 @@
 - [x] Sửa đúng luồng gọi API và giữ nguyên chức năng Shop SNKR
 - [x] Chạy test, TypeScript và xác minh request thực tế
 - [x] Lưu checkpoint phiên bản sửa lỗi
+
+## Chūsen — mặc định công bố gần nhất
+- [x] Rà soát state và logic sắp xếp Chūsen
+- [x] Đặt sắp xếp mặc định theo ngày công bố gần nhất
+- [x] Kiểm thử thứ tự mặc định và các lựa chọn khác
+- [x] Lưu checkpoint phiên bản mới nhất

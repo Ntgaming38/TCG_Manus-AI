@@ -9,6 +9,7 @@ describe("huy hiệu kết quả Chyusen hôm nay", () => {
     expect(source).toContain("const resultToday = isChyusenResultAnnouncementToday(entry)");
     expect(source).toContain(">Hôm nay</Badge>");
     expect(source).toContain('value="resultDate">Công bố gần nhất');
+    expect(source).toContain('useState<"deadline" | "resultDate">("resultDate")');
     expect(source).toContain('sortChyusenByNearestResultDate(matchingEntries)');
   });
 });

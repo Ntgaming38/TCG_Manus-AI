@@ -157,7 +157,7 @@ export default function Chyusen() {
   const resultAnnouncementToday = entries.filter((entry: any) => isChyusenResultAnnouncementToday(entry));
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState<"deadline" | "resultDate">("deadline");
+  const [sortOrder, setSortOrder] = useState<"deadline" | "resultDate">("resultDate");
   const [showDialog, setShowDialog] = useState(false);
   const [draft, setDraft] = useState<ChyusenDraft>(EMPTY_CHYUSEN_DRAFT);
   const dateFieldsRef = useRef<HTMLDivElement>(null);
