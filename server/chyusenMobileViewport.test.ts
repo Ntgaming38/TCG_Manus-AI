@@ -17,7 +17,7 @@ describe("Chyusen trên màn hình nhỏ", () => {
     expect(page).toContain("Tên sản phẩm Chyusen");
     expect(page).toContain("Toàn bộ tên sản phẩm được hiển thị bên dưới.");
     expect(page).toContain("break-words");
-    expect(page).toContain('title={`${entry.shop || "Khác"} · ${entry.productType} · ${entry.series || "Pokemon"}`} className="mt-1 truncate"');
+    expect(page).toContain('title={`${displayChyusenShop(entry)} · ${entry.productType} · ${entry.series || "Pokemon"}`} className="mt-1 truncate"');
     expect(page).toContain("max-h-[calc(100dvh-1rem)]");
     expect(page).toContain("w-[calc(100vw-1rem)]");
     expect(page).toContain("sm:max-w-4xl lg:max-w-5xl");

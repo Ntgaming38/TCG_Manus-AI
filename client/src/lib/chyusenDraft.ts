@@ -1,5 +1,5 @@
 import { formatChyusenDayMonth } from "@shared/chyusenDate";
-import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE, isDefaultChyusenShop } from "@shared/chyusenShops";
+import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE } from "@shared/chyusenShops";
 
 export type ChyusenDraft = {
   title: string;
@@ -27,7 +27,7 @@ export type ChyusenDraft = {
 };
 
 export const EMPTY_CHYUSEN_DRAFT: ChyusenDraft = {
-  title: "", productName: "", series: "Pokemon", productType: "other", shop: ADD_CUSTOM_CHYUSEN_SHOP_VALUE, customShopName: "", sourceUrl: "", externalProductId: "", imageUrl: "", price: "", quantityLimit: "",
+  title: "", productName: "", series: "Pokemon", productType: "other", shop: "", customShopName: "", sourceUrl: "", externalProductId: "", imageUrl: "", price: "", quantityLimit: "",
   applicationStart: "", applicationEnd: "", resultDate: "", pickupStart: "", pickupEnd: "", pickupNote: "", requirements: "", parserStatus: "manual", parserNote: "", fieldConfidence: {},
 };
 
@@ -36,7 +36,7 @@ export function toChyusenDraft(data: Record<string, any>): ChyusenDraft {
   const savedShop = data.shop || "Khác";
   return {
     title: data.title || "", productName: data.productName || "", series: data.series || "Pokemon", productType: data.productType || "other",
-    shop: savedCustomShopName || !isDefaultChyusenShop(savedShop) ? ADD_CUSTOM_CHYUSEN_SHOP_VALUE : savedShop, customShopName: savedCustomShopName || (!isDefaultChyusenShop(savedShop) && savedShop !== "Khác" ? savedShop : ""), sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
+    shop: savedCustomShopName || (savedShop !== "Khác" ? savedShop : ""), customShopName: "", sourceUrl: data.sourceUrl || "", externalProductId: data.externalProductId || "", imageUrl: data.imageUrl || "",
     price: data.price === undefined || data.price === null ? "" : String(data.price), quantityLimit: data.quantityLimit || "",
     applicationStart: formatChyusenDayMonth(data.applicationStart), applicationEnd: formatChyusenDayMonth(data.applicationEnd), resultDate: formatChyusenDayMonth(data.resultDate),
     pickupStart: formatChyusenDayMonth(data.pickupStart), pickupEnd: formatChyusenDayMonth(data.pickupEnd), pickupNote: data.pickupNote || "", requirements: data.requirements || "",

@@ -1313,3 +1313,10 @@
 - [x] Bảo toàn tự lưu cửa hàng mới theo tài khoản
 - [x] Bổ sung kiểm thử biểu mẫu và TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Chūsen — cửa hàng nhập trực tiếp
+- [x] Rà soát dữ liệu cửa hàng tùy chỉnh và điểm hiển thị trên thẻ Chūsen
+- [x] Đưa tên cửa hàng tự nhập vào cùng danh sách chọn với Geo/Joshin
+- [x] Hiển thị tên cửa hàng tùy chỉnh thay cho “Khác” trên thẻ Chūsen
+- [x] Bỏ giao diện ghim, cửa hàng đã lưu và ô tên cửa hàng riêng gây tốn diện tích
+- [x] Bổ sung kiểm thử hồi quy, xác minh mobile và lưu checkpoint

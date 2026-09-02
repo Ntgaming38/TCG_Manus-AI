@@ -32,10 +32,10 @@ describe("buildChyusenSubmission", () => {
     expect(payload.pickupNote).toBe("Khoảng đầu tháng 9");
   });
 
-  it("chuẩn hóa Thêm cửa hàng thành tên cửa hàng thực tế khi lưu", () => {
+  it("chuẩn hóa tên cửa hàng nhập trực tiếp thành dữ liệu tùy chỉnh khi lưu", () => {
     const payload = buildChyusenSubmission({
       ...EMPTY_CHYUSEN_DRAFT,
-      title: "Chyusen", productName: "Pikachu Box", shop: ADD_CUSTOM_CHYUSEN_SHOP_VALUE, customShopName: "  TCG Tokyo  ",
+      title: "Chyusen", productName: "Pikachu Box", shop: "  TCG Tokyo  ",
     });
 
     expect(payload.shop).toBe("Khác");

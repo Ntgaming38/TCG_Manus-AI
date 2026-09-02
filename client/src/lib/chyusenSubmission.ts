@@ -1,5 +1,5 @@
 import { parseChyusenDayMonth } from "@shared/chyusenDate";
-import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE } from "@shared/chyusenShops";
+import { ADD_CUSTOM_CHYUSEN_SHOP_VALUE, isDefaultChyusenShop } from "@shared/chyusenShops";
 import type { ChyusenDraft } from "./chyusenDraft";
 
 const dateFields = [
@@ -17,11 +17,14 @@ export function buildChyusenSubmission(draft: ChyusenDraft, savedAt = new Date()
     return [key, parsed];
   }));
   const { sourceUrl, applicationStart, applicationEnd, resultDate, pickupStart, pickupEnd, ...otherFields } = draft;
-  const customShopName = draft.shop === ADD_CUSTOM_CHYUSEN_SHOP_VALUE ? draft.customShopName.trim() : "";
+  const selectedShop = draft.shop.trim();
+  const customShopName = selectedShop === ADD_CUSTOM_CHYUSEN_SHOP_VALUE
+    ? draft.customShopName.trim()
+    : selectedShop && !isDefaultChyusenShop(selectedShop) ? selectedShop : "";
 
   return {
     ...otherFields,
-    shop: customShopName ? "Khác" : draft.shop,
+    shop: customShopName ? "Khác" : selectedShop,
     sourceUrl: sourceUrl.trim() || undefined,
     imageUrl: draft.imageUrl || undefined,
     customShopName: customShopName || undefined,
