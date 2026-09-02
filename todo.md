@@ -1334,3 +1334,10 @@
 - [x] Đổi mọi hướng dẫn và placeholder ngày sang chữ “Tháng/Ngày”
 - [x] Bổ sung kiểm thử URL, cửa hàng và định dạng ngày
 - [x] Lưu checkpoint phiên bản mới nhất
+
+## Sửa lỗi API Shop SNKR trả HTML thay vì JSON
+- [x] Kiểm tra log và request gây lỗi Unexpected token <
+- [x] Xác định endpoint hoặc cấu hình API sai
+- [x] Sửa đúng luồng gọi API và giữ nguyên chức năng Shop SNKR
+- [x] Chạy test, TypeScript và xác minh request thực tế
+- [x] Lưu checkpoint phiên bản sửa lỗi

@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
 import { initializeRgbEffects } from "./lib/rgbEffects";
+import { fetchTrpcWithHtmlGuard } from "./lib/trpcFetch";
 import "./index.css";
 
 initializeRgbEffects();
@@ -66,10 +67,7 @@ const trpcClient = trpc.createClient({
         return {};
       },
       fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-        });
+        return fetchTrpcWithHtmlGuard(input, init);
       },
     }),
   ],
