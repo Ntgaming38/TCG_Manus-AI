@@ -19,6 +19,7 @@ import { getAutoCreateProductType } from "@shared/productCreateType";
 import { getCardRankLabel, normalizeCardRank } from "@shared/cardRank";
 import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 import { useProductImageZoom } from "@/hooks/useProductImageZoom";
+import { productImageFrameStyle, productImageImageStyle } from "@/lib/productImageDisplay";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -42,7 +43,8 @@ const IMAGE_REFRESH_STEPS = [
 
 export default function Products() {
   const [location] = useLocation();
-  const productImageZoom = useProductImageZoom();
+  const cardImageZoom = useProductImageZoom("card");
+  const boxPackImageZoom = useProductImageZoom("box-pack");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [cardSort, setCardSort] = useState<"rarity" | "roi" | "marketPrice">("rarity");
@@ -542,8 +544,8 @@ export default function Products() {
                   </div>
                 </div>
                 {/* Product image / shared fallback */}
-                <div className="mb-3 aspect-square overflow-hidden rounded-lg border border-white/90 bg-white p-0">
-                  <img src={product.image || FALLBACK_PRODUCT_IMAGE_URL} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="h-full w-full object-contain" style={{ transform: `scale(${productImageZoom})`, transformOrigin: "center" }} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_PRODUCT_IMAGE_URL; }} />
+                <div className="mb-3 aspect-square overflow-hidden rounded-lg border border-white/90 bg-white p-0" style={productImageFrameStyle()}>
+                  <img src={product.image || FALLBACK_PRODUCT_IMAGE_URL} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="h-full w-full bg-white object-contain transition-transform duration-300 motion-reduce:transition-none" style={productImageImageStyle(product.type === "card" ? cardImageZoom : boxPackImageZoom)} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_PRODUCT_IMAGE_URL; }} />
                 </div>
                 <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>

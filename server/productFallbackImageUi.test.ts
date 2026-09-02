@@ -16,7 +16,7 @@ describe("ảnh fallback sản phẩm", () => {
       expect(source).toContain("onError");
       expect(source).toContain("object-contain");
       expect(source).toContain("useProductImageZoom");
-      expect(source).toContain("transform: `scale(${productImageZoom})`");
+      expect(source).toContain("productImageImageStyle");
     }
   });
 

@@ -1374,3 +1374,11 @@
 - [x] Sửa khung ảnh để nền trắng phủ kín và ảnh cân đúng tỉ lệ
 - [x] Áp dụng thiết lập nhất quán cho Card, Box và Pack toàn app
 - [x] Bổ sung kiểm thử desktop/mobile và lưu checkpoint phiên bản mới
+
+## Zoom riêng theo loại sản phẩm và căn ảnh tự động
+- [x] Thêm mức zoom riêng cho ảnh Card dọc và Box/Pack ngang, lưu theo tài khoản trên thiết bị
+- [x] Thêm nút “Khôi phục mặc định” cho từng nhóm zoom và trạng thái đặt lại rõ ràng
+- [x] Thêm chuyển động mượt, tôn trọng prefers-reduced-motion khi thay đổi zoom
+- [x] Tự động căn ảnh vào vùng nền trắng full khung, xử lý ảnh có viền đen hoặc tỷ lệ dư
+- [x] Bổ sung kiểm thử UI/logic, kiểm tra desktop/mobile và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

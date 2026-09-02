@@ -19,7 +19,7 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(detailSource).toContain("trpc.snkrShop.priceHistory.useQuery");
     expect(detailSource).toContain("trpc.snkrShop.quantityPrices.useQuery");
     expect(detailSource).toContain("referrerPolicy=\"no-referrer\"");
-    expect(detailSource).toContain("aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0 md:min-h-[390px]");
+    expect(detailSource).toContain("aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0");
     expect(detailSource).toContain("không được đưa vào Kho Hàng hoặc báo cáo tài chính");
   });
 
@@ -38,8 +38,8 @@ describe("Shop SNKR grid and detail navigation", () => {
   });
 
   it("uses white image frames in the grid and detail views", () => {
-    expect(homeSource).toContain("border-r border-white bg-white p-0");
-    expect(detailSource).toContain("aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0 md:min-h-[390px]");
+    expect(homeSource).toContain("border border-white/90 bg-white p-0");
+    expect(detailSource).toContain("aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0");
   });
 
   it("renders a compact seven-day sparkline from actual history for all products", () => {
@@ -51,7 +51,7 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");
     expect(homeSource).toContain("useProductImageZoom");
-    expect(homeSource).toContain("transform: `scale(${productImageZoom})`");
+    expect(homeSource).toContain("productImageImageStyle(productImageZoom)");
   });
 
   it("orders grid controls as sync, edit, then a red delete action with confirmation", () => {

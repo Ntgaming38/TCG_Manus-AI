@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 import { useProductImageZoom } from "@/hooks/useProductImageZoom";
+import { productImageFrameStyle, productImageImageStyle } from "@/lib/productImageDisplay";
 
 type ShopType = "card" | "box" | "pack";
 type WatchItem = {
@@ -211,7 +212,7 @@ function ShopGridCard({ item, sparklinePoints, onOpen, onSync, onEdit, onDelete,
   const displayName = item.sourceTitle || item.name;
   const customImageLabel = item.name.trim() !== (item.sourceTitle ?? "").trim() ? item.name.trim() : null;
   return <article role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onOpen(); } }} className="group min-w-0 cursor-pointer rounded-2xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-teal-400/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
-    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-white/90 bg-white p-0"><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur"><span className="rgb-action-label">{getTypeLabel(item.productType)}</span></span>{customImageLabel && <span className="absolute right-2 top-2 max-w-[62%] truncate rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm backdrop-blur" title={customImageLabel}>{customImageLabel}</span>}</div>
+    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-white/90 bg-white p-0" style={productImageFrameStyle()}><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur"><span className="rgb-action-label">{getTypeLabel(item.productType)}</span></span>{customImageLabel && <span className="absolute right-2 top-2 max-w-[62%] truncate rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm backdrop-blur" title={customImageLabel}>{customImageLabel}</span>}</div>
     <div className="min-w-0 px-1 pt-3"><p className="line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 text-foreground">{displayName}</p>{item.productType === "card" && <div className="mt-1"><RankBadge rank={item.cardRank} marketPrice={price} /></div>}<p className="mt-2 text-lg font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "Chưa có giá"}</p><MiniPriceSparkline points={sparklinePoints ?? []} /><div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground"><span>Theo dõi từ {new Date(item.createdAt).toLocaleDateString("vi-VN")}</span><span>{item.lastSyncedAt ? `Cập nhật ${new Date(item.lastSyncedAt).toLocaleDateString("vi-VN")}` : "Chờ đồng bộ"}</span></div>
       <div className="mt-2 flex gap-1.5 border-t border-border pt-2"><Button size="icon" onClick={(event) => { event.stopPropagation(); onSync(); }} disabled={syncing} className="h-7 w-7 bg-teal-500 text-slate-950 hover:bg-teal-400" aria-label={`Đồng bộ ${displayName}`}>{syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onEdit(); }} className="h-7 w-7 border-border bg-background" aria-label={`Sửa ${displayName}`}><Pencil className="h-3.5 w-3.5" /></Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onDelete(); }} disabled={deleting} className="h-7 w-7 border-red-500/55 bg-red-950/35 text-red-300 hover:bg-red-600 hover:text-white" aria-label={`Xóa ${displayName}`}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); void copySnkrdunkUrl(item.sourceUrl); }} className="h-7 w-7 border-teal-400/35 bg-teal-500/5 text-teal-100 hover:bg-teal-500/15" aria-label={`Sao chép URL SNKRDUNK của ${displayName}`} title="Sao chép URL SNKRDUNK"><Copy className="h-3.5 w-3.5" /></Button></div>
     </div>
@@ -244,11 +245,11 @@ function WatchItemCard({ item, onSync, onOpenHistory, onEdit, onDelete, syncing,
 }
 
 function DirectProductImage({ item }: { item: WatchItem }) {
-  const productImageZoom = useProductImageZoom();
+  const productImageZoom = useProductImageZoom(item.productType === "card" ? "card" : "box-pack");
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [item.imageUrl]);
   const imageUrl = item.imageUrl && !failed ? item.imageUrl : FALLBACK_PRODUCT_IMAGE_URL;
-  return <img src={imageUrl} alt={item.imageUrl && !failed ? item.sourceTitle || item.name : `${item.name} — chưa có ảnh`} className="h-full w-full object-contain" style={{ transform: `scale(${productImageZoom})`, transformOrigin: "center" }} loading="eager" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; setFailed(true); }} />;
+  return <img src={imageUrl} alt={item.imageUrl && !failed ? item.sourceTitle || item.name : `${item.name} — chưa có ảnh`} className="h-full w-full bg-white object-contain transition-transform duration-300 motion-reduce:transition-none" style={productImageImageStyle(productImageZoom)} loading="eager" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; setFailed(true); }} />;
 }
 
 function HistoryDialog({ item, history, loading, days, onDaysChange, onOpenChange }: { item: WatchItem | null; history: PricePoint[]; loading: boolean; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void; onOpenChange: (open: boolean) => void }) {

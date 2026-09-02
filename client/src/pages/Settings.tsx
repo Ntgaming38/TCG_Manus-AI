@@ -15,7 +15,7 @@ import { DEFAULT_RGB_EFFECT_COLORS, DEFAULT_RGB_EFFECTS_ENABLED, DEFAULT_RGB_EFF
 import { DEFAULT_LOGIN_BACKGROUND_URL, readLoginBackgroundDailyEligibleUrls, readLoginBackgroundDailyRandom, readLoginBackgroundHistory, readLoginBackgroundUrl, rememberLoginBackgroundUrl, removeLoginBackgroundUrl, saveLoginBackgroundDailyEligibleUrls, saveLoginBackgroundDailyRandom, saveLoginBackgroundUrl, type LoginBackgroundHistoryItem } from "@/lib/loginBackground";
 import { DEFAULT_LOGIN_BACKGROUND_EDIT, renderLoginBackgroundDataUrl, type LoginBackgroundEdit } from "@/lib/loginBackgroundEditor";
 import { formatYen, readCurrencySymbolPosition, saveCurrencySymbolPosition, type CurrencySymbolPosition } from "@shared/formatYen";
-import { DEFAULT_PRODUCT_IMAGE_ZOOM, PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS, productImageZoomLabel, readProductImageZoom, saveProductImageZoomToWindow, type ProductImageZoom } from "@/lib/productImageDisplay";
+import { DEFAULT_CARD_PRODUCT_IMAGE_ZOOM, DEFAULT_BOX_PACK_PRODUCT_IMAGE_ZOOM, PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS, productImageZoomLabel, readProductImageZoom, saveProductImageZoomToWindow, type ProductImageKind, type ProductImageZoom } from "@/lib/productImageDisplay";
 import { getDataBackupFileName, rowsToCsv, type DataBackupScope } from "@shared/dataBackupExport";
 import { dataBackupRestoreSchema, getDataBackupRestorePreview, type DataBackupRestorePayload } from "@shared/dataBackupRestore";
 import { getSensitiveActivityLabel } from "@shared/sensitiveActivityLog";
@@ -59,7 +59,8 @@ export default function Settings() {
   const [rgbEffectsSpeed, setRgbEffectsSpeed] = useState<RgbEffectSpeed>(() => readRgbEffectsSpeed(typeof window === "undefined" ? undefined : window.localStorage));
   const [rgbEffectsColors, setRgbEffectsColors] = useState<RgbEffectColors>(() => readRgbEffectsColors(typeof window === "undefined" ? undefined : window.localStorage));
   const [currencySymbolPosition, setCurrencySymbolPosition] = useState<CurrencySymbolPosition>(() => readCurrencySymbolPosition(typeof window === "undefined" ? undefined : window.localStorage));
-  const [productImageZoom, setProductImageZoom] = useState<ProductImageZoom>(() => readProductImageZoom(typeof window === "undefined" ? undefined : window.localStorage));
+  const [cardImageZoom, setCardImageZoom] = useState<ProductImageZoom>(() => readProductImageZoom("card", typeof window === "undefined" ? undefined : window.localStorage));
+  const [boxPackImageZoom, setBoxPackImageZoom] = useState<ProductImageZoom>(() => readProductImageZoom("box-pack", typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundUrl, setLoginBackgroundUrl] = useState(() => readLoginBackgroundUrl(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundHistory, setLoginBackgroundHistory] = useState<LoginBackgroundHistoryItem[]>(() => readLoginBackgroundHistory(typeof window === "undefined" ? undefined : window.localStorage));
   const [loginBackgroundDailyRandom, setLoginBackgroundDailyRandom] = useState(() => readLoginBackgroundDailyRandom(typeof window === "undefined" ? undefined : window.localStorage));
@@ -176,15 +177,18 @@ export default function Settings() {
     setCurrencySymbolPosition(position);
     toast.success(`Đã đặt ký hiệu ¥ ${position === "suffix" ? "sau" : "trước"} số tiền trên thiết bị này.`);
   };
-  const updateProductImageZoom = (zoom: ProductImageZoom) => {
-    saveProductImageZoomToWindow(zoom);
-    setProductImageZoom(zoom);
-    toast.success(`Đã đặt mức ảnh sản phẩm: ${productImageZoomLabel(zoom)}.`);
+  const updateProductImageZoom = (kind: ProductImageKind, zoom: ProductImageZoom) => {
+    saveProductImageZoomToWindow(zoom, kind);
+    if (kind === "card") setCardImageZoom(zoom);
+    else setBoxPackImageZoom(zoom);
+    toast.success(`Đã đặt mức zoom ${kind === "card" ? "Card dọc" : "Box/Pack ngang"}: ${productImageZoomLabel(zoom)}.`);
   };
-  const resetProductImageZoom = () => {
-    saveProductImageZoomToWindow(DEFAULT_PRODUCT_IMAGE_ZOOM);
-    setProductImageZoom(DEFAULT_PRODUCT_IMAGE_ZOOM);
-    toast.success("Đã khôi phục mức ảnh sản phẩm mặc định.");
+  const resetProductImageZoom = (kind: ProductImageKind) => {
+    const defaultZoom = kind === "card" ? DEFAULT_CARD_PRODUCT_IMAGE_ZOOM : DEFAULT_BOX_PACK_PRODUCT_IMAGE_ZOOM;
+    saveProductImageZoomToWindow(defaultZoom, kind);
+    if (kind === "card") setCardImageZoom(defaultZoom);
+    else setBoxPackImageZoom(defaultZoom);
+    toast.success(`Đã khôi phục zoom ${kind === "card" ? "Card dọc" : "Box/Pack ngang"} về mặc định.`);
   };
   const uploadLoginBackgroundFile = (file?: File) => {
     if (!file) return;
@@ -329,7 +333,7 @@ export default function Settings() {
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.productImages}>
       <CardHeader data-settings-header onClick={(event) => toggleSettingsSection("productImages", event)}><CardTitle className="flex items-center gap-2"><ImageUp className="h-5 w-5 text-teal-400" />Hiển thị ảnh sản phẩm</CardTitle><CardDescription>Điều chỉnh mức phóng to cho ảnh Card, Box và Pack trên toàn bộ ứng dụng. Nền trắng vẫn phủ kín khung và ảnh không bị méo.</CardDescription></CardHeader>
-      <CardContent className="space-y-3"><div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_210px] sm:items-center"><div><p className="text-sm font-semibold">Mức phóng to hình ảnh</p><p className="mt-1 text-xs text-muted-foreground">Hiện tại: <span className="font-semibold text-teal-300">{productImageZoomLabel(productImageZoom)}</span>. Thiết lập được lưu riêng trên thiết bị này.</p></div><Select value={String(productImageZoom)} onValueChange={(value) => updateProductImageZoom(Number(value) as ProductImageZoom)}><SelectTrigger aria-label="Mức phóng to ảnh sản phẩm"><SelectValue /></SelectTrigger><SelectContent>{PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}</SelectContent></Select></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-teal-500/20 bg-teal-500/5 p-3"><div className="flex items-center gap-3"><div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-white bg-white"><div className="h-12 w-12 scale-[var(--product-image-zoom)] rounded-md border-2 border-dashed border-slate-300 bg-slate-100" style={{ "--product-image-zoom": productImageZoom } as React.CSSProperties} /></div><div><p className="text-xs font-semibold">Xem trước khung trắng</p><p className="mt-0.5 text-[11px] text-muted-foreground">Ảnh được căn giữa và phóng to theo lựa chọn.</p></div></div><Button type="button" variant="outline" size="sm" onClick={resetProductImageZoom}>Đặt lại mặc định</Button></div></CardContent>
+      <CardContent className="space-y-3"><p className="text-xs text-muted-foreground">Hai nhóm zoom được lưu riêng trên thiết bị này. Ảnh luôn được căn giữa trong nền trắng full khung.</p><div className="grid gap-3 lg:grid-cols-2"><div className="rounded-lg border p-3"><div className="flex items-center justify-between gap-2"><div><p className="text-sm font-semibold">Card dọc</p><p className="mt-1 text-xs text-muted-foreground">Hiện tại: <span className="font-semibold text-teal-300">{productImageZoomLabel(cardImageZoom)}</span></p></div><Button type="button" variant="outline" size="sm" onClick={() => resetProductImageZoom("card")}>Khôi phục mặc định</Button></div><div className="mt-3 flex items-center gap-3"><div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white bg-white"><div className="h-12 w-8 rounded-md border-2 border-dashed border-slate-300 bg-slate-100 transition-transform duration-300" style={{ transform: `scale(${cardImageZoom})` }} /></div><Select value={String(cardImageZoom)} onValueChange={(value) => updateProductImageZoom("card", Number(value) as ProductImageZoom)}><SelectTrigger aria-label="Mức phóng to ảnh Card dọc"><SelectValue /></SelectTrigger><SelectContent>{PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}</SelectContent></Select></div></div><div className="rounded-lg border p-3"><div className="flex items-center justify-between gap-2"><div><p className="text-sm font-semibold">Box/Pack ngang</p><p className="mt-1 text-xs text-muted-foreground">Hiện tại: <span className="font-semibold text-teal-300">{productImageZoomLabel(boxPackImageZoom)}</span></p></div><Button type="button" variant="outline" size="sm" onClick={() => resetProductImageZoom("box-pack")}>Khôi phục mặc định</Button></div><div className="mt-3 flex items-center gap-3"><div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white bg-white"><div className="h-8 w-12 rounded-md border-2 border-dashed border-slate-300 bg-slate-100 transition-transform duration-300" style={{ transform: `scale(${boxPackImageZoom})` }} /></div><Select value={String(boxPackImageZoom)} onValueChange={(value) => updateProductImageZoom("box-pack", Number(value) as ProductImageZoom)}><SelectTrigger aria-label="Mức phóng to ảnh Box/Pack ngang"><SelectValue /></SelectTrigger><SelectContent>{PRODUCT_IMAGE_ZOOM_OPTIONS_WITH_LABELS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}</SelectContent></Select></div></div></div></CardContent>
     </Card>
 
     <Card className="settings-collapsible-panel" data-collapsed={collapsedSettingsSections.saleLocations}>
