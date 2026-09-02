@@ -24,7 +24,7 @@ import { toast } from "sonner";
 
 type ImageRefreshStatus = {
   id: number;
-  state: "loading" | "success" | "error";
+  state: "loading" | "success" | "error" | "cancelled";
   message: string;
   step: number;
   progress: number;
@@ -60,6 +60,7 @@ export default function Products() {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [imageRefreshStatus, setImageRefreshStatus] = useState<ImageRefreshStatus | null>(null);
   const imageRefreshProgressTimer = useRef<number | null>(null);
+  const cancelledImageRefreshIds = useRef(new Set<number>());
   const [newProduct, setNewProduct] = useState({
     name: "", type: "box" as "card" | "box" | "pack", series: "Pokemon",
     setName: "", quantity: 1, buyPrice: 0, marketPrice: 0, description: "",
@@ -119,6 +120,7 @@ export default function Products() {
   const refreshImage = trpc.products.refreshImageFromSnkrdunk.useMutation({
     onMutate: ({ id }) => {
       if (imageRefreshProgressTimer.current !== null) window.clearInterval(imageRefreshProgressTimer.current);
+      cancelledImageRefreshIds.current.delete(id);
       let nextStepIndex = 0;
       setImageRefreshStatus({ id, state: "loading", step: 1, progress: IMAGE_REFRESH_STEPS[0].progress, message: IMAGE_REFRESH_STEPS[0].label });
       imageRefreshProgressTimer.current = window.setInterval(() => {
@@ -134,6 +136,7 @@ export default function Products() {
     onSuccess: (result) => {
       if (imageRefreshProgressTimer.current !== null) window.clearInterval(imageRefreshProgressTimer.current);
       imageRefreshProgressTimer.current = null;
+      if (cancelledImageRefreshIds.current.delete(result.productId)) return;
       setImageRefreshStatus({ id: result.productId, state: "success", step: IMAGE_REFRESH_STEPS.length, progress: 100, message: result.message });
       toast.success(`${result.productName}: ${result.message}`);
       refetch();
@@ -141,6 +144,7 @@ export default function Products() {
     onError: (error, variables) => {
       if (imageRefreshProgressTimer.current !== null) window.clearInterval(imageRefreshProgressTimer.current);
       imageRefreshProgressTimer.current = null;
+      if (cancelledImageRefreshIds.current.delete(variables.id)) return;
       setImageRefreshStatus((current) => ({ id: variables.id, state: "error", step: current?.id === variables.id ? current.step : 1, progress: current?.id === variables.id ? current.progress : 0, message: error.message }));
       toast.error(`Làm mới ảnh thất bại: ${error.message}`);
     },
@@ -149,6 +153,15 @@ export default function Products() {
   const handleRefreshImage = (product: any) => {
     if (refreshImage.isPending) return;
     refreshImage.mutate({ id: product.id });
+  };
+
+  const handleCancelImageRefresh = () => {
+    if (!imageRefreshStatus || imageRefreshStatus.state !== "loading") return;
+    cancelledImageRefreshIds.current.add(imageRefreshStatus.id);
+    if (imageRefreshProgressTimer.current !== null) window.clearInterval(imageRefreshProgressTimer.current);
+    imageRefreshProgressTimer.current = null;
+    setImageRefreshStatus((current) => current ? { ...current, state: "cancelled", message: "Đã hủy theo dõi tiến trình. Nếu yêu cầu đã đến máy chủ, ảnh vẫn có thể hoàn tất ở nền." } : current);
+    toast.info("Đã hủy theo dõi tiến trình xử lý ảnh AI.");
   };
 
   const handleImageUpload = async (productId: number, file: File) => {
@@ -257,7 +270,7 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
-      {imageRefreshStatus && <div role="status" aria-live="polite" aria-busy={imageRefreshStatus.state === "loading"} className={`rounded-lg border px-3 py-3 text-sm ${imageRefreshStatus.state === "loading" ? "border-sky-400/40 bg-sky-500/10 text-sky-200" : imageRefreshStatus.state === "success" ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200" : "border-red-400/40 bg-red-500/10 text-red-200"}`}><div className="flex items-start gap-2"><span className="mt-0.5 shrink-0">{imageRefreshStatus.state === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : imageRefreshStatus.state === "success" ? <CheckCircle2 className="h-4 w-4" /> : <CircleAlert className="h-4 w-4" />}</span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><span className="font-semibold">{imageRefreshStatus.state === "loading" ? "Đang xử lý ảnh AI" : imageRefreshStatus.state === "success" ? "Đã xử lý ảnh thành công" : "Xử lý ảnh không thành công"}</span><span className="font-mono text-xs font-bold">{imageRefreshStatus.progress}%</span></div><p className="mt-1 text-xs opacity-90">{imageRefreshStatus.message}</p><div className="mt-2 h-2 overflow-hidden rounded-full bg-black/20" aria-label={`Tiến độ ${imageRefreshStatus.progress}%`}><div className={`h-full rounded-full transition-[width] duration-300 ${imageRefreshStatus.state === "error" ? "bg-red-300" : imageRefreshStatus.state === "success" ? "bg-emerald-300" : "bg-sky-300"}`} style={{ width: `${imageRefreshStatus.progress}%` }} /></div><div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] opacity-80">{IMAGE_REFRESH_STEPS.map((step, index) => <span key={step.label} className={index < imageRefreshStatus.step || imageRefreshStatus.state === "success" && index === IMAGE_REFRESH_STEPS.length - 1 ? "font-semibold opacity-100" : ""}>{index < imageRefreshStatus.step || imageRefreshStatus.state === "success" && index === IMAGE_REFRESH_STEPS.length - 1 ? "✓ " : "○ "}{step.label}</span>)}</div></div></div></div>}
+      {imageRefreshStatus && <div role="status" aria-live="polite" aria-busy={imageRefreshStatus.state === "loading"} className={`rounded-lg border px-3 py-3 text-sm ${imageRefreshStatus.state === "loading" ? "border-sky-400/40 bg-sky-500/10 text-sky-200" : imageRefreshStatus.state === "success" ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200" : imageRefreshStatus.state === "cancelled" ? "border-amber-400/40 bg-amber-500/10 text-amber-100" : "border-red-400/40 bg-red-500/10 text-red-200"}`}><div className="flex items-start gap-2"><span className="mt-0.5 shrink-0">{imageRefreshStatus.state === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : imageRefreshStatus.state === "success" ? <CheckCircle2 className="h-4 w-4" /> : <CircleAlert className="h-4 w-4" />}</span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><span className="font-semibold">{imageRefreshStatus.state === "loading" ? "Đang xử lý ảnh AI" : imageRefreshStatus.state === "success" ? "Đã xử lý ảnh thành công" : imageRefreshStatus.state === "cancelled" ? "Đã hủy xử lý ảnh AI" : "Xử lý ảnh không thành công"}</span><div className="flex items-center gap-2"><span className="font-mono text-xs font-bold">{imageRefreshStatus.progress}%</span>{imageRefreshStatus.state === "loading" && <Button type="button" size="sm" variant="outline" onClick={handleCancelImageRefresh} className="h-7 border-current/50 bg-transparent px-2 text-xs text-current hover:bg-current/10"><CircleAlert className="mr-1 h-3.5 w-3.5" />Hủy xử lý</Button>}</div></div><p className="mt-1 text-xs opacity-90">{imageRefreshStatus.message}</p><div className="mt-2 h-2 overflow-hidden rounded-full bg-black/20" aria-label={`Tiến độ ${imageRefreshStatus.progress}%`}><div className={`h-full rounded-full transition-[width] duration-300 ${imageRefreshStatus.state === "error" ? "bg-red-300" : imageRefreshStatus.state === "success" ? "bg-emerald-300" : imageRefreshStatus.state === "cancelled" ? "bg-amber-300" : "bg-sky-300"}`} style={{ width: `${imageRefreshStatus.progress}%` }} /></div><div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] opacity-80">{IMAGE_REFRESH_STEPS.map((step, index) => <span key={step.label} className={index < imageRefreshStatus.step || imageRefreshStatus.state === "success" && index === IMAGE_REFRESH_STEPS.length - 1 ? "font-semibold opacity-100" : ""}>{index < imageRefreshStatus.step || imageRefreshStatus.state === "success" && index === IMAGE_REFRESH_STEPS.length - 1 ? "✓ " : "○ "}{step.label}</span>)}</div></div></div></div>}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{getTypeLabel()}</h1>

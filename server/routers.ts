@@ -471,12 +471,6 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.deleteSnkrShopItem(input.id, ctx.user.id)),
-    togglePin: protectedProcedure
-      .input(z.object({ id: z.number().int().positive() }))
-      .mutation(({ ctx, input }) => snkrShopDb.toggleSnkrShopItemPin(input.id, ctx.user.id)),
-    reorderPinned: protectedProcedure
-      .input(z.object({ orderedIds: z.array(z.number().int().positive()).max(200) }))
-      .mutation(({ ctx, input }) => snkrShopDb.reorderPinnedSnkrShopItems(ctx.user.id, input.orderedIds)),
     sync: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.syncSnkrShopItem(input.id, ctx.user.id)),
@@ -485,10 +479,8 @@ export const appRouter = router({
     priceHistory: protectedProcedure
       .input(z.object({ id: z.number().int().positive(), days: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional() }))
       .query(({ ctx, input }) => snkrShopDb.getSnkrShopPriceHistory(input.id, ctx.user.id, input.days)),
-    priceChanges24h: protectedProcedure
-      .query(({ ctx }) => snkrShopDb.getPinnedSnkrShop24hChanges(ctx.user.id)),
-    pinnedHistory7d: protectedProcedure
-      .query(({ ctx }) => snkrShopDb.getPinnedSnkrShop7dHistory(ctx.user.id)),
+    trendHistory7d: protectedProcedure
+      .query(({ ctx }) => snkrShopDb.getSnkrShop7dHistory(ctx.user.id)),
     quantityPrices: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .query(({ ctx, input }) => snkrShopDb.getSnkrShopQuantityPrices(input.id, ctx.user.id)),

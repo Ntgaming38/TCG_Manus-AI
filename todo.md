@@ -1272,3 +1272,10 @@
 - [x] Hiển thị trạng thái hoàn tất, lỗi và khả năng thử lại rõ ràng
 - [x] Bổ sung kiểm thử hồi quy và xác minh desktop/mobile
 - [x] Lưu checkpoint phiên bản mới nhất
+
+## Shop SNKR: xu hướng 7 ngày, bỏ ghim và hủy xử lý ảnh AI
+- [x] Rà soát dữ liệu lịch sử giá 7 ngày và điểm ghim đang dùng trong Shop SNKR
+- [x] Hiển thị biểu đồ tăng/giảm 7 ngày cho toàn bộ sản phẩm Shop SNKR
+- [x] Gỡ nút, bộ lọc và thao tác ghim khỏi Shop SNKR nhưng giữ dữ liệu giá an toàn
+- [x] Thêm nút Hủy xử lý bên cạnh thanh tiến trình ảnh AI cùng trạng thái hủy rõ ràng
+- [x] Bổ sung kiểm thử hồi quy, xác minh giao diện và lưu checkpoint phiên bản mới nhất

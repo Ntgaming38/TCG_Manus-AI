@@ -29,28 +29,14 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(detailSource).toContain("h-[170px]");
   });
 
-  it("offers a visible pin action on grid cards for prioritizing products", () => {
-    expect(homeSource).toContain("onTogglePin");
-    expect(homeSource).toContain("Ghim ưu tiên");
-    expect(homeSource).toContain("togglePin.mutate");
+  it("removes pin controls and presents seven-day trends for every product", () => {
+    expect(homeSource).not.toContain("Ghim ưu tiên");
+    expect(homeSource).not.toContain("Đã ghim (");
+    expect(homeSource).not.toContain("reorderPinned.mutate");
+    expect(homeSource).toContain("trpc.snkrShop.trendHistory7d.useQuery");
   });
 
-  it("filters pinned products and persists their custom drag-and-drop ordering", () => {
-    expect(homeSource).toContain("Đã ghim (");
-    expect(homeSource).toContain("reorderPinned.mutate");
-    expect(homeSource).toContain("draggable={reorderMode && Boolean(item.isPinned)}");
-    expect(homeSource).toContain("Kéo thẻ đã ghim để đổi thứ tự");
-  });
-
-  it("shows real 24-hour movement only on pinned cards and confirms pin actions visually", () => {
-    expect(homeSource).toContain("trpc.snkrShop.priceChanges24h.useQuery");
-    expect(homeSource).toContain("24h: đang thu thập");
-    expect(homeSource).toContain("Đã ghim ưu tiên");
-    expect(homeSource).toContain("Đã bỏ ghim");
-  });
-
-  it("renders a compact seven-day sparkline from real pinned-item history", () => {
-    expect(homeSource).toContain("trpc.snkrShop.pinnedHistory7d.useQuery");
+  it("renders a compact seven-day sparkline from actual history for all products", () => {
     expect(homeSource).toContain("Xu hướng 7 ngày");
     expect(homeSource).toContain("Biểu đồ giá bảy ngày");
   });

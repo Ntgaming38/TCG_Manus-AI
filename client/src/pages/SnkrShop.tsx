@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RankBadge } from "@/components/RankBadge";
 import { trpc } from "@/lib/trpc";
 import { formatYen } from "@shared/formatYen";
-import { BarChart3, Box, ChevronDown, ChevronUp, Copy, ExternalLink, GripVertical, ImageOff, Link2, Loader2, Minus, Package, Pencil, Pin, Plus, RefreshCw, Search, ShieldCheck, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { BarChart3, Box, Copy, ExternalLink, ImageOff, Link2, Loader2, Package, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -24,17 +24,13 @@ type WatchItem = {
   sourceUrl: string;
   sourceTitle: string | null;
   imageUrl: string | null;
-  isPinned: number;
-  pinnedOrder: number;
   currentPrice: string | number;
   lastSyncedAt: Date | null;
   lastSyncError: string | null;
   createdAt: Date;
 };
 type PricePoint = { id: number; price: string | number; source: string; createdAt: Date };
-type PriceMovement24h = { itemId: number; amount: number; percent: number; trend: "up" | "down" | "flat"; hasData: boolean };
 type SparklinePoint7d = { price: string | number; createdAt: Date };
-type PinFeedback = { id: number; isPinned: boolean };
 
 const priceChartConfig = { price: { label: "Giá SNKRDUNK", color: "#14b8a6" } } satisfies ChartConfig;
 
@@ -58,10 +54,6 @@ async function copySnkrdunkUrl(sourceUrl: string) {
 export default function SnkrShop() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | ShopType>("all");
-  const [pinnedOnly, setPinnedOnly] = useState(false);
-  const [reorderMode, setReorderMode] = useState(false);
-  const [draggedPinnedId, setDraggedPinnedId] = useState<number | null>(null);
-  const [pinFeedback, setPinFeedback] = useState<PinFeedback | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [historyItem, setHistoryItem] = useState<WatchItem | null>(null);
   const [editItem, setEditItem] = useState<WatchItem | null>(null);
@@ -72,8 +64,7 @@ export default function SnkrShop() {
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
   const { data: items = [], isLoading } = trpc.snkrShop.list.useQuery({ search: search.trim() || undefined });
-  const priceChangesQuery = trpc.snkrShop.priceChanges24h.useQuery();
-  const pinnedHistory7dQuery = trpc.snkrShop.pinnedHistory7d.useQuery();
+  const trendHistory7dQuery = trpc.snkrShop.trendHistory7d.useQuery();
   const selectedId = historyItem?.id ?? 0;
   const historyInput = useMemo(() => ({ id: selectedId, days: historyDays }), [historyDays, selectedId]);
   const historyQuery = trpc.snkrShop.priceHistory.useQuery(historyInput, { enabled: selectedId > 0 });
@@ -81,8 +72,7 @@ export default function SnkrShop() {
   const refresh = () => {
     void utils.snkrShop.list.invalidate();
     void utils.snkrShop.priceHistory.invalidate();
-    void utils.snkrShop.priceChanges24h.invalidate();
-    void utils.snkrShop.pinnedHistory7d.invalidate();
+    void utils.snkrShop.trendHistory7d.invalidate();
   };
   const syncItem = trpc.snkrShop.sync.useMutation({
     onSuccess: (result) => { toast.success(`${result.name}: ${formatYen(result.currentPrice)}`); refresh(); },
@@ -116,20 +106,6 @@ export default function SnkrShop() {
     onSuccess: () => { setDeleteConfirmItem(null); toast.success("Đã bỏ sản phẩm khỏi Shop SNKR."); refresh(); },
     onError: (error) => toast.error(error.message),
   });
-  const togglePin = trpc.snkrShop.togglePin.useMutation({
-    onSuccess: (item) => {
-      setPinFeedback({ id: item.id, isPinned: Boolean(item.isPinned) });
-      window.setTimeout(() => setPinFeedback((current) => current?.id === item.id ? null : current), 1300);
-      toast.success(item.isPinned ? "Đã ghim sản phẩm ưu tiên." : "Đã bỏ ghim sản phẩm.", { duration: 2600, className: item.isPinned ? "border-amber-400/60 bg-slate-950 text-amber-100" : "border-slate-500/60 bg-slate-950 text-slate-100" });
-      if (!item.isPinned && pinnedOnly) setPinnedOnly(false);
-      refresh();
-    },
-    onError: (error) => toast.error(error.message),
-  });
-  const reorderPinned = trpc.snkrShop.reorderPinned.useMutation({
-    onSuccess: () => { setDraggedPinnedId(null); toast.success("Đã lưu thứ tự sản phẩm ghim."); refresh(); },
-    onError: (error) => { setDraggedPinnedId(null); toast.error(error.message); },
-  });
   const updateItem = trpc.snkrShop.update.useMutation({
     onSuccess: (item) => {
       toast.success("Đã cập nhật thông tin Shop SNKR. Đang lấy giá mới...");
@@ -143,34 +119,10 @@ export default function SnkrShop() {
   const watchItems = items as WatchItem[];
   const syncedCount = watchItems.filter((item) => Boolean(item.lastSyncedAt)).length;
   const pendingCount = watchItems.length - syncedCount;
-  const pinnedItems = watchItems.filter((item) => Boolean(item.isPinned));
-  const priceChangeByItem = useMemo(() => new Map<number, PriceMovement24h>((priceChangesQuery.data ?? []).map((change) => [change.itemId, change])), [priceChangesQuery.data]);
-  const sparklineByItem = useMemo(() => new Map<number, SparklinePoint7d[]>((pinnedHistory7dQuery.data ?? []).map((entry) => [entry.itemId, entry.points])), [pinnedHistory7dQuery.data]);
+  const sparklineByItem = useMemo(() => new Map<number, SparklinePoint7d[]>((trendHistory7dQuery.data ?? []).map((entry) => [entry.itemId, entry.points])), [trendHistory7dQuery.data]);
   const typeMatchedItems = typeFilter === "all" ? watchItems : watchItems.filter((item) => item.productType === typeFilter);
-  const displayedItems = pinnedOnly ? typeMatchedItems.filter((item) => Boolean(item.isPinned)) : typeMatchedItems;
+  const displayedItems = typeMatchedItems;
   const bulkSyncEtaSeconds = Math.max(8, Math.ceil(watchItems.length / 3) * 8);
-  const persistPinnedOrder = (orderedIds: number[]) => {
-    if (orderedIds.length > 1) reorderPinned.mutate({ orderedIds });
-  };
-  const movePinnedItem = (fromId: number, toId: number) => {
-    if (fromId === toId || reorderPinned.isPending) return;
-    const orderedIds = pinnedItems.map((item) => item.id);
-    const fromIndex = orderedIds.indexOf(fromId);
-    const toIndex = orderedIds.indexOf(toId);
-    if (fromIndex < 0 || toIndex < 0) return;
-    orderedIds.splice(fromIndex, 1);
-    orderedIds.splice(toIndex, 0, fromId);
-    persistPinnedOrder(orderedIds);
-  };
-  const movePinnedBy = (id: number, direction: -1 | 1) => {
-    if (reorderPinned.isPending) return;
-    const orderedIds = pinnedItems.map((item) => item.id);
-    const currentIndex = orderedIds.indexOf(id);
-    const nextIndex = currentIndex + direction;
-    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= orderedIds.length) return;
-    [orderedIds[currentIndex], orderedIds[nextIndex]] = [orderedIds[nextIndex], orderedIds[currentIndex]];
-    persistPinnedOrder(orderedIds);
-  };
   const submitAdd = () => {
     if (!form.sourceUrl.trim()) { toast.error("Hãy nhập URL SNKRDUNK."); return; }
     createItem.mutate({ name: form.name.trim() || undefined, productType: form.productType, cardRank: form.productType === "card" ? form.cardRank : undefined, sourceUrl: form.sourceUrl.trim() });
@@ -205,11 +157,10 @@ export default function SnkrShop() {
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card/70 p-3 shadow-sm">
         <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 bg-background pl-10" placeholder="Tìm sản phẩm Shop SNKR..." aria-label="Tìm sản phẩm Shop SNKR" /></div>
-        <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap gap-1.5">{(["all", "box", "card", "pack"] as const).map((type) => <Button key={type} size="sm" variant={typeFilter === type ? "default" : "outline"} onClick={() => setTypeFilter(type)} className={typeFilter === type ? "bg-teal-500 text-slate-950 hover:bg-teal-400" : "border-border bg-background text-muted-foreground"}>{type === "all" ? `Tất cả (${watchItems.length})` : `${getTypeLabel(type)} (${watchItems.filter((item) => item.productType === type).length})`}</Button>)}<Button size="sm" variant={pinnedOnly ? "default" : "outline"} onClick={() => setPinnedOnly((current) => !current)} className={pinnedOnly ? "bg-amber-400 text-slate-950 hover:bg-amber-300" : "border-amber-400/35 bg-amber-500/5 text-amber-200 hover:bg-amber-500/15"}><Pin className={`mr-1.5 h-3.5 w-3.5 ${pinnedOnly ? "fill-current" : ""}`} />Đã ghim ({pinnedItems.length})</Button>{pinnedItems.length > 1 && <Button size="sm" variant="outline" onClick={() => setReorderMode((current) => !current)} className={reorderMode ? "border-teal-400/65 bg-teal-500/15 text-teal-100" : "border-border bg-background text-muted-foreground"}>{reorderMode ? "Xong sắp xếp" : "Sắp xếp ghim"}</Button>}</div><span className="text-xs text-muted-foreground">Giá theo ¥ · dữ liệu độc lập với Marketplace</span></div>
-        {reorderMode && <p className="rounded-lg border border-teal-400/25 bg-teal-500/10 px-3 py-2 text-xs leading-5 text-teal-100"><GripVertical className="mr-1 inline h-3.5 w-3.5" />Kéo thẻ đã ghim để đổi thứ tự. Trên điện thoại, dùng mũi tên lên/xuống trong từng thẻ.</p>}
+        <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap gap-1.5">{(["all", "box", "card", "pack"] as const).map((type) => <Button key={type} size="sm" variant={typeFilter === type ? "default" : "outline"} onClick={() => setTypeFilter(type)} className={typeFilter === type ? "bg-teal-500 text-slate-950 hover:bg-teal-400" : "border-border bg-background text-muted-foreground"}>{type === "all" ? `Tất cả (${watchItems.length})` : `${getTypeLabel(type)} (${watchItems.filter((item) => item.productType === type).length})`}</Button>)}</div><span className="text-xs text-muted-foreground">Xu hướng giá 7 ngày · dữ liệu độc lập với Marketplace</span></div>
       </section>
 
-      {isLoading ? <div className="flex h-52 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div> : watchItems.length === 0 ? <EmptyWatchlist onAdd={() => setAddOpen(true)} /> : displayedItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">{pinnedOnly ? "Chưa có sản phẩm đã ghim phù hợp bộ lọc." : `Không có sản phẩm loại ${getTypeLabel(typeFilter as ShopType)} khớp bộ lọc.`}</div> : <section className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{displayedItems.map((item) => { const pinnedIndex = pinnedItems.findIndex((pinnedItem) => pinnedItem.id === item.id); return <ShopGridCard key={item.id} item={item} priceMovement={priceChangeByItem.get(item.id)} sparklinePoints={sparklineByItem.get(item.id)} pinFeedback={pinFeedback?.id === item.id ? pinFeedback : null} onOpen={() => setLocation(`/shop-snkr/${item.id}`)} onSync={() => syncItem.mutate({ id: item.id })} onEdit={() => openEdit(item)} onDelete={() => setDeleteConfirmItem(item)} onTogglePin={() => togglePin.mutate({ id: item.id })} syncing={syncItem.isPending && syncItem.variables?.id === item.id} deleting={deleteItem.isPending && deleteItem.variables?.id === item.id} pinning={togglePin.isPending && togglePin.variables?.id === item.id} reorderMode={reorderMode} reordering={reorderPinned.isPending} dragging={draggedPinnedId === item.id} canMoveUp={pinnedIndex > 0} canMoveDown={pinnedIndex >= 0 && pinnedIndex < pinnedItems.length - 1} onDragStart={() => setDraggedPinnedId(item.id)} onDragEnd={() => setDraggedPinnedId(null)} onDrop={() => { if (draggedPinnedId && item.isPinned) movePinnedItem(draggedPinnedId, item.id); }} onMoveUp={() => movePinnedBy(item.id, -1)} onMoveDown={() => movePinnedBy(item.id, 1)} />; })}</section>}
+      {isLoading ? <div className="flex h-52 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400" /></div> : watchItems.length === 0 ? <EmptyWatchlist onAdd={() => setAddOpen(true)} /> : displayedItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">{`Không có sản phẩm loại ${getTypeLabel(typeFilter as ShopType)} khớp bộ lọc.`}</div> : <section className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{displayedItems.map((item) => <ShopGridCard key={item.id} item={item} sparklinePoints={sparklineByItem.get(item.id)} onOpen={() => setLocation(`/shop-snkr/${item.id}`)} onSync={() => syncItem.mutate({ id: item.id })} onEdit={() => openEdit(item)} onDelete={() => setDeleteConfirmItem(item)} syncing={syncItem.isPending && syncItem.variables?.id === item.id} deleting={deleteItem.isPending && deleteItem.variables?.id === item.id} />)}</section>}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-4 sm:max-w-xl sm:p-6">
@@ -253,16 +204,14 @@ function SummaryCard({ label, value, icon, tone }: { label: string; value: numbe
 
 function EmptyWatchlist({ onAdd }: { onAdd: () => void }) { return <div className="rounded-2xl border border-dashed border-teal-500/30 bg-card/60 py-16 text-center"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-300"><Box className="h-8 w-8" /></div><h2 className="mt-4 text-lg font-bold text-foreground">Chưa có sản phẩm theo dõi</h2><p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Thêm URL Box, Card hoặc Pack từ SNKRDUNK để tạo biểu đồ giá riêng, không ảnh hưởng dữ liệu kho hàng.</p><Button onClick={onAdd} className="mt-5 bg-teal-500 text-slate-950 hover:bg-teal-400"><Plus className="mr-2 h-4 w-4" />Thêm sản phẩm đầu tiên</Button></div>; }
 
-function ShopGridCard({ item, priceMovement, sparklinePoints, pinFeedback, onOpen, onSync, onEdit, onDelete, onTogglePin, syncing, deleting, pinning, reorderMode, reordering, dragging, canMoveUp, canMoveDown, onDragStart, onDragEnd, onDrop, onMoveUp, onMoveDown }: { item: WatchItem; priceMovement?: PriceMovement24h; sparklinePoints?: SparklinePoint7d[]; pinFeedback: PinFeedback | null; onOpen: () => void; onSync: () => void; onEdit: () => void; onDelete: () => void; onTogglePin: () => void; syncing: boolean; deleting: boolean; pinning: boolean; reorderMode: boolean; reordering: boolean; dragging: boolean; canMoveUp: boolean; canMoveDown: boolean; onDragStart: () => void; onDragEnd: () => void; onDrop: () => void; onMoveUp: () => void; onMoveDown: () => void }) {
+function ShopGridCard({ item, sparklinePoints, onOpen, onSync, onEdit, onDelete, syncing, deleting }: { item: WatchItem; sparklinePoints?: SparklinePoint7d[]; onOpen: () => void; onSync: () => void; onEdit: () => void; onDelete: () => void; syncing: boolean; deleting: boolean }) {
   const price = Number(item.currentPrice) || 0;
   const displayName = item.sourceTitle || item.name;
   const customImageLabel = item.name.trim() !== (item.sourceTitle ?? "").trim() ? item.name.trim() : null;
-  const movementTone = priceMovement?.trend === "up" ? "border-emerald-400/35 bg-emerald-500/10 text-emerald-200" : priceMovement?.trend === "down" ? "border-red-400/35 bg-red-500/10 text-red-200" : "border-slate-500/35 bg-slate-500/10 text-slate-300";
-  const MovementIcon = priceMovement?.trend === "up" ? TrendingUp : priceMovement?.trend === "down" ? TrendingDown : Minus;
-  return <article role="button" tabIndex={0} draggable={reorderMode && Boolean(item.isPinned)} onDragStart={(event) => { if (reorderMode && item.isPinned) { event.dataTransfer.effectAllowed = "move"; onDragStart(); } }} onDragOver={(event) => { if (reorderMode && item.isPinned) event.preventDefault(); }} onDrop={(event) => { if (reorderMode && item.isPinned) { event.preventDefault(); onDrop(); } }} onDragEnd={onDragEnd} onClick={onOpen} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onOpen(); } }} className={`group min-w-0 cursor-pointer rounded-2xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-teal-400/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 ${dragging ? "scale-[0.98] opacity-50" : ""} ${reorderMode && item.isPinned ? "cursor-grab active:cursor-grabbing" : ""} ${pinFeedback?.isPinned ? "motion-safe:animate-pulse border-amber-300/75 shadow-lg shadow-amber-400/20" : ""}`}>
-    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-950/45 p-2"><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur"><span className="rgb-action-label">{getTypeLabel(item.productType)}</span></span>{customImageLabel && <span className="absolute right-2 top-2 max-w-[62%] truncate rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm backdrop-blur" title={customImageLabel}>{customImageLabel}</span>}{reorderMode && item.isPinned && <span className="absolute bottom-2 left-2 rounded-full bg-slate-950/80 p-1.5 text-teal-100 backdrop-blur"><GripVertical className="h-3.5 w-3.5" /></span>}{pinFeedback && <span className={`absolute inset-x-3 top-1/2 z-10 -translate-y-1/2 rounded-lg border px-2 py-1.5 text-center text-xs font-bold shadow-lg backdrop-blur ${pinFeedback.isPinned ? "border-amber-300/70 bg-amber-400/90 text-slate-950" : "border-slate-200/55 bg-slate-950/90 text-white"}`}>{pinFeedback.isPinned ? "Đã ghim ưu tiên" : "Đã bỏ ghim"}</span>}<Button size="icon" variant="outline" disabled={pinning || reordering} onClick={(event) => { event.stopPropagation(); onTogglePin(); }} className={`absolute bottom-2 right-2 h-8 w-8 rounded-full border backdrop-blur ${item.isPinned ? "border-amber-300/70 bg-amber-400/90 text-slate-950 hover:bg-amber-300" : "border-white/25 bg-slate-950/70 text-white hover:bg-teal-500/25 hover:text-teal-100"}`} aria-label={item.isPinned ? `Bỏ ghim ${displayName}` : `Ghim ${displayName}`} title={item.isPinned ? "Bỏ ghim ưu tiên" : "Ghim ưu tiên"}>{pinning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pin className={`h-3.5 w-3.5 ${item.isPinned ? "fill-current" : ""}`} />}</Button></div>
-    <div className="min-w-0 px-1 pt-3"><p className="line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 text-foreground">{displayName}</p>{item.productType === "card" && <div className="mt-1"><RankBadge rank={item.cardRank} marketPrice={price} /></div>}<p className="mt-2 text-lg font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "Chưa có giá"}</p>{item.isPinned && <div className={`mt-1.5 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-1 text-[10px] font-semibold ${movementTone}`}>{priceMovement?.hasData ? <><MovementIcon className="h-3 w-3 shrink-0" /><span className="truncate">24h {priceMovement.amount > 0 ? "+" : priceMovement.amount < 0 ? "−" : ""}{formatYen(Math.abs(priceMovement.amount))} · {priceMovement.percent > 0 ? "+" : ""}{priceMovement.percent.toFixed(1)}%</span></> : <><Minus className="h-3 w-3 shrink-0" /><span>24h: đang thu thập</span></>}</div>}{item.isPinned && <MiniPriceSparkline points={sparklinePoints ?? []} />}<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground"><span>Theo dõi từ {new Date(item.createdAt).toLocaleDateString("vi-VN")}</span><span>{item.lastSyncedAt ? `Cập nhật ${new Date(item.lastSyncedAt).toLocaleDateString("vi-VN")}` : "Chờ đồng bộ"}</span></div>
-      <div className="mt-2 flex gap-1.5 border-t border-border pt-2"><Button size="icon" onClick={(event) => { event.stopPropagation(); onSync(); }} disabled={syncing || reordering} className="h-7 w-7 bg-teal-500 text-slate-950 hover:bg-teal-400" aria-label={`Đồng bộ ${displayName}`}>{syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onEdit(); }} disabled={reordering} className="h-7 w-7 border-border bg-background" aria-label={`Sửa ${displayName}`}><Pencil className="h-3.5 w-3.5" /></Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onDelete(); }} disabled={deleting || reordering} className="h-7 w-7 border-red-500/55 bg-red-950/35 text-red-300 hover:bg-red-600 hover:text-white" aria-label={`Xóa ${displayName}`}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); void copySnkrdunkUrl(item.sourceUrl); }} disabled={reordering} className="h-7 w-7 border-teal-400/35 bg-teal-500/5 text-teal-100 hover:bg-teal-500/15" aria-label={`Sao chép URL SNKRDUNK của ${displayName}`} title="Sao chép URL SNKRDUNK"><Copy className="h-3.5 w-3.5" /></Button>{reorderMode && item.isPinned && <div className="ml-auto flex gap-1"><Button size="icon" variant="outline" disabled={!canMoveUp || reordering} onClick={(event) => { event.stopPropagation(); onMoveUp(); }} className="h-7 w-7 border-teal-400/35 bg-teal-500/5 text-teal-100" aria-label={`Đưa ${displayName} lên`}><ChevronUp className="h-3.5 w-3.5" /></Button><Button size="icon" variant="outline" disabled={!canMoveDown || reordering} onClick={(event) => { event.stopPropagation(); onMoveDown(); }} className="h-7 w-7 border-teal-400/35 bg-teal-500/5 text-teal-100" aria-label={`Đưa ${displayName} xuống`}><ChevronDown className="h-3.5 w-3.5" /></Button></div>}</div>
+  return <article role="button" tabIndex={0} onClick={onOpen} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onOpen(); } }} className="group min-w-0 cursor-pointer rounded-2xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-teal-400/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-950/45 p-2"><DirectProductImage item={item} /><span className="absolute left-2 top-2 rounded-full bg-slate-950/75 px-2 py-0.5 text-[10px] font-bold text-teal-100 backdrop-blur"><span className="rgb-action-label">{getTypeLabel(item.productType)}</span></span>{customImageLabel && <span className="absolute right-2 top-2 max-w-[62%] truncate rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm backdrop-blur" title={customImageLabel}>{customImageLabel}</span>}</div>
+    <div className="min-w-0 px-1 pt-3"><p className="line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 text-foreground">{displayName}</p>{item.productType === "card" && <div className="mt-1"><RankBadge rank={item.cardRank} marketPrice={price} /></div>}<p className="mt-2 text-lg font-black tracking-tight text-teal-300">{price > 0 ? formatYen(price) : "Chưa có giá"}</p><MiniPriceSparkline points={sparklinePoints ?? []} /><div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground"><span>Theo dõi từ {new Date(item.createdAt).toLocaleDateString("vi-VN")}</span><span>{item.lastSyncedAt ? `Cập nhật ${new Date(item.lastSyncedAt).toLocaleDateString("vi-VN")}` : "Chờ đồng bộ"}</span></div>
+      <div className="mt-2 flex gap-1.5 border-t border-border pt-2"><Button size="icon" onClick={(event) => { event.stopPropagation(); onSync(); }} disabled={syncing} className="h-7 w-7 bg-teal-500 text-slate-950 hover:bg-teal-400" aria-label={`Đồng bộ ${displayName}`}>{syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onEdit(); }} className="h-7 w-7 border-border bg-background" aria-label={`Sửa ${displayName}`}><Pencil className="h-3.5 w-3.5" /></Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); onDelete(); }} disabled={deleting} className="h-7 w-7 border-red-500/55 bg-red-950/35 text-red-300 hover:bg-red-600 hover:text-white" aria-label={`Xóa ${displayName}`}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button><Button size="icon" variant="outline" onClick={(event) => { event.stopPropagation(); void copySnkrdunkUrl(item.sourceUrl); }} className="h-7 w-7 border-teal-400/35 bg-teal-500/5 text-teal-100 hover:bg-teal-500/15" aria-label={`Sao chép URL SNKRDUNK của ${displayName}`} title="Sao chép URL SNKRDUNK"><Copy className="h-3.5 w-3.5" /></Button></div>
     </div>
   </article>;
 }

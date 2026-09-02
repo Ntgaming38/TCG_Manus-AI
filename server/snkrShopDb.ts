@@ -48,7 +48,7 @@ export async function listSnkrShopItems(userId: number, search?: string) {
   if (!db) return [];
   const items = await db.select().from(snkrShopItems)
     .where(eq(snkrShopItems.userId, userId))
-    .orderBy(desc(snkrShopItems.isPinned), asc(snkrShopItems.pinnedOrder), desc(snkrShopItems.lastSyncedAt), desc(snkrShopItems.updatedAt), desc(snkrShopItems.id));
+    .orderBy(desc(snkrShopItems.lastSyncedAt), desc(snkrShopItems.updatedAt), desc(snkrShopItems.id));
   const keyword = search?.trim().toLocaleLowerCase();
   return keyword ? items.filter((item) => item.name.toLocaleLowerCase().includes(keyword)) : items;
 }
@@ -83,21 +83,21 @@ export async function getPinnedSnkrShop24hChanges(userId: number): Promise<SnkrS
   });
 }
 
-/** Returns real seven-day price points for rendering compact pinned-item sparklines. */
-export async function getPinnedSnkrShop7dHistory(userId: number): Promise<SnkrShopSparkline7d[]> {
+/** Returns real seven-day price points for every account-private Shop SNKR item. */
+export async function getSnkrShop7dHistory(userId: number): Promise<SnkrShopSparkline7d[]> {
   const db = await getDb();
   if (!db) return [];
-  const pinnedItems = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
-    .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.isPinned, 1)));
-  if (!pinnedItems.length) return [];
+  const items = await db.select({ id: snkrShopItems.id }).from(snkrShopItems)
+    .where(eq(snkrShopItems.userId, userId));
+  if (!items.length) return [];
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const history = await db.select({ itemId: snkrShopPriceHistory.itemId, price: snkrShopPriceHistory.price, createdAt: snkrShopPriceHistory.createdAt })
     .from(snkrShopPriceHistory)
-    .where(and(inArray(snkrShopPriceHistory.itemId, pinnedItems.map((item) => item.id)), gte(snkrShopPriceHistory.createdAt, cutoff)))
+    .where(and(inArray(snkrShopPriceHistory.itemId, items.map((item) => item.id)), gte(snkrShopPriceHistory.createdAt, cutoff)))
     .orderBy(asc(snkrShopPriceHistory.createdAt), asc(snkrShopPriceHistory.id));
   const pointsByItem = new Map<number, Array<{ price: string | number; createdAt: Date }>>();
   history.forEach((entry) => pointsByItem.set(entry.itemId, [...(pointsByItem.get(entry.itemId) ?? []), entry]));
-  return pinnedItems.map(({ id: itemId }) => ({ itemId, points: pointsByItem.get(itemId) ?? [] }));
+  return items.map(({ id: itemId }) => ({ itemId, points: pointsByItem.get(itemId) ?? [] }));
 }
 
 export async function createSnkrShopItem(userId: number, input: CreateSnkrShopItemInput) {

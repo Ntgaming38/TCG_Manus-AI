@@ -35,5 +35,8 @@ describe("Làm mới ảnh sản phẩm từ SNKRDUNK", () => {
     expect(productsPage).toContain("CircleAlert");
     expect(productsPage).toContain("aria-label={`Tiến độ ${imageRefreshStatus.progress}%`}");
     expect(productsPage).toContain("Đọc dữ liệu sản phẩm SNKRDUNK");
+    expect(productsPage).toContain("Hủy xử lý");
+    expect(productsPage).toContain("handleCancelImageRefresh");
+    expect(productsPage).toContain("Đã hủy xử lý ảnh AI");
   });
 });
