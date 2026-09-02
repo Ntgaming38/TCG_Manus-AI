@@ -1253,8 +1253,8 @@
 - [x] Xác minh dữ liệu sau migration và hoàn tất báo cáo
 
 ## Hợp nhất Git và lưu checkpoint phiên bản mới nhất
-- [ ] Kiểm tra trạng thái Git, nhánh và vùng xung đột hiện tại
-- [ ] Commit thay đổi hiện có rồi hợp nhất origin/main mà không reset hoặc tạo project mới
-- [ ] Hợp nhất thủ công ActivityHistory.tsx và todo.md, giữ lại cả hai phía
-- [ ] Chạy test và kiểm tra TypeScript, chỉ sửa lỗi do merge
+- [x] Kiểm tra trạng thái Git, nhánh và vùng xung đột hiện tại
+- [x] Commit thay đổi hiện có rồi hợp nhất origin/main mà không reset hoặc tạo project mới
+- [x] Hợp nhất thủ công ActivityHistory.tsx và todo.md, giữ lại cả hai phía
+- [x] Chạy test và kiểm tra TypeScript, chỉ sửa lỗi do merge
 - [ ] Commit kết quả và lưu checkpoint xuất bản phiên bản mới nhất
