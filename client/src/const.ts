@@ -2,6 +2,9 @@ import { OAUTH_STATE_COOKIE, encodeOAuthState } from "@shared/const";
 
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
+/** Ảnh dùng chung khi sản phẩm chưa có ảnh hoặc ảnh nguồn không tải được. */
+export const FALLBACK_PRODUCT_IMAGE_URL = "/manus-storage/tcg-product-fallback_93dfd725.png";
+
 // Start the Manus OAuth login. Call this from an event handler or effect at the
 // moment you want to navigate, e.g. `onClick={() => startLogin()}`.
 //

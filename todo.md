@@ -1288,17 +1288,17 @@
 - [x] Bổ sung kiểm thử hồi quy và lưu checkpoint phiên bản mới nhất
 
 ## Ảnh fallback sản phẩm
-- [ ] Rà soát component ảnh sản phẩm và tài sản fallback hiện có
-- [ ] Tạo ảnh fallback thống nhất và lưu vào storage
-- [ ] Tích hợp fallback cho ảnh thiếu hoặc lỗi tải trong Shop SNKR, Kho Hàng và thẻ sản phẩm
-- [ ] Bổ sung kiểm thử lỗi tải ảnh và xác minh desktop/mobile
-- [ ] Lưu checkpoint phiên bản mới nhất
+- [x] Rà soát component ảnh sản phẩm và tài sản fallback hiện có
+- [x] Tạo ảnh fallback thống nhất và lưu vào storage
+- [x] Tích hợp fallback cho ảnh thiếu hoặc lỗi tải trong Shop SNKR, Kho Hàng và thẻ sản phẩm
+- [x] Bổ sung kiểm thử lỗi tải ảnh và xác minh desktop/mobile
+- [x] Lưu checkpoint phiên bản mới nhất
 
 ## Khung ảnh Shop SNKR nền trắng toàn phần
-- [ ] Rà soát layout khung ảnh trang chi tiết Shop SNKR
-- [ ] Đặt nền trắng cho toàn bộ ô ảnh, gồm viền trong và vùng đệm
-- [ ] Giữ fallback ảnh thống nhất khi ảnh sản phẩm thiếu hoặc lỗi tải
-- [ ] Kiểm thử responsive desktop/mobile và lưu checkpoint
+- [x] Rà soát layout khung ảnh trang chi tiết Shop SNKR
+- [x] Đặt nền trắng cho toàn bộ ô ảnh, gồm viền trong và vùng đệm
+- [x] Giữ fallback ảnh thống nhất khi ảnh sản phẩm thiếu hoặc lỗi tải
+- [x] Kiểm thử responsive desktop/mobile và lưu checkpoint
 
 ## Biểu mẫu Chūsen — cửa hàng tùy chỉnh
 - [x] Rà soát lựa chọn cửa hàng và luồng tự lưu cửa hàng hiện có
@@ -1306,3 +1306,10 @@
 - [x] Giữ tự động lưu cửa hàng mới vào danh sách gợi ý
 - [x] Bổ sung kiểm thử giao diện và kiểm thử lưu cửa hàng
 - [x] Lưu checkpoint phiên bản mới nhất
+
+## Biểu mẫu Chūsen — ô nhập cửa hàng inline
+- [x] Kiểm tra vị trí trường cửa hàng và cơ chế lưu gợi ý hiện tại
+- [x] Đặt ô nhập tên cửa hàng ngay bên dưới lựa chọn “Thêm cửa hàng”
+- [x] Bảo toàn tự lưu cửa hàng mới theo tài khoản
+- [x] Bổ sung kiểm thử biểu mẫu và TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

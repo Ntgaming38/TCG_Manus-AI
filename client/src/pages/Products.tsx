@@ -17,6 +17,7 @@ import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type Product
 import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { getAutoCreateProductType } from "@shared/productCreateType";
 import { getCardRankLabel, normalizeCardRank } from "@shared/cardRank";
+import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -538,12 +539,10 @@ export default function Products() {
                     <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onRefreshImage={handleRefreshImage} refreshingImageId={refreshImage.isPending ? (refreshImage.variables?.id ?? null) : null} onDelete={handleDelete} />
                   </div>
                 </div>
-                {/* Product image */}
-                {product.image && (
-                  <div className="mb-3 aspect-[4/3] overflow-hidden rounded-lg border border-white/80 bg-white">
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                  </div>
-                )}
+                {/* Product image / shared fallback */}
+                <div className="mb-3 aspect-[4/3] overflow-hidden rounded-lg border border-white/80 bg-white">
+                  <img src={product.image || FALLBACK_PRODUCT_IMAGE_URL} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="h-full w-full object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_PRODUCT_IMAGE_URL; }} />
+                </div>
                 <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>
                   {product.type === "card" && <RarityBadge rarity={product.rarity} />}

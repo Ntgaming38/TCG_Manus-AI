@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RankBadge } from "@/components/RankBadge";
 import { trpc } from "@/lib/trpc";
 import { formatYen } from "@shared/formatYen";
-import { BarChart3, Box, Copy, ExternalLink, ImageOff, Link2, Loader2, Package, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { BarChart3, Box, Copy, ExternalLink, Link2, Loader2, Package, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 
 type ShopType = "card" | "box" | "pack";
 type WatchItem = {
@@ -244,8 +245,8 @@ function WatchItemCard({ item, onSync, onOpenHistory, onEdit, onDelete, syncing,
 function DirectProductImage({ item }: { item: WatchItem }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [item.imageUrl]);
-  if (!item.imageUrl || failed) return <div className="flex flex-col items-center gap-2 text-teal-300/70">{getTypeIcon(item.productType)}<ImageOff className="h-5 w-5" /></div>;
-  return <img src={item.imageUrl} alt={item.sourceTitle || item.name} className="h-full w-full object-contain" loading="eager" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+  const imageUrl = item.imageUrl && !failed ? item.imageUrl : FALLBACK_PRODUCT_IMAGE_URL;
+  return <img src={imageUrl} alt={item.imageUrl && !failed ? item.sourceTitle || item.name : `${item.name} — chưa có ảnh`} className="h-full w-full object-contain" loading="eager" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.onerror = null; setFailed(true); }} />;
 }
 
 function HistoryDialog({ item, history, loading, days, onDaysChange, onOpenChange }: { item: WatchItem | null; history: PricePoint[]; loading: boolean; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void; onOpenChange: (open: boolean) => void }) {
