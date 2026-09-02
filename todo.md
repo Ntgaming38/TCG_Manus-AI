@@ -1264,4 +1264,4 @@
 - [x] Thêm trạng thái loading trực quan, khóa thao tác lặp và thông báo đang xử lý
 - [x] Thêm thông báo thành công và lỗi rõ ràng sau khi làm mới ảnh
 - [x] Bổ sung kiểm thử hồi quy và xác minh desktop/mobile
-- [ ] Lưu checkpoint phiên bản mới nhất
+- [x] Lưu checkpoint phiên bản mới nhất
