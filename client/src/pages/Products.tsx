@@ -540,7 +540,7 @@ export default function Products() {
                 </div>
                 {/* Product image */}
                 {product.image && (
-                  <div className="mb-3 rounded-lg overflow-hidden bg-secondary/30 aspect-[4/3]">
+                  <div className="mb-3 aspect-[4/3] overflow-hidden rounded-lg border border-white/80 bg-white">
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                   </div>
                 )}

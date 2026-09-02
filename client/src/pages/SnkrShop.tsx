@@ -232,7 +232,7 @@ function WatchItemCard({ item, onSync, onOpenHistory, onEdit, onDelete, syncing,
   const displayName = item.sourceTitle || item.name;
   return <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
     <div className="grid min-w-0 grid-cols-[112px_minmax(0,1fr)] border-b border-border bg-gradient-to-r from-teal-500/10 via-transparent to-transparent">
-      <div className="flex aspect-square items-center justify-center overflow-hidden border-r border-border bg-slate-950/25 p-2">
+      <div className="flex aspect-square items-center justify-center overflow-hidden border-r border-white/80 bg-white p-2">
         <DirectProductImage item={item} />
       </div>
       <div className="min-w-0 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h2 className="min-w-0 break-words text-base font-bold leading-6 text-foreground">{displayName}</h2>{item.productType === "card" && <RankBadge rank={item.cardRank} marketPrice={price} />}</div><div className="mt-1 flex flex-wrap gap-1.5"><Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-200">{getTypeLabel(item.productType)}</Badge>{item.lastSyncedAt ? <span className="text-xs text-muted-foreground">Cập nhật {new Date(item.lastSyncedAt).toLocaleString("vi-VN")}</span> : <span className="text-xs text-amber-300">Chưa lấy giá</span>}</div></div><a href={item.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Mở SNKRDUNK cho ${displayName}`} className="shrink-0 rounded-lg p-2 text-teal-300 transition-colors hover:bg-teal-500/10"><ExternalLink className="h-4 w-4" /></a></div></div>

@@ -21,5 +21,10 @@ describe("cửa hàng tùy chỉnh trong Chyusen", () => {
     expect(source).toContain("Cửa hàng dùng gần đây");
     expect(source).toContain("reorderPinnedShopSuggestions.mutate");
     expect(source).toContain("GripVertical");
+    expect(source).toContain("Tên cửa hàng mới");
+    expect(source).toContain("Tên sẽ tự lưu vào gợi ý của tài khoản khi bạn lưu Chūsen.");
+    expect(source).toContain("const persistCustomShop");
+    expect(source).toContain("sm:col-span-2 rounded-lg border border-emerald-400/35");
+    expect(source).not.toContain("Tên cửa hàng thực tế");
   });
 });
