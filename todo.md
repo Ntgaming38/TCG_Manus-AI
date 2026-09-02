@@ -1327,3 +1327,10 @@
 - [x] Khôi phục lựa chọn cửa hàng sẵn có, bổ sung COMG! và giữ ô Thêm cửa hàng mới
 - [x] Bảo toàn tự lưu và hiển thị đúng tên cửa hàng tùy chỉnh
 - [x] Bổ sung kiểm thử hồi quy, xác minh mobile và lưu checkpoint
+
+## Tự nhận diện cửa hàng và nhãn Tháng/Ngày
+- [ ] Rà soát detector URL và sự kiện dán URL trong Chūsen
+- [ ] Tự động nhận diện và điền tên cửa hàng khi dán URL sản phẩm
+- [ ] Đổi mọi hướng dẫn và placeholder ngày sang chữ “Tháng/Ngày”
+- [ ] Bổ sung kiểm thử URL, cửa hàng và định dạng ngày
+- [ ] Lưu checkpoint phiên bản mới nhất
