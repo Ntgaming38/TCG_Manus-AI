@@ -10,7 +10,7 @@ import { RankBadge } from "@/components/RankBadge";
 import { trpc } from "@/lib/trpc";
 import { formatYen } from "@shared/formatYen";
 import { BarChart3, Box, Copy, ExternalLink, ImageOff, Link2, Loader2, Package, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -243,8 +243,9 @@ function WatchItemCard({ item, onSync, onOpenHistory, onEdit, onDelete, syncing,
 
 function DirectProductImage({ item }: { item: WatchItem }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [item.imageUrl]);
   if (!item.imageUrl || failed) return <div className="flex flex-col items-center gap-2 text-teal-300/70">{getTypeIcon(item.productType)}<ImageOff className="h-5 w-5" /></div>;
-  return <img src={item.imageUrl} alt={item.sourceTitle || item.name} className="h-full w-full object-contain" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+  return <img src={item.imageUrl} alt={item.sourceTitle || item.name} className="h-full w-full object-contain" loading="eager" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
 }
 
 function HistoryDialog({ item, history, loading, days, onDaysChange, onOpenChange }: { item: WatchItem | null; history: PricePoint[]; loading: boolean; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void; onOpenChange: (open: boolean) => void }) {

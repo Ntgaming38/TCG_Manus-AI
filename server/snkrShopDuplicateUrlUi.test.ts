@@ -10,7 +10,7 @@ describe("Shop SNKR duplicate URL flow", () => {
 
   it("trả về mục đã theo dõi thay vì ném lỗi khi thêm URL trùng", () => {
     expect(dbSource).toContain("return { ...trackedItem, alreadyTracked: true }");
-    expect(dbSource).toContain("return { ...item, alreadyTracked: false }");
+    expect(dbSource).toContain("return { ...(created ?? item), alreadyTracked: false }");
   });
 
   it("đóng biểu mẫu và mở chi tiết mục đã theo dõi", () => {

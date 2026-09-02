@@ -1279,3 +1279,10 @@
 - [x] Gỡ nút, bộ lọc và thao tác ghim khỏi Shop SNKR nhưng giữ dữ liệu giá an toàn
 - [x] Thêm nút Hủy xử lý bên cạnh thanh tiến trình ảnh AI cùng trạng thái hủy rõ ràng
 - [x] Bổ sung kiểm thử hồi quy, xác minh giao diện và lưu checkpoint phiên bản mới nhất
+
+## Lưu cố định ảnh Shop SNKR
+- [x] Kiểm tra luồng lấy ảnh và các bản ghi Shop SNKR đang thiếu ảnh storage
+- [x] Lưu ảnh nguồn hợp lệ vào storage ngay khi thêm hoặc đồng bộ sản phẩm
+- [x] Bảo toàn ảnh nền trắng và khôi phục ảnh cho các bản ghi cũ thiếu ảnh
+- [x] Xác minh ảnh Box, Pack và Card hiển thị tức thì khi mở lại Shop SNKR
+- [x] Bổ sung kiểm thử hồi quy và lưu checkpoint phiên bản mới nhất

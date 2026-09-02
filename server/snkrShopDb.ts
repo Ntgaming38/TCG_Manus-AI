@@ -4,6 +4,7 @@ import { normalizeCardRank } from "../shared/cardRank";
 import { getDb } from "./db";
 import { fetchSnkrdunkPrice, fetchSnkrdunkProductMetadata, fetchSnkrdunkQuantityPrices, isSnkrdunkGenericImageUrl, isValidSnkrdunkUrl } from "./snkrdunk";
 import { processMarketplaceManualSyncBatch } from "./marketplaceManualSyncBatch";
+import { storagePut } from "./storage";
 
 export type SnkrShopProductType = "card" | "box" | "pack";
 export const SNKR_SHOP_AUTO_SYNC_CRON = "0 0 * * * *";
@@ -20,6 +21,53 @@ type CreateSnkrShopItemInput = {
 };
 
 type UpdateSnkrShopItemInput = Partial<CreateSnkrShopItemInput>;
+
+const MAX_SNKR_PRODUCT_IMAGE_BYTES = 8 * 1024 * 1024;
+
+function isStoredProductImage(imageUrl: string | null | undefined) {
+  return Boolean(imageUrl?.startsWith("/manus-storage/"));
+}
+
+function getImageExtension(contentType: string, imageUrl: string) {
+  if (contentType.includes("png")) return "png";
+  if (contentType.includes("webp")) return "webp";
+  if (contentType.includes("gif")) return "gif";
+  if (contentType.includes("jpeg") || contentType.includes("jpg")) return "jpg";
+  const pathname = new URL(imageUrl).pathname.toLowerCase();
+  return pathname.endsWith(".png") ? "png" : pathname.endsWith(".webp") ? "webp" : "jpg";
+}
+
+/** Downloads only public SNKRDUNK images, stores bytes privately, and returns a durable app URL. */
+async function persistSnkrShopProductImage(imageUrl: string | null, userId: number, itemId: number) {
+  if (!imageUrl) return { imageUrl: null, error: null };
+  if (isStoredProductImage(imageUrl)) return { imageUrl, error: null };
+
+  try {
+    const parsedUrl = new URL(imageUrl);
+    const hostname = parsedUrl.hostname.toLowerCase();
+    if (parsedUrl.protocol !== "https:" || (hostname !== "snkrdunk.com" && !hostname.endsWith(".snkrdunk.com"))) {
+      throw new Error("Nguồn ảnh không thuộc SNKRDUNK.");
+    }
+    const response = await fetch(parsedUrl, {
+      headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,*/*;q=0.8", "User-Agent": "Mozilla/5.0 (compatible; TCGManager/1.0; +https://snkrdunk.com)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!response.ok) throw new Error(`Nguồn ảnh trả về HTTP ${response.status}.`);
+    const contentType = response.headers.get("content-type")?.split(";")[0]?.toLowerCase() || "";
+    if (!contentType.startsWith("image/")) throw new Error("Nguồn không trả về tệp hình ảnh hợp lệ.");
+    const contentLength = Number(response.headers.get("content-length") || 0);
+    if (contentLength > MAX_SNKR_PRODUCT_IMAGE_BYTES) throw new Error("Ảnh vượt quá giới hạn 8 MB.");
+    const imageBytes = Buffer.from(await response.arrayBuffer());
+    if (!imageBytes.length || imageBytes.length > MAX_SNKR_PRODUCT_IMAGE_BYTES) throw new Error("Ảnh rỗng hoặc vượt quá giới hạn 8 MB.");
+    const extension = getImageExtension(contentType, parsedUrl.toString());
+    const stored = await storagePut(`snkr-shop/${userId}/product-${itemId}.${extension}`, imageBytes, contentType);
+    return { imageUrl: stored.url, error: null };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Lỗi không xác định.";
+    return { imageUrl: null, error: `Không thể lưu ảnh cố định từ SNKRDUNK: ${detail}` };
+  }
+}
 
 async function getOwnedItem(itemId: number, userId: number) {
   const db = await getDb();
@@ -122,13 +170,18 @@ export async function createSnkrShopItem(userId: number, input: CreateSnkrShopIt
     // Metadata is a convenience only; a public price sync can still be attempted after creation.
   }
   const name = input.name?.trim() || metadata.title || "Sản phẩm SNKRDUNK";
-  await db.insert(snkrShopItems).values({ userId, name, productType: input.productType, cardRank, sourceUrl, sourceTitle: metadata.title, imageUrl: metadata.imageUrl });
+  await db.insert(snkrShopItems).values({ userId, name, productType: input.productType, cardRank, sourceUrl, sourceTitle: metadata.title, imageUrl: null });
   const [item] = await db.select().from(snkrShopItems)
     .where(and(eq(snkrShopItems.userId, userId), eq(snkrShopItems.sourceUrl, sourceUrl)))
     .limit(1);
   if (!item) throw new Error("Không thể tạo sản phẩm theo dõi Shop SNKR.");
+  const storedImage = await persistSnkrShopProductImage(metadata.imageUrl, userId, item.id);
+  if (storedImage.imageUrl || storedImage.error) {
+    await db.update(snkrShopItems).set({ imageUrl: storedImage.imageUrl, lastSyncError: storedImage.error }).where(and(eq(snkrShopItems.id, item.id), eq(snkrShopItems.userId, userId)));
+  }
   await db.insert(activityLogs).values({ userId, action: "snkr_shop_item_created", description: `Thêm theo dõi Shop SNKR: ${name}`, entityType: "snkr_shop_item", entityId: item.id });
-  return { ...item, alreadyTracked: false };
+  const [created] = await db.select().from(snkrShopItems).where(and(eq(snkrShopItems.id, item.id), eq(snkrShopItems.userId, userId))).limit(1);
+  return { ...(created ?? item), alreadyTracked: false };
 }
 
 export async function updateSnkrShopItem(itemId: number, userId: number, input: UpdateSnkrShopItemInput) {
@@ -142,22 +195,23 @@ export async function updateSnkrShopItem(itemId: number, userId: number, input: 
       .limit(1);
     if (duplicate) throw new Error("URL SNKRDUNK này đã có trong Shop SNKR của bạn.");
   }
-  let metadata: { title: string | null; imageUrl: string | null } = { title: item.sourceTitle, imageUrl: item.imageUrl };
+  let metadata: { title: string | null; imageUrl: string | null } = sourceChanged ? { title: null, imageUrl: null } : { title: item.sourceTitle, imageUrl: item.imageUrl };
   if (sourceChanged) {
     try { metadata = await fetchSnkrdunkProductMetadata(nextUrl); } catch { /* URL vẫn được cập nhật để người dùng thử đồng bộ giá sau. */ }
   }
   const name = input.name === undefined ? (sourceChanged ? metadata.title || item.name : item.name) : input.name.trim() || metadata.title || item.name;
   const cardRank = getCardRank(productType, input.cardRank ?? item.cardRank);
+  const storedImage = sourceChanged ? await persistSnkrShopProductImage(metadata.imageUrl, userId, itemId) : { imageUrl: item.imageUrl, error: null };
   await db.update(snkrShopItems).set({
     name,
     productType,
     cardRank,
     sourceUrl: nextUrl,
     sourceTitle: sourceChanged ? metadata.title : item.sourceTitle,
-    imageUrl: sourceChanged ? metadata.imageUrl : item.imageUrl,
+    imageUrl: storedImage.imageUrl,
     currentPrice: sourceChanged ? "0" : item.currentPrice,
     lastSyncedAt: sourceChanged ? null : item.lastSyncedAt,
-    lastSyncError: sourceChanged ? null : item.lastSyncError,
+    lastSyncError: sourceChanged ? storedImage.error : item.lastSyncError,
   })
     .where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
   if (sourceChanged) await db.delete(snkrShopPriceHistory).where(eq(snkrShopPriceHistory.itemId, itemId));
@@ -211,10 +265,12 @@ export async function syncSnkrShopItem(itemId: number, userId: number, syncMode:
     const result = await fetchSnkrdunkPrice(item.sourceUrl, productType, cardRank ?? "A");
     const syncedAt = new Date();
     let metadata: { title: string | null; imageUrl: string | null } = { title: item.sourceTitle, imageUrl: item.imageUrl };
-    if (!metadata.title || !metadata.imageUrl || isSnkrdunkGenericImageUrl(metadata.imageUrl)) {
+    if (!metadata.title || !metadata.imageUrl || !isStoredProductImage(metadata.imageUrl) || isSnkrdunkGenericImageUrl(metadata.imageUrl)) {
       try { metadata = await fetchSnkrdunkProductMetadata(item.sourceUrl); } catch { /* Keep saved display metadata when the page is temporarily unavailable. */ }
     }
-    await db.update(snkrShopItems).set({ currentPrice: String(result.price), lastSyncedAt: syncedAt, lastSyncError: null, sourceTitle: metadata.title, imageUrl: metadata.imageUrl })
+    const storedImage = await persistSnkrShopProductImage(metadata.imageUrl, userId, itemId);
+    const nextImageUrl = storedImage.imageUrl ?? (isStoredProductImage(item.imageUrl) ? item.imageUrl : null);
+    await db.update(snkrShopItems).set({ currentPrice: String(result.price), lastSyncedAt: syncedAt, lastSyncError: storedImage.error, sourceTitle: metadata.title, imageUrl: nextImageUrl })
       .where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
     if (Number(item.currentPrice || 0) !== result.price) {
       await db.insert(snkrShopPriceHistory).values({ itemId, price: String(result.price), source: "snkrdunk" });
