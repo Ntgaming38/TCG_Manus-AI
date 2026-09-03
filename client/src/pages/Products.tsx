@@ -415,6 +415,17 @@ export default function Products() {
                 <Label>Tên sản phẩm</Label>
                 <Input value={editingProduct.name} onChange={(e) => setEditingProduct((p: any) => ({ ...p, name: e.target.value }))} />
               </div>
+              <div className="space-y-2">
+                <Label>Loại sản phẩm</Label>
+                <Select value={editingProduct.type} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, type: value, rarity: value === "card" ? p.rarity : "", condition: value === "card" ? p.condition : "" }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="box">Box</SelectItem>
+                    <SelectItem value="pack">Pack</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Series</Label>

@@ -1400,3 +1400,11 @@
 - [x] Áp dụng vị trí và zoom riêng cho Card, Box, Pack, GIF và ảnh tĩnh trên toàn app
 - [x] Bổ sung kiểm thử, responsive/mobile và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Tắt kéo thả và sửa loại sản phẩm
+- [x] Tắt tương tác kéo thả trên tất cả ảnh nhưng giữ nguyên zoom, vị trí và GIF
+- [x] Thêm trường chọn Loại sản phẩm vào biểu mẫu Sửa Kho hàng
+- [x] Cập nhật backend để cho phép đổi loại Card/Box/Pack an toàn theo userId
+- [x] Xử lý lại các trường phụ thuộc loại và kiểm tra dữ liệu giao dịch liên quan
+- [x] Bổ sung kiểm thử hồi quy, responsive và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

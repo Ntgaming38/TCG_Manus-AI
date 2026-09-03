@@ -13,8 +13,9 @@ describe("ảnh fallback sản phẩm", () => {
     expect(componentSource).toContain("FALLBACK_PRODUCT_IMAGE_URL");
     expect(componentSource).toContain("object-contain");
     expect(componentSource).toContain("onError");
-    expect(componentSource).toContain("onPointerDown");
+    expect(componentSource).not.toContain("onPointerDown");
     expect(readClientFile("components/ProductImageEditControls.tsx")).toContain('type="range"');
+    expect(readClientFile("pages/Products.tsx")).toContain("Loại sản phẩm");
     for (const fileName of ["pages/Products.tsx", "pages/SnkrShop.tsx", "pages/SnkrShopDetail.tsx"]) {
       const source = readClientFile(fileName);
       expect(source).toContain("ProductImageAdjuster");
