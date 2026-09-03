@@ -365,6 +365,9 @@ export const appRouter = router({
         psaGrade: z.string().optional(),
         releaseDate: z.string().optional(),
         image: z.string().optional(),
+        imageZoom: z.number().min(1).max(1.5).optional(),
+        imagePositionX: z.number().min(-50).max(50).optional(),
+        imagePositionY: z.number().min(-50).max(50).optional(),
         status: z.enum(["in_stock", "sold", "reserved", "traded", "damaged"]).optional(),
       }))
       .mutation(({ ctx, input }) => {
@@ -383,8 +386,8 @@ export const appRouter = router({
       }),
 
     updateImageZoom: protectedProcedure
-      .input(z.object({ id: z.number().int().positive(), imageZoom: z.number().min(1).max(1.5) }))
-      .mutation(({ ctx, input }) => db.updateProductImageZoom(input.id, ctx.user.id, input.imageZoom)),
+      .input(z.object({ id: z.number().int().positive(), imageZoom: z.number().min(1).max(1.5), imagePositionX: z.number().min(-50).max(50).optional(), imagePositionY: z.number().min(-50).max(50).optional() }))
+      .mutation(({ ctx, input }) => db.updateProductImageZoom(input.id, ctx.user.id, input.imageZoom, input.imagePositionX, input.imagePositionY)),
 
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -467,14 +470,17 @@ export const appRouter = router({
         productType: z.enum(["card", "box", "pack"]).optional(),
         cardRank: z.enum(["A", "B", "C", "D"]).optional(),
         sourceUrl: z.string().trim().url().max(2048).optional(),
+        imageZoom: z.number().min(1).max(1.5).optional(),
+        imagePositionX: z.number().min(-50).max(50).optional(),
+        imagePositionY: z.number().min(-50).max(50).optional(),
       }))
       .mutation(({ ctx, input }) => {
         const { id, ...changes } = input;
         return snkrShopDb.updateSnkrShopItem(id, ctx.user.id, changes);
       }),
     updateImageZoom: protectedProcedure
-      .input(z.object({ id: z.number().int().positive(), imageZoom: z.number().min(1).max(1.5) }))
-      .mutation(({ ctx, input }) => snkrShopDb.updateSnkrShopItemImageZoom(input.id, ctx.user.id, input.imageZoom)),
+      .input(z.object({ id: z.number().int().positive(), imageZoom: z.number().min(1).max(1.5), imagePositionX: z.number().min(-50).max(50).optional(), imagePositionY: z.number().min(-50).max(50).optional() }))
+      .mutation(({ ctx, input }) => snkrShopDb.updateSnkrShopItemImageZoom(input.id, ctx.user.id, input.imageZoom, input.imagePositionX, input.imagePositionY)),
     delete: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.deleteSnkrShopItem(input.id, ctx.user.id)),

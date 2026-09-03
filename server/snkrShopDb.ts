@@ -20,7 +20,7 @@ type CreateSnkrShopItemInput = {
   sourceUrl: string;
 };
 
-type UpdateSnkrShopItemInput = Partial<CreateSnkrShopItemInput>;
+type UpdateSnkrShopItemInput = Partial<CreateSnkrShopItemInput> & { imageZoom?: number; imagePositionX?: number; imagePositionY?: number };
 
 const MAX_SNKR_PRODUCT_IMAGE_BYTES = 8 * 1024 * 1024;
 
@@ -206,6 +206,9 @@ export async function updateSnkrShopItem(itemId: number, userId: number, input: 
     name,
     productType,
     cardRank,
+    ...(input.imageZoom === undefined ? {} : { imageZoom: input.imageZoom.toFixed(2) }),
+    ...(input.imagePositionX === undefined ? {} : { imagePositionX: Math.min(50, Math.max(-50, input.imagePositionX)).toFixed(2) }),
+    ...(input.imagePositionY === undefined ? {} : { imagePositionY: Math.min(50, Math.max(-50, input.imagePositionY)).toFixed(2) }),
     sourceUrl: nextUrl,
     sourceTitle: sourceChanged ? metadata.title : item.sourceTitle,
     imageUrl: storedImage.imageUrl,
@@ -219,11 +222,13 @@ export async function updateSnkrShopItem(itemId: number, userId: number, input: 
   return updated;
 }
 
-export async function updateSnkrShopItemImageZoom(itemId: number, userId: number, imageZoom: number) {
+export async function updateSnkrShopItemImageZoom(itemId: number, userId: number, imageZoom: number, imagePositionX = 0, imagePositionY = 0) {
   const { db } = await getOwnedItem(itemId, userId);
-  await db.update(snkrShopItems).set({ imageZoom: imageZoom.toFixed(2) }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
-  const [updated] = await db.select({ id: snkrShopItems.id, imageZoom: snkrShopItems.imageZoom }).from(snkrShopItems).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId))).limit(1);
-  return updated ?? { id: itemId, imageZoom: imageZoom.toFixed(2) };
+  const positionX = Math.min(50, Math.max(-50, imagePositionX));
+  const positionY = Math.min(50, Math.max(-50, imagePositionY));
+  await db.update(snkrShopItems).set({ imageZoom: imageZoom.toFixed(2), imagePositionX: positionX.toFixed(2), imagePositionY: positionY.toFixed(2) }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+  const [updated] = await db.select({ id: snkrShopItems.id, imageZoom: snkrShopItems.imageZoom, imagePositionX: snkrShopItems.imagePositionX, imagePositionY: snkrShopItems.imagePositionY }).from(snkrShopItems).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId))).limit(1);
+  return updated ?? { id: itemId, imageZoom: imageZoom.toFixed(2), imagePositionX: positionX.toFixed(2), imagePositionY: positionY.toFixed(2) };
 }
 
 export async function deleteSnkrShopItem(itemId: number, userId: number) {

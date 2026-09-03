@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 import { trpc } from "@/lib/trpc";
 import {
@@ -8,9 +8,7 @@ import {
   type ProductImageKind,
 } from "@/lib/productImageDisplay";
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 1.5;
-const STEP = 0.01;
+const DEFAULT_ZOOM = 1.12;
 
 type ProductImageAdjusterProps = {
   entity: "product" | "snkr";
@@ -19,42 +17,67 @@ type ProductImageAdjusterProps = {
   src: string | null | undefined;
   alt: string;
   initialZoom?: number | string | null;
+  initialPositionX?: number | string | null;
+  initialPositionY?: number | string | null;
   className?: string;
   eager?: boolean;
   referrerPolicy?: React.HTMLAttributeReferrerPolicy;
 };
 
-export function ProductImageAdjuster({ entity, id, kind, src, alt, initialZoom, className = "", eager = false, referrerPolicy }: ProductImageAdjusterProps) {
-  const fallbackZoom = kind === "card" ? 1.12 : 1.12;
-  const [zoom, setZoom] = useState<number>(() => normalizeCustomProductImageZoom(initialZoom, fallbackZoom));
+type ImagePosition = { x: number; y: number };
+
+function normalizePosition(value: unknown) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? Math.min(50, Math.max(-50, numeric)) : 0;
+}
+
+export function ProductImageAdjuster({ entity, id, kind, src, alt, initialZoom, initialPositionX, initialPositionY, className = "", eager = false, referrerPolicy }: ProductImageAdjusterProps) {
+  const [zoom, setZoom] = useState(() => normalizeCustomProductImageZoom(initialZoom, DEFAULT_ZOOM));
+  const [position, setPosition] = useState<ImagePosition>(() => ({ x: normalizePosition(initialPositionX), y: normalizePosition(initialPositionY) }));
   const [failed, setFailed] = useState(false);
+  const dragStart = useRef<{ pointerX: number; pointerY: number; x: number; y: number } | null>(null);
   const productZoom = trpc.products.updateImageZoom.useMutation();
   const snkrZoom = trpc.snkrShop.updateImageZoom.useMutation();
 
   useEffect(() => {
-    setZoom(normalizeCustomProductImageZoom(initialZoom, fallbackZoom));
+    setZoom(normalizeCustomProductImageZoom(initialZoom, DEFAULT_ZOOM));
+    setPosition({ x: normalizePosition(initialPositionX), y: normalizePosition(initialPositionY) });
     setFailed(false);
-  }, [initialZoom, fallbackZoom, src]);
+  }, [initialZoom, initialPositionX, initialPositionY, src]);
 
-  const commitZoom = (nextValue: number) => {
-    const next = normalizeCustomProductImageZoom(nextValue, fallbackZoom);
-    setZoom(next);
-    if (entity === "product") productZoom.mutate({ id, imageZoom: next });
-    else snkrZoom.mutate({ id, imageZoom: next });
+  const commit = (nextZoom: number, nextPosition: ImagePosition) => {
+    const safeZoom = normalizeCustomProductImageZoom(nextZoom, DEFAULT_ZOOM);
+    const safePosition = { x: normalizePosition(nextPosition.x), y: normalizePosition(nextPosition.y) };
+    setZoom(safeZoom);
+    setPosition(safePosition);
+    const input = { id, imageZoom: safeZoom, imagePositionX: safePosition.x, imagePositionY: safePosition.y };
+    if (entity === "product") productZoom.mutate(input);
+    else snkrZoom.mutate(input);
   };
 
   const imageUrl = src && !failed ? src : FALLBACK_PRODUCT_IMAGE_URL;
   const isSaving = productZoom.isPending || snkrZoom.isPending;
+  const onPointerDown = (event: React.PointerEvent<HTMLImageElement>) => {
+    if (zoom <= 1) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStart.current = { pointerX: event.clientX, pointerY: event.clientY, x: position.x, y: position.y };
+  };
+  const onPointerMove = (event: React.PointerEvent<HTMLImageElement>) => {
+    if (!dragStart.current) return;
+    const next = { x: dragStart.current.x + (event.clientX - dragStart.current.pointerX) / 3, y: dragStart.current.y + (event.clientY - dragStart.current.pointerY) / 3 };
+    setPosition({ x: normalizePosition(next.x), y: normalizePosition(next.y) });
+  };
+  const onPointerUp = (event: React.PointerEvent<HTMLImageElement>) => {
+    if (!dragStart.current) return;
+    const next = { x: dragStart.current.x + (event.clientX - dragStart.current.pointerX) / 3, y: dragStart.current.y + (event.clientY - dragStart.current.pointerY) / 3 };
+    dragStart.current = null;
+    commit(zoom, next);
+  };
 
   return <div className={`relative flex aspect-square min-h-0 items-center justify-center overflow-hidden bg-white ${className}`} style={productImageFrameStyle()} onClick={(event) => event.stopPropagation()}>
-    <img src={imageUrl} alt={alt} className="h-full w-full bg-white object-contain transition-transform duration-300 motion-reduce:transition-none" style={productImageImageStyle(zoom)} loading={eager ? "eager" : "lazy"} referrerPolicy={referrerPolicy} onError={(event) => { event.currentTarget.onerror = null; setFailed(true); }} />
-    <details className="absolute inset-x-2 bottom-2 z-10 rounded-md bg-slate-950/80 p-1.5 text-white shadow-sm backdrop-blur" onClick={(event) => event.stopPropagation()}>
-      <summary className="cursor-pointer list-none text-center text-[10px] font-semibold text-white">Zoom ảnh · {Math.round(zoom * 100)}%{isSaving ? " · Đang lưu…" : ""}</summary>
-      <div className="px-1 pb-1 pt-2">
-        <label className="sr-only" htmlFor={`image-zoom-${entity}-${id}`}>Mức zoom ảnh</label>
-        <input id={`image-zoom-${entity}-${id}`} type="range" min={MIN_ZOOM} max={MAX_ZOOM} step={STEP} value={zoom} onChange={(event) => setZoom(normalizeCustomProductImageZoom(event.target.value, fallbackZoom))} onPointerUp={(event) => commitZoom(Number(event.currentTarget.value))} onBlur={(event) => commitZoom(Number(event.currentTarget.value))} className="w-full accent-teal-400" aria-label="Điều chỉnh zoom ảnh riêng" />
-        <div className="mt-1 flex items-center justify-between text-[9px] text-white/70"><span>100%</span><button type="button" className="font-semibold text-teal-200 hover:text-white" onClick={() => commitZoom(fallbackZoom)}>Khôi phục ảnh</button><span>{Math.round(MAX_ZOOM * 100)}%</span></div>
-      </div>
-    </details>
+    <img src={imageUrl} alt={alt} className={`h-full w-full bg-white object-contain transition-transform duration-300 motion-reduce:transition-none ${zoom > 1 ? "cursor-grab active:cursor-grabbing touch-none" : ""}`} style={productImageImageStyle(zoom, position)} loading={eager ? "eager" : "lazy"} referrerPolicy={referrerPolicy} draggable={false} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { dragStart.current = null; }} onError={(event) => { event.currentTarget.onerror = null; setFailed(true); }} />
+    {isSaving && <span className="pointer-events-none absolute right-2 top-2 rounded bg-slate-950/75 px-1.5 py-0.5 text-[9px] font-semibold text-white">Đang lưu vị trí…</span>}
   </div>;
 }
+
+export const PRODUCT_IMAGE_DEFAULT_ZOOM = DEFAULT_ZOOM;

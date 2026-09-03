@@ -195,14 +195,16 @@ export async function updateProduct(id: number, userId: number, data: Partial<In
   }
 }
 
-export async function updateProductImageZoom(id: number, userId: number, imageZoom: number) {
+export async function updateProductImageZoom(id: number, userId: number, imageZoom: number, imagePositionX = 0, imagePositionY = 0) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const product = await getProductById(id);
   if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
-  await db.update(products).set({ imageZoom: imageZoom.toFixed(2) }).where(and(eq(products.id, id), eq(products.userId, userId)));
-  const [updated] = await db.select({ id: products.id, imageZoom: products.imageZoom }).from(products).where(and(eq(products.id, id), eq(products.userId, userId))).limit(1);
-  return updated ?? { id, imageZoom: imageZoom.toFixed(2) };
+  const positionX = Math.min(50, Math.max(-50, imagePositionX));
+  const positionY = Math.min(50, Math.max(-50, imagePositionY));
+  await db.update(products).set({ imageZoom: imageZoom.toFixed(2), imagePositionX: positionX.toFixed(2), imagePositionY: positionY.toFixed(2) }).where(and(eq(products.id, id), eq(products.userId, userId)));
+  const [updated] = await db.select({ id: products.id, imageZoom: products.imageZoom, imagePositionX: products.imagePositionX, imagePositionY: products.imagePositionY }).from(products).where(and(eq(products.id, id), eq(products.userId, userId))).limit(1);
+  return updated ?? { id, imageZoom: imageZoom.toFixed(2), imagePositionX: positionX.toFixed(2), imagePositionY: positionY.toFixed(2) };
 }
 
 export async function deleteProduct(id: number, userId: number) {

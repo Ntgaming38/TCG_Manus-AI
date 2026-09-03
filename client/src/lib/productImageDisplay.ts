@@ -65,9 +65,11 @@ export function productImageFrameStyle() {
   return { backgroundColor: "#FFFFFF", isolation: "isolate" } as const;
 }
 
-export function productImageImageStyle(value: number) {
+export function productImageImageStyle(value: number, position: { x?: number; y?: number } = {}) {
+  const x = Math.min(50, Math.max(-50, position.x ?? 0));
+  const y = Math.min(50, Math.max(-50, position.y ?? 0));
   return {
-    transform: `scale(${normalizeCustomProductImageZoom(value)})`,
+    transform: `translate(${x}%, ${y}%) scale(${normalizeCustomProductImageZoom(value)})`,
     transformOrigin: "center",
     transition: "transform 280ms cubic-bezier(0.23, 1, 0.32, 1)",
     backgroundColor: "#FFFFFF",

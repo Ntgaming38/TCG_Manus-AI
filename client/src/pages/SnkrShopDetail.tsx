@@ -10,7 +10,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useLocation, useRoute } from "wouter";
 
-type DetailItem = { id: number; name: string; productType: "card" | "box" | "pack"; cardRank: string | null; sourceUrl: string; sourceTitle: string | null; imageUrl: string | null; imageZoom: string | number | null; currentPrice: string | number; lastSyncedAt: Date | null; lastSyncError: string | null };
+type DetailItem = { id: number; name: string; productType: "card" | "box" | "pack"; cardRank: string | null; sourceUrl: string; sourceTitle: string | null; imageUrl: string | null; imageZoom: string | number | null; imagePositionX: string | number | null; imagePositionY: string | number | null; currentPrice: string | number; lastSyncedAt: Date | null; lastSyncError: string | null };
 type PricePoint = { id: number; price: string | number; createdAt: Date };
 type QuantityPrice = { quantity: number | null; label: string; price: number; listingCount: number | null };
 const chartConfig = { price: { label: "Giá SNKRDUNK", color: "#14b8a6" } } satisfies ChartConfig;
@@ -52,7 +52,7 @@ export default function SnkrShopDetail() {
     <div className="flex items-center justify-between gap-3"><Button variant="ghost" onClick={() => setLocation("/shop-snkr")} className="-ml-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-2 h-5 w-5" />Shop SNKR</Button><a href={item.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-3 text-sm font-medium text-teal-200 hover:bg-teal-500/10"><ExternalLink className="mr-2 h-4 w-4" />Mở SNKRDUNK</a></div>
 
     <section className="grid gap-5 rounded-3xl border border-border bg-card p-4 shadow-sm md:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.25fr)] md:p-6">
-      <ProductImageAdjuster entity="snkr" id={item.id} kind={item.productType === "card" ? "card" : "box-pack"} src={item.imageUrl} initialZoom={item.imageZoom} alt={item.imageUrl ? title : `${title} — chưa có ảnh`} className="rounded-2xl border border-white md:min-h-[390px]" eager referrerPolicy="no-referrer" />
+      <ProductImageAdjuster entity="snkr" id={item.id} kind={item.productType === "card" ? "card" : "box-pack"} src={item.imageUrl} initialZoom={item.imageZoom} initialPositionX={item.imagePositionX} initialPositionY={item.imagePositionY} alt={item.imageUrl ? title : `${title} — chưa có ảnh`} className="rounded-2xl border border-white md:min-h-[390px]" eager referrerPolicy="no-referrer" />
       <div className="flex min-w-0 flex-col py-1">
         <div className="mb-3 flex flex-wrap gap-2"><Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-100">{typeLabel(item.productType)}</Badge>{item.productType === "card" && item.cardRank && <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-100">Rank {item.cardRank}</Badge>}<Badge variant="outline" className="border-border bg-background text-muted-foreground">Theo dõi giá độc lập</Badge></div>
         <h1 className="break-words text-xl font-black leading-tight text-foreground sm:text-2xl md:text-3xl">{title}</h1>

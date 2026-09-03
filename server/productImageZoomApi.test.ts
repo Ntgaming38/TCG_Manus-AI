@@ -8,8 +8,8 @@ describe("API zoom riêng từng ảnh", () => {
   it("exposes protected mutations for inventory and Shop SNKR", () => {
     const routers = read("server/routers.ts");
     expect(routers).toContain("updateImageZoom: protectedProcedure");
-    expect(routers).toContain("db.updateProductImageZoom(input.id, ctx.user.id, input.imageZoom)");
-    expect(routers).toContain("snkrShopDb.updateSnkrShopItemImageZoom(input.id, ctx.user.id, input.imageZoom)");
+    expect(routers).toContain("db.updateProductImageZoom(input.id, ctx.user.id, input.imageZoom,");
+    expect(routers).toContain("snkrShopDb.updateSnkrShopItemImageZoom(input.id, ctx.user.id, input.imageZoom,");
   });
 
   it("scopes both updates and reads by the authenticated user", () => {

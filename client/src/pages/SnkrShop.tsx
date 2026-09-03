@@ -15,6 +15,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
+import { ProductImageEditControls } from "@/components/ProductImageEditControls";
 
 type ShopType = "card" | "box" | "pack";
 type WatchItem = {
@@ -26,6 +27,8 @@ type WatchItem = {
   sourceTitle: string | null;
   imageUrl: string | null;
   imageZoom: string | number | null;
+  imagePositionX: string | number | null;
+  imagePositionY: string | number | null;
   currentPrice: string | number;
   lastSyncedAt: Date | null;
   lastSyncError: string | null;
@@ -62,7 +65,7 @@ export default function SnkrShop() {
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<WatchItem | null>(null);
   const [historyDays, setHistoryDays] = useState<7 | 30 | 90>(30);
   const [form, setForm] = useState<{ name: string; productType: ShopType; cardRank: "A" | "B" | "C" | "D"; sourceUrl: string }>({ name: "", productType: "box", cardRank: "A", sourceUrl: "" });
-  const [editForm, setEditForm] = useState({ name: "", sourceUrl: "" });
+  const [editForm, setEditForm] = useState({ name: "", sourceUrl: "", imageZoom: 1.12, imagePositionX: 0, imagePositionY: 0 });
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
   const { data: items = [], isLoading } = trpc.snkrShop.list.useQuery({ search: search.trim() || undefined });
@@ -131,11 +134,11 @@ export default function SnkrShop() {
   };
   const openEdit = (item: WatchItem) => {
     setEditItem(item);
-    setEditForm({ name: item.name, sourceUrl: item.sourceUrl });
+    setEditForm({ name: item.name, sourceUrl: item.sourceUrl, imageZoom: Number(item.imageZoom) || 1.12, imagePositionX: Number(item.imagePositionX) || 0, imagePositionY: Number(item.imagePositionY) || 0 });
   };
   const submitEdit = () => {
     if (!editItem || !editForm.sourceUrl.trim()) { toast.error("Hãy nhập URL SNKRDUNK."); return; }
-    updateItem.mutate({ id: editItem.id, name: editForm.name.trim() || undefined, sourceUrl: editForm.sourceUrl.trim() });
+    updateItem.mutate({ id: editItem.id, name: editForm.name.trim() || undefined, sourceUrl: editForm.sourceUrl.trim(), imageZoom: editForm.imageZoom, imagePositionX: editForm.imagePositionX, imagePositionY: editForm.imagePositionY });
   };
 
   return (
@@ -180,7 +183,7 @@ export default function SnkrShop() {
       <Dialog open={Boolean(editItem)} onOpenChange={(open) => !open && setEditItem(null)}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-4 sm:max-w-xl sm:p-6">
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-foreground"><Pencil className="h-5 w-5 text-teal-400" />Sửa sản phẩm Shop SNKR</DialogTitle><DialogDescription>Đổi tên hoặc URL. Nếu đổi URL, hệ thống sẽ làm mới tên, hình, giá và lịch sử cũ của mục này.</DialogDescription></DialogHeader>
-          <div className="space-y-4 py-2"><Field label="Tên hiển thị (tùy chọn)"><Input value={editForm.name} onChange={(event) => setEditForm((current) => ({ ...current, name: event.target.value }))} placeholder="Tự lấy từ URL nếu để trống" /></Field><Field label="URL SNKRDUNK"><Input value={editForm.sourceUrl} onChange={(event) => setEditForm((current) => ({ ...current, sourceUrl: event.target.value }))} inputMode="url" /></Field></div>
+          <div className="space-y-4 py-2"><Field label="Tên hiển thị (tùy chọn)"><Input value={editForm.name} onChange={(event) => setEditForm((current) => ({ ...current, name: event.target.value }))} placeholder="Tự lấy từ URL nếu để trống" /></Field><Field label="URL SNKRDUNK"><Input value={editForm.sourceUrl} onChange={(event) => setEditForm((current) => ({ ...current, sourceUrl: event.target.value }))} inputMode="url" /></Field>{editItem && <ProductImageEditControls src={editItem.imageUrl} alt={editItem.name} zoom={editForm.imageZoom} position={{ x: editForm.imagePositionX, y: editForm.imagePositionY }} onZoomChange={(imageZoom) => setEditForm((current) => ({ ...current, imageZoom }))} onPositionChange={({ x, y }) => setEditForm((current) => ({ ...current, imagePositionX: x, imagePositionY: y }))} />}</div>
           <Button onClick={submitEdit} disabled={updateItem.isPending} className="w-full bg-teal-500 font-semibold text-slate-950 hover:bg-teal-400">{updateItem.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}Lưu và cập nhật giá</Button>
         </DialogContent>
       </Dialog>
@@ -244,7 +247,7 @@ function WatchItemCard({ item, onSync, onOpenHistory, onEdit, onDelete, syncing,
 }
 
 function DirectProductImage({ item }: { item: WatchItem }) {
-  return <ProductImageAdjuster entity="snkr" id={item.id} kind={item.productType === "card" ? "card" : "box-pack"} src={item.imageUrl} initialZoom={item.imageZoom} alt={item.imageUrl ? item.sourceTitle || item.name : `${item.name} — chưa có ảnh`} className="absolute inset-0 rounded-xl" eager referrerPolicy="no-referrer" />;
+  return <ProductImageAdjuster entity="snkr" id={item.id} kind={item.productType === "card" ? "card" : "box-pack"} src={item.imageUrl} initialZoom={item.imageZoom} initialPositionX={item.imagePositionX} initialPositionY={item.imagePositionY} alt={item.imageUrl ? item.sourceTitle || item.name : `${item.name} — chưa có ảnh`} className="absolute inset-0 rounded-xl" eager referrerPolicy="no-referrer" />;
 }
 
 function HistoryDialog({ item, history, loading, days, onDaysChange, onOpenChange }: { item: WatchItem | null; history: PricePoint[]; loading: boolean; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void; onOpenChange: (open: boolean) => void }) {

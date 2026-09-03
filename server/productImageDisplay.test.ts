@@ -58,7 +58,7 @@ describe("product image display settings", () => {
   it("keeps a white full frame and smooth transform style", () => {
     expect(productImageFrameStyle()).toMatchObject({ backgroundColor: "#FFFFFF", isolation: "isolate" });
     expect(productImageImageStyle(1.18)).toMatchObject({
-      transform: "scale(1.18)",
+      transform: "translate(0%, 0%) scale(1.18)",
       transformOrigin: "center",
       transition: expect.stringContaining("transform"),
       backgroundColor: "#FFFFFF",

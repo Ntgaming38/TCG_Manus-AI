@@ -19,6 +19,7 @@ import { getAutoCreateProductType } from "@shared/productCreateType";
 import { getCardRankLabel, normalizeCardRank } from "@shared/cardRank";
 import { useProductImageZoom } from "@/hooks/useProductImageZoom";
 import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
+import { ProductImageEditControls } from "@/components/ProductImageEditControls";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -215,6 +216,10 @@ export default function Products() {
       rarity: normalizeCardRarity(product.rarity),
       condition: normalizeCardRank(product.condition),
       psaGrade: product.psaGrade || "",
+      image: product.image || "",
+      imageZoom: Number(product.imageZoom) || 1.12,
+      imagePositionX: Number(product.imagePositionX) || 0,
+      imagePositionY: Number(product.imagePositionY) || 0,
     });
     setShowEditDialog(true);
   };
@@ -443,6 +448,7 @@ export default function Products() {
                   <Input type="number" min={0} value={editingProduct.marketPrice} onChange={(e) => setEditingProduct((p: any) => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
+              <ProductImageEditControls src={editingProduct.image} alt={editingProduct.name} zoom={editingProduct.imageZoom} position={{ x: editingProduct.imagePositionX, y: editingProduct.imagePositionY }} onZoomChange={(imageZoom) => setEditingProduct((p: any) => ({ ...p, imageZoom }))} onPositionChange={({ x, y }) => setEditingProduct((p: any) => ({ ...p, imagePositionX: x, imagePositionY: y }))} />
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Textarea value={editingProduct.description} onChange={(e) => setEditingProduct((p: any) => ({ ...p, description: e.target.value }))} />
@@ -543,7 +549,7 @@ export default function Products() {
                   </div>
                 </div>
                 {/* Product image / shared fallback */}
-                <ProductImageAdjuster entity="product" id={product.id} kind={product.type === "card" ? "card" : "box-pack"} src={product.image} initialZoom={product.imageZoom ?? (product.type === "card" ? cardImageZoom : boxPackImageZoom)} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="mb-3 rounded-lg border border-white/90" />
+                <ProductImageAdjuster entity="product" id={product.id} kind={product.type === "card" ? "card" : "box-pack"} src={product.image} initialZoom={product.imageZoom ?? (product.type === "card" ? cardImageZoom : boxPackImageZoom)} initialPositionX={product.imagePositionX} initialPositionY={product.imagePositionY} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="mb-3 rounded-lg border border-white/90" />
                 <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>
                   {product.type === "card" && <RarityBadge rarity={product.rarity} />}

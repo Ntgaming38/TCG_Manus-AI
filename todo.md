@@ -1391,3 +1391,12 @@
 - [x] Thêm khôi phục zoom từng ảnh và khôi phục hàng loạt về mặc định
 - [x] Bổ sung kiểm thử responsive, kiểm thử dữ liệu cách ly và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Kéo thả vị trí ảnh và điều chỉnh trong biểu mẫu Sửa
+- [x] Rà soát component ảnh, biểu mẫu sửa sản phẩm và mọi trang đang hiển thị ảnh
+- [x] Thêm dữ liệu vị trí ảnh riêng theo từng sản phẩm và tài khoản
+- [x] Thêm kéo thả ảnh sau khi zoom, hỗ trợ chuột và cảm ứng, không che ảnh khi xem bình thường
+- [x] Chuyển thanh Zoom ảnh vào popup/biểu mẫu Sửa và bổ sung xem trước rõ ràng
+- [x] Áp dụng vị trí và zoom riêng cho Card, Box, Pack, GIF và ảnh tĩnh trên toàn app
+- [x] Bổ sung kiểm thử, responsive/mobile và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

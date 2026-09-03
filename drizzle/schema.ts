@@ -95,6 +95,8 @@ export const products = mysqlTable("products", {
   image: text("image"),
   /** Per-product display zoom, kept separate from global orientation defaults. */
   imageZoom: decimal("imageZoom", { precision: 4, scale: 2 }).default("1.12").notNull(),
+  imagePositionX: decimal("imagePositionX", { precision: 5, scale: 2 }).default("0").notNull(),
+  imagePositionY: decimal("imagePositionY", { precision: 5, scale: 2 }).default("0").notNull(),
   description: text("description"),
   // Card-specific fields
   cardNumber: varchar("cardNumber", { length: 50 }),
@@ -168,6 +170,8 @@ export const snkrShopItems = mysqlTable("snkr_shop_items", {
   imageUrl: varchar("imageUrl", { length: 2048 }),
   /** Per-watch-item display zoom, scoped by userId through this row. */
   imageZoom: decimal("imageZoom", { precision: 4, scale: 2 }).default("1.12").notNull(),
+  imagePositionX: decimal("imagePositionX", { precision: 5, scale: 2 }).default("0").notNull(),
+  imagePositionY: decimal("imagePositionY", { precision: 5, scale: 2 }).default("0").notNull(),
   isPinned: int("isPinned").notNull().default(0),
   pinnedOrder: int("pinnedOrder").notNull().default(0),
   currentPrice: decimal("currentPrice", { precision: 12, scale: 2 }).notNull().default("0"),
