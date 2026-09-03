@@ -1408,3 +1408,10 @@
 - [x] Xử lý lại các trường phụ thuộc loại và kiểm tra dữ liệu giao dịch liên quan
 - [x] Bổ sung kiểm thử hồi quy, responsive và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Nút khôi phục vị trí và độ thu phóng ảnh
+- [x] Thêm nút “Đặt lại vị trí và độ thu phóng” trong vùng Sửa ảnh
+- [x] Đưa zoom về mặc định và vị trí về trung tâm ngay khi bấm nút
+- [x] Bảo đảm trạng thái khôi phục được gửi và lưu cùng nút Lưu
+- [x] Bổ sung kiểm thử UI/logic và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

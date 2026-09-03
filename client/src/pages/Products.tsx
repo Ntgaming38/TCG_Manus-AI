@@ -459,7 +459,7 @@ export default function Products() {
                   <Input type="number" min={0} value={editingProduct.marketPrice} onChange={(e) => setEditingProduct((p: any) => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
-              <ProductImageEditControls src={editingProduct.image} alt={editingProduct.name} zoom={editingProduct.imageZoom} position={{ x: editingProduct.imagePositionX, y: editingProduct.imagePositionY }} onZoomChange={(imageZoom) => setEditingProduct((p: any) => ({ ...p, imageZoom }))} onPositionChange={({ x, y }) => setEditingProduct((p: any) => ({ ...p, imagePositionX: x, imagePositionY: y }))} />
+              <ProductImageEditControls src={editingProduct.image} alt={editingProduct.name} zoom={editingProduct.imageZoom} position={{ x: editingProduct.imagePositionX, y: editingProduct.imagePositionY }} onZoomChange={(imageZoom) => setEditingProduct((p: any) => ({ ...p, imageZoom }))} onPositionChange={({ x, y }) => setEditingProduct((p: any) => ({ ...p, imagePositionX: x, imagePositionY: y }))} onReset={() => setEditingProduct((p: any) => ({ ...p, imageZoom: 1.12, imagePositionX: 0, imagePositionY: 0 }))} />
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Textarea value={editingProduct.description} onChange={(e) => setEditingProduct((p: any) => ({ ...p, description: e.target.value }))} />
