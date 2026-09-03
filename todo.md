@@ -1415,3 +1415,11 @@
 - [x] Bảo đảm trạng thái khôi phục được gửi và lưu cùng nút Lưu
 - [x] Bổ sung kiểm thử UI/logic và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Thumbnail sản phẩm trong Market
+- [x] Rà soát trang Market, dữ liệu sản phẩm và ảnh SNKRDUNK đã lưu
+- [x] Thay ô biểu tượng bằng thumbnail thật tương ứng với từng sản phẩm/liên kết
+- [x] Dùng chung fallback, nền trắng và cách tải ảnh như Shop SNKR
+- [x] Căn chỉnh thumbnail nhỏ trước tên trên desktop/mobile
+- [x] Bổ sung kiểm thử UI và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới
