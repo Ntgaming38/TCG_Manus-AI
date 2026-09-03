@@ -2,27 +2,26 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const readClientFile = (name: string) => readFileSync(join(process.cwd(), "client/src/pages", name), "utf8");
+const readClientFile = (name: string) => readFileSync(join(process.cwd(), "client/src", name), "utf8");
 
 describe("ảnh fallback sản phẩm", () => {
-  it("dùng chung URL fallback trong Kho Hàng, Shop SNKR và trang chi tiết", () => {
-    const constantSource = readFileSync(join(process.cwd(), "client/src/const.ts"), "utf8");
+  it("dùng chung component ảnh và URL fallback trong Kho Hàng, Shop SNKR và trang chi tiết", () => {
+    const constantSource = readClientFile("const.ts");
+    const componentSource = readClientFile("components/ProductImageAdjuster.tsx");
     expect(constantSource).toContain("FALLBACK_PRODUCT_IMAGE_URL");
     expect(constantSource).toContain("/manus-storage/tcg-product-fallback_93dfd725.png");
-
-    for (const fileName of ["Products.tsx", "SnkrShop.tsx", "SnkrShopDetail.tsx"]) {
+    expect(componentSource).toContain("FALLBACK_PRODUCT_IMAGE_URL");
+    expect(componentSource).toContain("object-contain");
+    expect(componentSource).toContain("onError");
+    expect(componentSource).toContain("type=\"range\"");
+    for (const fileName of ["pages/Products.tsx", "pages/SnkrShop.tsx", "pages/SnkrShopDetail.tsx"]) {
       const source = readClientFile(fileName);
-      expect(source).toContain("FALLBACK_PRODUCT_IMAGE_URL");
-      expect(source).toContain("onError");
-      expect(source).toContain("object-contain");
-      expect(source).toContain("useProductImageZoom");
-      expect(source).toContain("productImageImageStyle");
+      expect(source).toContain("ProductImageAdjuster");
     }
   });
 
   it("không hiển thị trạng thái icon rỗng thay cho fallback", () => {
-    expect(readClientFile("SnkrShop.tsx")).not.toContain("<ImageOff");
-    expect(readClientFile("SnkrShopDetail.tsx")).not.toContain("Chưa có ảnh sản phẩm");
-    expect(readClientFile("Products.tsx")).toContain("product.image || FALLBACK_PRODUCT_IMAGE_URL");
+    expect(readClientFile("pages/SnkrShop.tsx")).not.toContain("<ImageOff");
+    expect(readClientFile("pages/SnkrShopDetail.tsx")).not.toContain("Chưa có ảnh sản phẩm");
   });
 });

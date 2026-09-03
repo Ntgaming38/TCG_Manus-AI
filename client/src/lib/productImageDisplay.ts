@@ -41,6 +41,12 @@ export function saveProductImageZoom(value: ProductImageZoom, kindOrStorage?: Pr
   storage?.setItem(productImageZoomStorageKey(kind), String(normalizeProductImageZoom(value, defaultProductImageZoom(kind))));
 }
 
+export function normalizeCustomProductImageZoom(value: unknown, fallback = DEFAULT_PRODUCT_IMAGE_ZOOM): number {
+  const numeric = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.min(1.5, Math.max(1, Math.round(numeric * 100) / 100));
+}
+
 export function productImageZoomLabel(value: ProductImageZoom) {
   const zoom = normalizeProductImageZoom(value);
   if (zoom === 1) return "Mặc định (100%)";
@@ -59,9 +65,9 @@ export function productImageFrameStyle() {
   return { backgroundColor: "#FFFFFF", isolation: "isolate" } as const;
 }
 
-export function productImageImageStyle(value: ProductImageZoom) {
+export function productImageImageStyle(value: number) {
   return {
-    transform: `scale(${normalizeProductImageZoom(value)})`,
+    transform: `scale(${normalizeCustomProductImageZoom(value)})`,
     transformOrigin: "center",
     transition: "transform 280ms cubic-bezier(0.23, 1, 0.32, 1)",
     backgroundColor: "#FFFFFF",

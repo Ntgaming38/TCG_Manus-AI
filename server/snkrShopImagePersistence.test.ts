@@ -21,7 +21,8 @@ describe("Lưu ảnh cố định Shop SNKR", () => {
   });
 
   it("tải ảnh storage ngay khi mở lưới Shop SNKR và đặt lại fallback khi URL đổi", () => {
-    expect(shopUi).toContain('loading="eager"');
-    expect(shopUi).toContain("useEffect(() => setFailed(false), [item.imageUrl])");
+    expect(shopUi).toContain("ProductImageAdjuster");
+    expect(readFileSync(join(process.cwd(), "client/src/components/ProductImageAdjuster.tsx"), "utf8")).toContain('loading={eager ? "eager" : "lazy"}');
+    expect(readFileSync(join(process.cwd(), "client/src/components/ProductImageAdjuster.tsx"), "utf8")).toContain("setFailed(true)");
   });
 });

@@ -382,6 +382,10 @@ export const appRouter = router({
         return db.updateProduct(id, ctx.user.id, updateData);
       }),
 
+    updateImageZoom: protectedProcedure
+      .input(z.object({ id: z.number().int().positive(), imageZoom: z.number().min(1).max(1.5) }))
+      .mutation(({ ctx, input }) => db.updateProductImageZoom(input.id, ctx.user.id, input.imageZoom)),
+
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(({ ctx, input }) => db.deleteProduct(input.id, ctx.user.id)),
@@ -468,6 +472,9 @@ export const appRouter = router({
         const { id, ...changes } = input;
         return snkrShopDb.updateSnkrShopItem(id, ctx.user.id, changes);
       }),
+    updateImageZoom: protectedProcedure
+      .input(z.object({ id: z.number().int().positive(), imageZoom: z.number().min(1).max(1.5) }))
+      .mutation(({ ctx, input }) => snkrShopDb.updateSnkrShopItemImageZoom(input.id, ctx.user.id, input.imageZoom)),
     delete: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => snkrShopDb.deleteSnkrShopItem(input.id, ctx.user.id)),

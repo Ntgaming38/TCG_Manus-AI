@@ -17,9 +17,8 @@ import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type Product
 import { formatSignedYen, formatYen } from "@shared/formatYen";
 import { getAutoCreateProductType } from "@shared/productCreateType";
 import { getCardRankLabel, normalizeCardRank } from "@shared/cardRank";
-import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 import { useProductImageZoom } from "@/hooks/useProductImageZoom";
-import { productImageFrameStyle, productImageImageStyle } from "@/lib/productImageDisplay";
+import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
 import { Plus, Search, Filter, Package, CreditCard, Box, Gift, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -544,9 +543,7 @@ export default function Products() {
                   </div>
                 </div>
                 {/* Product image / shared fallback */}
-                <div className="mb-3 aspect-square overflow-hidden rounded-lg border border-white/90 bg-white p-0" style={productImageFrameStyle()}>
-                  <img src={product.image || FALLBACK_PRODUCT_IMAGE_URL} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="h-full w-full bg-white object-contain transition-transform duration-300 motion-reduce:transition-none" style={productImageImageStyle(product.type === "card" ? cardImageZoom : boxPackImageZoom)} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_PRODUCT_IMAGE_URL; }} />
-                </div>
+                <ProductImageAdjuster entity="product" id={product.id} kind={product.type === "card" ? "card" : "box-pack"} src={product.image} initialZoom={product.imageZoom ?? (product.type === "card" ? cardImageZoom : boxPackImageZoom)} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="mb-3 rounded-lg border border-white/90" />
                 <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>
                   {product.type === "card" && <RarityBadge rarity={product.rarity} />}

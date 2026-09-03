@@ -219,6 +219,13 @@ export async function updateSnkrShopItem(itemId: number, userId: number, input: 
   return updated;
 }
 
+export async function updateSnkrShopItemImageZoom(itemId: number, userId: number, imageZoom: number) {
+  const { db } = await getOwnedItem(itemId, userId);
+  await db.update(snkrShopItems).set({ imageZoom: imageZoom.toFixed(2) }).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId)));
+  const [updated] = await db.select({ id: snkrShopItems.id, imageZoom: snkrShopItems.imageZoom }).from(snkrShopItems).where(and(eq(snkrShopItems.id, itemId), eq(snkrShopItems.userId, userId))).limit(1);
+  return updated ?? { id: itemId, imageZoom: imageZoom.toFixed(2) };
+}
+
 export async function deleteSnkrShopItem(itemId: number, userId: number) {
   const { db, item } = await getOwnedItem(itemId, userId);
   await db.delete(snkrShopPriceHistory).where(eq(snkrShopPriceHistory.itemId, itemId));

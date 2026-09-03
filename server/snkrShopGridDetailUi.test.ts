@@ -19,7 +19,8 @@ describe("Shop SNKR grid and detail navigation", () => {
     expect(detailSource).toContain("trpc.snkrShop.priceHistory.useQuery");
     expect(detailSource).toContain("trpc.snkrShop.quantityPrices.useQuery");
     expect(detailSource).toContain("referrerPolicy=\"no-referrer\"");
-    expect(detailSource).toContain("aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0");
+    expect(detailSource).toContain("ProductImageAdjuster");
+    expect(detailSource).toContain("initialZoom={item.imageZoom}");
     expect(detailSource).toContain("không được đưa vào Kho Hàng hoặc báo cáo tài chính");
   });
 
@@ -38,8 +39,13 @@ describe("Shop SNKR grid and detail navigation", () => {
   });
 
   it("uses white image frames in the grid and detail views", () => {
-    expect(homeSource).toContain("border border-white/90 bg-white p-0");
-    expect(detailSource).toContain("aspect-square min-h-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white bg-white p-0");
+    expect(homeSource).toContain("ProductImageAdjuster");
+    expect(detailSource).toContain("ProductImageAdjuster");
+    const imageComponent = readFileSync(resolve(root, "client/src/components/ProductImageAdjuster.tsx"), "utf8");
+    const displayLib = readFileSync(resolve(root, "client/src/lib/productImageDisplay.ts"), "utf8");
+    expect(imageComponent).toContain("productImageFrameStyle");
+    expect(imageComponent).toContain("bg-white");
+    expect(displayLib).toContain("backgroundColor: \"#FFFFFF\"");
   });
 
   it("renders a compact seven-day sparkline from actual history for all products", () => {
@@ -50,8 +56,8 @@ describe("Shop SNKR grid and detail navigation", () => {
   it("shows an RGB type label and a custom product name over the grid image", () => {
     expect(homeSource).toContain("const customImageLabel");
     expect(homeSource).toContain("rgb-action-label");
-    expect(homeSource).toContain("useProductImageZoom");
-    expect(homeSource).toContain("productImageImageStyle(productImageZoom)");
+    expect(homeSource).toContain("ProductImageAdjuster");
+    expect(homeSource).toContain("initialZoom={item.imageZoom}");
   });
 
   it("orders grid controls as sync, edit, then a red delete action with confirmation", () => {

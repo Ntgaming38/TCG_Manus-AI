@@ -1382,3 +1382,12 @@
 - [x] Tự động căn ảnh vào vùng nền trắng full khung, xử lý ảnh có viền đen hoặc tỷ lệ dư
 - [x] Bổ sung kiểm thử UI/logic, kiểm tra desktop/mobile và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## GIF và zoom riêng từng ảnh sản phẩm
+- [x] Rà soát tất cả component ảnh sản phẩm và cơ chế ảnh GIF hiện tại
+- [x] Thiết kế lưu zoom riêng theo từng sản phẩm, tách biệt theo tài khoản
+- [x] Thêm chế độ tự căn ảnh đầy khung cho GIF và ảnh tĩnh, có lựa chọn không méo/không cắt
+- [x] Thêm điều khiển zoom riêng trên từng ảnh và đồng bộ giữa Kho hàng, Shop SNKR và trang chi tiết
+- [x] Thêm khôi phục zoom từng ảnh và khôi phục hàng loạt về mặc định
+- [x] Bổ sung kiểm thử responsive, kiểm thử dữ liệu cách ly và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

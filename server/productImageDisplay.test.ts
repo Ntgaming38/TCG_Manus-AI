@@ -65,3 +65,14 @@ describe("product image display settings", () => {
     });
   });
 });
+
+
+describe("custom per-image zoom", () => {
+  it("accepts continuous per-image zoom values and clamps the safe range", async () => {
+    const { normalizeCustomProductImageZoom } = await import("../client/src/lib/productImageDisplay");
+    expect(normalizeCustomProductImageZoom(1.01)).toBe(1.01);
+    expect(normalizeCustomProductImageZoom("1.37")).toBe(1.37);
+    expect(normalizeCustomProductImageZoom(0.4)).toBe(1);
+    expect(normalizeCustomProductImageZoom(2)).toBe(1.5);
+  });
+});
