@@ -1430,3 +1430,11 @@
 - [x] Bảo đảm giá trị zoom được giữ sau khi tải lại và áp dụng cho Market/Shop SNKR/Kho hàng
 - [x] Bổ sung kiểm thử hồi quy cho cả hai nhóm zoom
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Xem trước zoom trực tiếp trong Cài đặt
+- [x] Rà soát khối Cài đặt zoom Card và Box/Pack hiện tại
+- [x] Thêm khung xem trước ảnh Card cập nhật theo mức zoom đang chọn
+- [x] Thêm khung xem trước ảnh Box/Pack cập nhật theo mức zoom đang chọn
+- [x] Dùng ảnh mẫu/fallback rõ ràng, nền trắng và không ảnh hưởng dữ liệu sản phẩm
+- [x] Bổ sung kiểm thử UI, responsive và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới
