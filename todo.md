@@ -1423,3 +1423,10 @@
 - [x] Căn chỉnh thumbnail nhỏ trước tên trên desktop/mobile
 - [x] Bổ sung kiểm thử UI và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Sửa lỗi zoom Cài đặt không cập nhật ảnh
+- [x] Rà soát khóa localStorage, sự kiện zoom và hook đọc zoom hiện tại
+- [x] Sửa để ảnh Card và Box/Pack cập nhật ngay sau khi đổi Cài đặt
+- [x] Bảo đảm giá trị zoom được giữ sau khi tải lại và áp dụng cho Market/Shop SNKR/Kho hàng
+- [x] Bổ sung kiểm thử hồi quy cho cả hai nhóm zoom
+- [x] Lưu checkpoint và xuất bản phiên bản mới

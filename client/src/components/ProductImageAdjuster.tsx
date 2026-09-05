@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FALLBACK_PRODUCT_IMAGE_URL } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { useProductImageZoom } from "@/hooks/useProductImageZoom";
 import { normalizeCustomProductImageZoom, productImageFrameStyle, productImageImageStyle, type ProductImageKind } from "@/lib/productImageDisplay";
 
 const DEFAULT_ZOOM = 1.12;
@@ -24,18 +25,22 @@ function normalizePosition(value: unknown) {
   return Number.isFinite(numeric) ? Math.min(50, Math.max(-50, numeric)) : 0;
 }
 
-export function ProductImageAdjuster({ entity, id, kind: _kind, src, alt, initialZoom, initialPositionX, initialPositionY, className = "", eager = false, referrerPolicy }: ProductImageAdjusterProps) {
-  const [zoom, setZoom] = useState(() => normalizeCustomProductImageZoom(initialZoom, DEFAULT_ZOOM));
+export function ProductImageAdjuster({ entity, id, kind, src, alt, initialZoom, initialPositionX, initialPositionY, className = "", eager = false, referrerPolicy }: ProductImageAdjusterProps) {
+  const settingsZoom = useProductImageZoom(kind);
+  const hasCustomZoom = initialZoom !== null && initialZoom !== undefined && Number.isFinite(Number(initialZoom)) && Number(initialZoom) !== DEFAULT_ZOOM;
+  const effectiveInitialZoom = hasCustomZoom ? initialZoom : settingsZoom;
+  const [zoom, setZoom] = useState(() => normalizeCustomProductImageZoom(effectiveInitialZoom, settingsZoom));
   const [position, setPosition] = useState(() => ({ x: normalizePosition(initialPositionX), y: normalizePosition(initialPositionY) }));
   const [failed, setFailed] = useState(false);
   const productZoom = trpc.products.updateImageZoom.useMutation();
   const snkrZoom = trpc.snkrShop.updateImageZoom.useMutation();
 
   useEffect(() => {
-    setZoom(normalizeCustomProductImageZoom(initialZoom, DEFAULT_ZOOM));
+    const nextHasCustomZoom = initialZoom !== null && initialZoom !== undefined && Number.isFinite(Number(initialZoom)) && Number(initialZoom) !== DEFAULT_ZOOM;
+    setZoom(normalizeCustomProductImageZoom(nextHasCustomZoom ? initialZoom : settingsZoom, settingsZoom));
     setPosition({ x: normalizePosition(initialPositionX), y: normalizePosition(initialPositionY) });
     setFailed(false);
-  }, [initialZoom, initialPositionX, initialPositionY, src]);
+  }, [initialZoom, initialPositionX, initialPositionY, src, settingsZoom]);
 
   const imageUrl = src && !failed ? src : FALLBACK_PRODUCT_IMAGE_URL;
   const isSaving = productZoom.isPending || snkrZoom.isPending;
