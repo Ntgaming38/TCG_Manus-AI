@@ -7,6 +7,7 @@ const dateFields = [
   ["Hết hạn đăng ký", "applicationEnd"],
   ["Công bố kết quả", "resultDate"],
   ["Ngày nhận hàng", "pickupStart"],
+  ["Hạn mua hàng", "pickupEnd"],
 ] as const satisfies ReadonlyArray<readonly [string, keyof ChyusenDraft]>;
 
 export function buildChyusenSubmission(draft: ChyusenDraft, savedAt = new Date()) {
@@ -33,6 +34,6 @@ export function buildChyusenSubmission(draft: ChyusenDraft, savedAt = new Date()
     applicationEnd: parsedDates.applicationEnd,
     resultDate: parsedDates.resultDate,
     pickupStart: parsedDates.pickupStart,
-    pickupEnd: null,
+    pickupEnd: parsedDates.pickupEnd,
   };
 }

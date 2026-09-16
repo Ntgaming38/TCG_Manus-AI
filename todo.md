@@ -1438,3 +1438,10 @@
 - [x] Dùng ảnh mẫu/fallback rõ ràng, nền trắng và không ảnh hưởng dữ liệu sản phẩm
 - [x] Bổ sung kiểm thử UI, responsive và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Hiển thị hạn mua hàng khi Đã trúng Chūsen
+- [x] Rà soát trường hạn mua và điều kiện trạng thái Đã trúng
+- [x] Hiển thị hạn mua hàng đã nhập trên thẻ Chūsen khi đã trúng
+- [x] Giữ ẩn nội dung khi chưa nhập hạn mua hoặc chưa trúng
+- [x] Bổ sung kiểm thử UI mobile/desktop và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

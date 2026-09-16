@@ -21,14 +21,14 @@ describe("buildChyusenSubmission", () => {
     })).toThrow("Hết hạn đăng ký phải có dạng Tháng/Ngày");
   });
 
-  it("lưu ghi chú nhận hàng linh hoạt và luôn bỏ ngày nhận hàng kết thúc", () => {
+  it("lưu ngày nhận hàng, hạn mua hàng và ghi chú nhận hàng linh hoạt", () => {
     const payload = buildChyusenSubmission({
       ...EMPTY_CHYUSEN_DRAFT,
       title: "Chyusen", productName: "Pikachu Box", pickupStart: "09/03", pickupEnd: "09/10", pickupNote: "Khoảng đầu tháng 9",
     }, new Date("2026-08-13T10:00:00.000Z"));
 
     expect(payload.pickupStart?.toISOString()).toBe("2026-09-02T15:00:00.000Z");
-    expect(payload.pickupEnd).toBeNull();
+    expect(payload.pickupEnd?.toISOString()).toBe("2026-09-09T15:00:00.000Z");
     expect(payload.pickupNote).toBe("Khoảng đầu tháng 9");
   });
 
