@@ -1445,3 +1445,10 @@
 - [x] Giữ ẩn nội dung khi chưa nhập hạn mua hoặc chưa trúng
 - [x] Bổ sung kiểm thử UI mobile/desktop và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Số ngày còn lại của hạn mua Chūsen
+- [x] Rà soát helper tính số ngày và khối hạn mua khi Đã trúng
+- [x] Hiển thị số ngày còn lại bên cạnh ngày hạn mua hàng
+- [x] Phân biệt rõ hôm nay, sắp hết hạn và quá hạn
+- [x] Bổ sung kiểm thử UI/logic và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới
