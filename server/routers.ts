@@ -310,7 +310,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         name: z.string().min(1),
-        type: z.enum(["card", "box", "pack"]),
+        type: z.enum(["card", "box", "pack", "junk_pack"]),
         series: z.string().optional(),
         setName: z.string().optional(),
         quantity: z.number().min(0).default(1),
@@ -350,7 +350,7 @@ export const appRouter = router({
     update: protectedProcedure
       .input(z.object({
         id: z.number(),
-        type: z.enum(["card", "box", "pack"]).optional(),
+        type: z.enum(["card", "box", "pack", "junk_pack"]).optional(),
         name: z.string().optional(),
         series: z.string().optional(),
         setName: z.string().optional(),
@@ -508,7 +508,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         productName: z.string().min(1),
-        productType: z.string().default("card"),
+        productType: z.enum(["card", "box", "pack", "junk_pack"]).default("card"),
         series: z.string().optional(),
         shop: z.string().optional(),
         purchaseType: z.string().optional(),

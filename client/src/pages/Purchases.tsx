@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
 import { formatYen } from "@shared/formatYen";
+import { productTypeLabel, type ProductType } from "@shared/productCreateType";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart"];
 const ADD_PURCHASE_SHOP_VALUE = "__add_purchase_shop";
@@ -29,7 +30,7 @@ export default function Purchases() {
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
   const [editForm, setEditForm] = useState({ quantity: 1, price: 0, shop: "", note: "" });
   const [newPurchase, setNewPurchase] = useState({
-    productName: "", productType: "box" as "card" | "box" | "pack",
+    productName: "", productType: "box" as ProductType,
     series: "Pokemon", shop: "Joshin", purchaseType: "mua_le" as any,
     quantity: 1, price: 0, note: "",
   });
@@ -249,6 +250,7 @@ export default function Purchases() {
                       <SelectItem value="card">Card</SelectItem>
                       <SelectItem value="box">Box</SelectItem>
                       <SelectItem value="pack">Pack</SelectItem>
+                      <SelectItem value="junk_pack">Pack Rác</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -283,7 +285,7 @@ export default function Purchases() {
                           price: (Number(s.buyPrice) || 0) * p.quantity,
                         }))}
                       >
-                        <span className="capitalize text-xs text-muted-foreground">{s.type}</span>
+                        <span className="text-xs text-muted-foreground">{productTypeLabel(s.type)}</span>
                         <span>{s.name}</span>
                         {s.status === "sold" && <span className="rounded border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">Đã bán hết</span>}
                         {s.buyPrice > 0 && <span className="ml-auto text-xs text-muted-foreground">{formatYen(Number(s.buyPrice))}/sp</span>}
@@ -379,7 +381,7 @@ export default function Purchases() {
                       <ShoppingCart className="h-5 w-5 text-blue-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{purchase.productName || 'Sản phẩm'}</p>
+                      <p className="flex flex-wrap items-center gap-1.5 font-medium text-sm"><span>{purchase.productName || 'Sản phẩm'}</span>{purchase.productType && <span className="rounded border border-border/70 bg-secondary/45 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{productTypeLabel(purchase.productType)}</span>}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-2">
                         <Calendar className="h-3 w-3" />
                         {new Date(purchase.purchaseDate).toLocaleDateString('vi-VN')}

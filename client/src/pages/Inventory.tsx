@@ -14,6 +14,7 @@ import { Search, Package, Warehouse, AlertTriangle, Pencil, Trash2, EyeOff } fro
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { sortInventoryByStatus } from "@shared/inventoryStatusOrder";
+import { productTypeLabel } from "@shared/productCreateType";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
@@ -198,6 +199,7 @@ export default function Inventory() {
             <SelectItem value="card">Card</SelectItem>
             <SelectItem value="box">Box</SelectItem>
             <SelectItem value="pack">Pack</SelectItem>
+            <SelectItem value="junk_pack">Pack Rác</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -237,7 +239,7 @@ export default function Inventory() {
               <Card key={product.id} className={`bg-card neon-card hover:border-primary/30 transition-colors ${hasDamaged ? 'border-red-500/30' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs capitalize">{product.type}</Badge>
+                    <Badge variant="secondary" className="text-xs">{productTypeLabel(product.type)}</Badge>
                     <div className="flex gap-1">
                       {hasDamaged && (
                         <Badge variant="destructive" className="text-xs">

@@ -1,8 +1,8 @@
-export type DashboardProductType = "card" | "box" | "pack";
+export type DashboardProductType = "card" | "box" | "pack" | "junk_pack";
 
 export type DashboardMetricBreakdown = Record<DashboardProductType, number>;
 
-export const emptyDashboardMetricBreakdown = (): DashboardMetricBreakdown => ({ card: 0, box: 0, pack: 0 });
+export const emptyDashboardMetricBreakdown = (): DashboardMetricBreakdown => ({ card: 0, box: 0, pack: 0, junk_pack: 0 });
 
 type StockMetricProduct = {
   id: number;
@@ -15,7 +15,7 @@ type StockMetricProduct = {
 type SaleMetric = { productId: number; profit?: number | string | null };
 
 function isDashboardProductType(value: string): value is DashboardProductType {
-  return value === "card" || value === "box" || value === "pack";
+  return value === "card" || value === "box" || value === "pack" || value === "junk_pack";
 }
 
 export function getStockMetricBreakdown(products: StockMetricProduct[], metric: "capital" | "market") {

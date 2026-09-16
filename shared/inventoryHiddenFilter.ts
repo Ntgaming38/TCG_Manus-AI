@@ -8,7 +8,7 @@ export function getInventoryEmptyState(status: string) {
   if (isInventoryHiddenFilter(status)) {
     return {
       title: "Chưa có sản phẩm đã bán",
-      description: "Sản phẩm đã bán hết sẽ xuất hiện ở đây. Khi nhập mua lại, sản phẩm sẽ tự hiện lại trong Card, Box hoặc Pack.",
+      description: "Sản phẩm đã bán hết sẽ xuất hiện ở đây. Khi nhập mua lại, sản phẩm sẽ tự hiện lại trong Card, Box, Pack hoặc Pack Rác.",
     };
   }
   return {

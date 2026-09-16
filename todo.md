@@ -1452,3 +1452,10 @@
 - [x] Phân biệt rõ hôm nay, sắp hết hạn và quá hạn
 - [x] Bổ sung kiểm thử UI/logic và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Loại Pack Rác trong Mua Hàng
+- [x] Rà soát enum loại sản phẩm, bộ lọc và luồng tạo Mua Hàng
+- [x] Thêm Pack Rác thành loại sản phẩm riêng, không gộp với Pack
+- [x] Hiển thị và lọc tồn kho Pack Rác tách biệt khỏi Pack thông thường
+- [x] Bổ sung kiểm thử tách dữ liệu, UI và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

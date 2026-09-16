@@ -22,7 +22,7 @@ import {
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
-  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift, RefreshCw, UserRoundCog, Store,
+  BarChart3, LogOut, PanelLeft, CreditCard, Box, Gift, Package, RefreshCw, UserRoundCog, Store,
   Warehouse, ShoppingCart, DollarSign, TrendingUp, FileText, LayoutDashboard, Ticket, Settings, History, Trash2
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -44,6 +44,7 @@ const menuItems = [
   { icon: CreditCard, label: "Card", path: "/san-pham/card" },
   { icon: Box, label: "Box", path: "/san-pham/box" },
   { icon: Gift, label: "Pack", path: "/san-pham/pack" },
+  { icon: Package, label: "Pack Rác", path: "/san-pham/junk_pack" },
   { icon: Warehouse, label: "Kho Hàng", path: "/kho-hang" },
   { icon: ShoppingCart, label: "Mua Hàng", path: "/mua-hang" },
   { icon: DollarSign, label: "Bán Hàng", path: "/ban-hang" },

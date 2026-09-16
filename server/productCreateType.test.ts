@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getAutoCreateProductType } from "../shared/productCreateType";
 
 describe("productCreateType", () => {
-  it.each(["card", "box", "pack"])("tự nhận diện loại %s theo trang sản phẩm", (type) => {
+  it.each(["card", "box", "pack", "junk_pack"])("tự nhận diện loại %s theo trang sản phẩm", (type) => {
     expect(getAutoCreateProductType(type)).toBe(type);
   });
 

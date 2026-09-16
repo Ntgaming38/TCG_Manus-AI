@@ -15,7 +15,7 @@ import { RarityBadge } from "@/components/RarityBadge";
 import { RankBadge } from "@/components/RankBadge";
 import { DEFAULT_PRODUCT_LIST_COLUMNS, PRODUCT_LIST_COLUMN_OPTIONS, type ProductListColumnKey } from "@shared/productListPreferences";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
-import { getAutoCreateProductType } from "@shared/productCreateType";
+import { getAutoCreateProductType, productTypeLabel, type ProductType } from "@shared/productCreateType";
 import { getCardRankLabel, normalizeCardRank } from "@shared/cardRank";
 import { useProductImageZoom } from "@/hooks/useProductImageZoom";
 import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
@@ -67,7 +67,7 @@ export default function Products() {
   const imageRefreshProgressTimer = useRef<number | null>(null);
   const cancelledImageRefreshIds = useRef(new Set<number>());
   const [newProduct, setNewProduct] = useState({
-    name: "", type: "box" as "card" | "box" | "pack", series: "Pokemon",
+    name: "", type: "box" as ProductType, series: "Pokemon",
     setName: "", quantity: 1, buyPrice: 0, marketPrice: 0, description: "",
     rarity: "", psaGrade: "", cardNumber: "", language: "Japanese", condition: "A",
   });
@@ -234,10 +234,7 @@ export default function Products() {
   };
 
   const getTypeLabel = () => {
-    if (activeType === "card") return "Card";
-    if (activeType === "box") return "Box";
-    if (activeType === "pack") return "Pack";
-    return "Sản phẩm";
+    return activeType === "all" ? "Sản phẩm" : productTypeLabel(activeType);
   };
 
   const handleAddDialogChange = (open: boolean) => {
@@ -306,6 +303,7 @@ export default function Products() {
                       <SelectItem value="card">Card</SelectItem>
                       <SelectItem value="box">Box</SelectItem>
                       <SelectItem value="pack">Pack</SelectItem>
+                      <SelectItem value="junk_pack">Pack Rác</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -423,6 +421,7 @@ export default function Products() {
                     <SelectItem value="card">Card</SelectItem>
                     <SelectItem value="box">Box</SelectItem>
                     <SelectItem value="pack">Pack</SelectItem>
+                    <SelectItem value="junk_pack">Pack Rác</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -513,6 +512,7 @@ export default function Products() {
               <SelectItem value="card">Card</SelectItem>
               <SelectItem value="box">Box</SelectItem>
               <SelectItem value="pack">Pack</SelectItem>
+              <SelectItem value="junk_pack">Pack Rác</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -550,7 +550,7 @@ export default function Products() {
                 <div className="flex items-start justify-between mb-3">
                   <Badge variant="secondary" className="text-xs">
                     {getTypeIcon(product.type)}
-                    <span className="ml-1 capitalize">{product.type}</span>
+                    <span className="ml-1">{productTypeLabel(product.type)}</span>
                   </Badge>
                   <div className="flex items-center gap-1">
                     <Badge variant={product.status === 'in_stock' ? 'default' : 'secondary'} className="text-xs">
@@ -593,7 +593,7 @@ export default function Products() {
           {sortedProducts.map((product: any) => {
             const metricColumns = visibleListColumns.filter((column) => ["quantity", "buyPrice", "marketPrice", "profit"].includes(column));
             return <Card key={product.id} className="bg-card transition-colors hover:border-primary/30"><CardContent className="flex items-center gap-2 p-2.5 sm:gap-3 sm:p-3">
-              <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}<Badge variant="secondary" className="text-[10px] capitalize">{product.type}</Badge>{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}</div>
+              <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}<Badge variant="secondary" className="text-[10px]">{productTypeLabel(product.type)}</Badge>{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}</div>
               {metricColumns.length > 0 && <div className="grid shrink-0 grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] sm:flex sm:items-center sm:gap-x-3">{metricColumns.map((column) => <ProductListMetric key={column} product={product} column={column} />)}</div>}
               <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onRefreshImage={handleRefreshImage} refreshingImageId={refreshImage.isPending ? (refreshImage.variables?.id ?? null) : null} onDelete={handleDelete} />
             </CardContent></Card>;

@@ -1231,9 +1231,9 @@ export async function getDashboardStats(userId: number) {
   const db = await getDb();
   if (!db) return {
     totalCapital: 0, currentValue: 0, totalProfit: 0,
-    capitalByType: { card: 0, box: 0, pack: 0 }, currentValueByType: { card: 0, box: 0, pack: 0 }, profitByType: { card: 0, box: 0, pack: 0 },
-    totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0,
-    totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0,
+    capitalByType: { card: 0, box: 0, pack: 0, junk_pack: 0 }, currentValueByType: { card: 0, box: 0, pack: 0, junk_pack: 0 }, profitByType: { card: 0, box: 0, pack: 0, junk_pack: 0 },
+    totalInStock: 0, inStockCards: 0, inStockBoxes: 0, inStockPacks: 0, inStockJunkPacks: 0,
+    totalSold: 0, soldCards: 0, soldBoxes: 0, soldPacks: 0, soldJunkPacks: 0,
     cardRarityStats: [], chartData: [], recentActivities: [],
     chyusen: { open: 0, expiring: 0, deadlineToday: false, deadlineTomorrow: false, waitingResult: 0, won: 0, lost: 0 }, chyusenReminders: [], chyusenNearestDeadline: null, chyusenRegisterNow: null,
   };
@@ -1247,6 +1247,7 @@ export async function getDashboardStats(userId: number) {
   const inStockCards = inStockProducts.filter(p => p.type === "card").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const inStockBoxes = inStockProducts.filter(p => p.type === "box").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const inStockPacks = inStockProducts.filter(p => p.type === "pack").reduce((sum, p) => sum + (p.quantity || 0), 0);
+  const inStockJunkPacks = inStockProducts.filter(p => p.type === "junk_pack").reduce((sum, p) => sum + (p.quantity || 0), 0);
   const cardRarityStats = summarizeCardRarityQuantities(inStockProducts.filter(p => p.type === "card"));
   const userChyusenEntries = await db.select().from(chyusenEntries).where(eq(chyusenEntries.userId, userId));
   const chyusenWithState = userChyusenEntries.map((entry) => ({
@@ -1282,13 +1283,14 @@ export async function getDashboardStats(userId: number) {
   const userPurchasesForTrend = await db.select().from(purchases).where(eq(purchases.userId, userId));
   const totalSold = userSalesForCount.reduce((sum, s) => sum + s.quantity, 0);
   const productMap = new Map(userProducts.map(p => [p.id, p]));
-  let soldCards = 0, soldBoxes = 0, soldPacks = 0;
+  let soldCards = 0, soldBoxes = 0, soldPacks = 0, soldJunkPacks = 0;
   for (const s of userSalesForCount) {
     const prod = productMap.get(s.productId);
     if (prod) {
       if (prod.type === "card") soldCards += s.quantity;
       else if (prod.type === "box") soldBoxes += s.quantity;
       else if (prod.type === "pack") soldPacks += s.quantity;
+      else if (prod.type === "junk_pack") soldJunkPacks += s.quantity;
     }
   }
 
@@ -1360,8 +1362,8 @@ export async function getDashboardStats(userId: number) {
 
   return {
     totalCapital, currentValue, totalProfit, capitalByType, currentValueByType, profitByType, monthlyTrends,
-    totalInStock, inStockCards, inStockBoxes, inStockPacks,
-    totalSold, soldCards, soldBoxes, soldPacks,
+    totalInStock, inStockCards, inStockBoxes, inStockPacks, inStockJunkPacks,
+    totalSold, soldCards, soldBoxes, soldPacks, soldJunkPacks,
     cardRarityStats, chartData, recentActivities, chyusen, chyusenReminders, chyusenNearestDeadline, chyusenRegisterNow,
   };
 }

@@ -91,7 +91,7 @@ export const products = mysqlTable("products", {
   name: varchar("name", { length: 255 }).notNull(),
   series: varchar("series", { length: 100 }).default("Pokemon"),
   setName: varchar("setName", { length: 255 }),
-  type: mysqlEnum("type", ["card", "box", "pack"]).notNull(),
+  type: mysqlEnum("type", ["card", "box", "pack", "junk_pack"]).notNull(),
   image: text("image"),
   /** Per-product display zoom, kept separate from global orientation defaults. */
   imageZoom: decimal("imageZoom", { precision: 4, scale: 2 }).default("1.12").notNull(),
