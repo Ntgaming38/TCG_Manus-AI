@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, Minus, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, Ticket, Clock3, ExternalLink, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Package, ShoppingCart, DollarSign, BarChart3, Activity, PackageCheck, PackageOpen, Ticket, Clock3, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -75,7 +75,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 [&>div]:relative">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 [&>div]:relative">
         <Card className="bg-card neon-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
@@ -136,6 +136,21 @@ export default function Dashboard() {
               </div>
               <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
                 <Package className="h-5 w-5 text-purple-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-amber-400/30 bg-card neon-card">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Pack Rác hiện có</p><MetricInfo label="Pack Rác hiện có"><p>Tổng số lượng Pack Rác đang có trạng thái Trong kho.</p><p>Pack Rác được quản lý riêng và không được gộp với Pack thông thường.</p><p className="font-medium text-amber-200">= {inStockJunkPacks} Pack Rác</p></MetricInfo></div>
+                <p className="mt-1 text-2xl font-bold text-amber-300">{inStockJunkPacks}</p>
+                <p className="mt-1 text-xs font-medium text-amber-200/85">Đang trong kho</p>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                <PackageOpen className="h-5 w-5 text-amber-300" />
               </div>
             </div>
           </CardContent>

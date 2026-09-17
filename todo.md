@@ -1466,3 +1466,9 @@
 - [x] Áp dụng huy hiệu ở Mua Hàng, Kho Hàng, danh sách sản phẩm và Tổng quan
 - [x] Bổ sung kiểm thử UI, kiểm tra desktop/mobile và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Hiển thị Card Number và tổng Pack Rác
+- [x] Rà soát các bề mặt hiển thị Card và chuẩn hóa Card Number phía sau tên sản phẩm
+- [x] Thêm chỉ số Pack Rác hiện có nổi bật trên bảng điều khiển Tổng quan
+- [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

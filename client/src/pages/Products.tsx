@@ -430,12 +430,15 @@ export default function Products() {
                   <Input value={editingProduct.setName} onChange={(e) => setEditingProduct((p: any) => ({ ...p, setName: e.target.value }))} />
                 </div>
               </div>
-              {editingProduct.type === "card" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Rarity</Label><Select value={editingProduct.rarity || undefined} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, rarity: value }))}><SelectTrigger><SelectValue placeholder="Chọn rarity" /></SelectTrigger><SelectContent>{getCardRarityOptionsForSeries(editingProduct.series).map((rarity) => <SelectItem key={rarity.value} value={rarity.value}>{rarity.label}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Rank Card</Label><Select value={normalizeCardRank(editingProduct.condition)} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, condition: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="A">Rank A</SelectItem><SelectItem value="B">Rank B</SelectItem><SelectItem value="C">Rank C</SelectItem><SelectItem value="D">Rank D</SelectItem></SelectContent></Select></div>
-                </div>
-              )}
+	              {editingProduct.type === "card" && (
+	                <>
+	                  <div className="space-y-2"><Label>Card Number</Label><Input value={editingProduct.cardNumber} onChange={(event) => setEditingProduct((p: any) => ({ ...p, cardNumber: event.target.value }))} placeholder="001/187" /></div>
+	                  <div className="grid grid-cols-2 gap-4">
+	                    <div className="space-y-2"><Label>Rarity</Label><Select value={editingProduct.rarity || undefined} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, rarity: value }))}><SelectTrigger><SelectValue placeholder="Chọn rarity" /></SelectTrigger><SelectContent>{getCardRarityOptionsForSeries(editingProduct.series).map((rarity) => <SelectItem key={rarity.value} value={rarity.value}>{rarity.label}</SelectItem>)}</SelectContent></Select></div>
+	                    <div className="space-y-2"><Label>Rank Card</Label><Select value={normalizeCardRank(editingProduct.condition)} onValueChange={(value) => setEditingProduct((p: any) => ({ ...p, condition: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="A">Rank A</SelectItem><SelectItem value="B">Rank B</SelectItem><SelectItem value="C">Rank C</SelectItem><SelectItem value="D">Rank D</SelectItem></SelectContent></Select></div>
+	                  </div>
+	                </>
+	              )}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Số lượng</Label>
@@ -550,10 +553,10 @@ export default function Products() {
                 </div>
                 {/* Product image / shared fallback */}
                 <ProductImageAdjuster entity="product" id={product.id} kind={product.type === "card" ? "card" : "box-pack"} src={product.image} initialZoom={product.imageZoom ?? (product.type === "card" ? cardImageZoom : boxPackImageZoom)} initialPositionX={product.imagePositionX} initialPositionY={product.imagePositionY} alt={product.image ? product.name : `${product.name} — chưa có ảnh`} className="mb-3 rounded-lg border border-white/90" />
-                <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>
-                  {product.type === "card" && <RarityBadge rarity={product.rarity} />}
-                </div>
+	                <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
+	                  <div className="flex min-w-0 items-center gap-1.5"><h3 className="min-w-0 truncate font-semibold text-sm">{product.name}</h3>{product.type === "card" && product.cardNumber && <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-sky-300" title={`Card Number: ${product.cardNumber}`}>#{product.cardNumber}</span>}{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}</div>
+	                  {product.type === "card" && <RarityBadge rarity={product.rarity} />}
+	                </div>
                 <p className="text-xs text-muted-foreground mt-1">{product.series} - {product.setName || 'N/A'}</p>
                 <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 gap-2 text-xs">
                   <div>
@@ -581,8 +584,8 @@ export default function Products() {
         </div> : <div className="space-y-2">
           {sortedProducts.map((product: any) => {
             const metricColumns = visibleListColumns.filter((column) => ["quantity", "buyPrice", "marketPrice", "profit"].includes(column));
-            return <Card key={product.id} className="bg-card transition-colors hover:border-primary/30"><CardContent className="flex items-center gap-2 p-2.5 sm:gap-3 sm:p-3">
-              <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3>{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}<ProductTypeBadge type={product.type} compact />{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}</div>
+	            return <Card key={product.id} className="bg-card transition-colors hover:border-primary/30"><CardContent className="flex items-center gap-2 p-2.5 sm:gap-3 sm:p-3">
+	              <div className="min-w-0 flex-1"><div className="flex min-w-0 flex-wrap items-center gap-1.5"><h3 className="max-w-full truncate text-sm font-semibold">{product.name}</h3>{product.type === "card" && product.cardNumber && <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-sky-300" title={`Card Number: ${product.cardNumber}`}>#{product.cardNumber}</span>}{product.type === "card" && <RankBadge rank={product.condition} marketPrice={product.marketPrice} className="ml-1.5" />}<ProductTypeBadge type={product.type} compact />{product.type === "card" && visibleListColumns.includes("rarity") && <RarityBadge rarity={product.rarity} />}{visibleListColumns.includes("status") && <Badge variant={product.status === "in_stock" ? "default" : "secondary"} className="text-[10px]">{product.status === "in_stock" ? "Trong kho" : product.status === "sold" ? "Đã bán" : product.status}</Badge>}</div>{visibleListColumns.includes("series") && <p className="mt-0.5 truncate text-xs text-muted-foreground">{product.series} · {product.setName || "N/A"}</p>}</div>
               {metricColumns.length > 0 && <div className="grid shrink-0 grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] sm:flex sm:items-center sm:gap-x-3">{metricColumns.map((column) => <ProductListMetric key={column} product={product} column={column} />)}</div>}
               <ProductActionMenu product={product} onEdit={openEdit} onUpload={(id) => { setUploadingId(id); fileInputRef.current?.click(); }} onRefreshImage={handleRefreshImage} refreshingImageId={refreshImage.isPending ? (refreshImage.variables?.id ?? null) : null} onDelete={handleDelete} />
             </CardContent></Card>;

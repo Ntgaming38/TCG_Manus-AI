@@ -253,10 +253,11 @@ export default function Inventory() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="mt-2 flex min-w-0 items-center gap-2">
-                    <h3 className="min-w-0 flex-1 truncate font-semibold text-sm">{product.name}</h3>
-                    {product.type === "card" && <RarityBadge rarity={product.rarity} />}
-                  </div>
+	                  <div className="mt-2 flex min-w-0 items-center gap-2">
+	                    <h3 className="min-w-0 flex-1 truncate font-semibold text-sm">{product.name}</h3>
+	                    {product.type === "card" && product.cardNumber && <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-sky-300" title={`Card Number: ${product.cardNumber}`}>#{product.cardNumber}</span>}
+	                    {product.type === "card" && <RarityBadge rarity={product.rarity} />}
+	                  </div>
                   <p className="text-xs text-muted-foreground">{product.series}</p>
                   
                   {product.damageNote && (
