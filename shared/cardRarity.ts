@@ -1,5 +1,6 @@
 /** Thứ tự ưu tiên dùng cho Card từ mọi series: độ hiếm cao nhất đứng trước. */
 export const CARD_RARITY_ORDER = [
+  "FUR",
   "MUR",
   "SAR",
   "SR",

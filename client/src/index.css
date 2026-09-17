@@ -648,7 +648,8 @@
 }
 
 :root[data-rgb-effects="enabled"] .rarity-rgb-text,
-:root[data-rgb-effects="enabled"] .rank-rgb-text {
+:root[data-rgb-effects="enabled"] .rank-rgb-text,
+:root[data-rgb-effects="enabled"] .rgb-card-number {
   display: inline-block;
   background-image: var(--tcg-rgb-gradient, linear-gradient(90deg, #ffcb05, #fb7185, #a855f7, #38bdf8, #22c55e, #ffcb05));
   background-size: 240% 100%;
@@ -710,7 +711,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root[data-rgb-effects="enabled"] .rarity-rgb-text,
-  :root[data-rgb-effects="enabled"] .rank-rgb-text {
+  :root[data-rgb-effects="enabled"] .rank-rgb-text,
+  :root[data-rgb-effects="enabled"] .rgb-card-number {
     animation: none;
     background-position: 50% 50%;
   }

@@ -1472,3 +1472,9 @@
 - [x] Thêm chỉ số Pack Rác hiện có nổi bật trên bảng điều khiển Tổng quan
 - [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## FUR rarity và hiệu ứng Card Number
+- [x] Đưa FUR lên đầu thứ tự rarity và hiển thị huy hiệu riêng đồng nhất
+- [x] Áp dụng hiệu ứng RGB cho Card Number bên cạnh tên Card
+- [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

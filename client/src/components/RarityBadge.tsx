@@ -6,6 +6,7 @@ type RarityBadgeProps = {
 };
 
 const RARITY_BADGE_STYLES: Record<string, string> = {
+  FUR: "border-pink-300 bg-gradient-to-r from-rose-950 via-fuchsia-700 to-pink-300 text-white shadow-[0_0_10px_rgba(244,114,182,0.55)]",
   AR: "border-slate-300 bg-gradient-to-r from-white via-slate-100 to-slate-300 text-slate-900 shadow-[0_0_8px_rgba(203,213,225,0.5)]",
   RR: "border-blue-300 bg-blue-100 text-blue-800",
   R: "border-teal-300 bg-teal-100 text-teal-800",
