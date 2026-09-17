@@ -80,7 +80,7 @@ export default function Dashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng vốn</p><MetricInfo label="Tổng vốn"><p>Giá mua × số lượng còn trong kho.</p><p>Card {formatYen(capitalByType.card)} + Box {formatYen(capitalByType.box)} + Pack {formatYen(capitalByType.pack)} + Pack Rác {formatYen(capitalByType.junk_pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalCapital)}</p></MetricInfo></div>
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Tổng vốn</p><MetricInfo label="Tổng vốn"><p>Giá mua × số lượng còn trong kho.</p><p>Card {formatYen(capitalByType.card)} + Box {formatYen(capitalByType.box)} + Pack {formatYen(capitalByType.pack)} + <span className="font-semibold text-amber-200">Pack Rác {formatYen(capitalByType.junk_pack)}</span>.</p><p className="font-medium text-foreground">= {formatYen(totalCapital)}</p></MetricInfo></div>
                 <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">{formatYen(totalCapital)}</span></p>
                 <MonthlyTrend trend={monthlyTrends.capital} label="Tổng vốn" />
               </div>
@@ -95,7 +95,7 @@ export default function Dashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Giá trị hiện tại</p><MetricInfo label="Giá trị hiện tại"><p>Giá thị trường × số lượng còn trong kho; nếu chưa có giá thị trường, hệ thống dùng giá mua.</p><p>Card {formatYen(currentValueByType.card)} + Box {formatYen(currentValueByType.box)} + Pack {formatYen(currentValueByType.pack)} + Pack Rác {formatYen(currentValueByType.junk_pack)}.</p><p className="font-medium text-foreground">= {formatYen(currentValue)}</p></MetricInfo></div>
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Giá trị hiện tại</p><MetricInfo label="Giá trị hiện tại"><p>Giá thị trường × số lượng còn trong kho; nếu chưa có giá thị trường, hệ thống dùng giá mua.</p><p>Card {formatYen(currentValueByType.card)} + Box {formatYen(currentValueByType.box)} + Pack {formatYen(currentValueByType.pack)} + <span className="font-semibold text-amber-200">Pack Rác {formatYen(currentValueByType.junk_pack)}</span>.</p><p className="font-medium text-foreground">= {formatYen(currentValue)}</p></MetricInfo></div>
                 <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">{formatYen(currentValue)}</span></p>
                 <MonthlyTrend trend={monthlyTrends.currentValue} label="Giá trị hiện tại" />
               </div>
@@ -110,7 +110,7 @@ export default function Dashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Lợi nhuận</p><MetricInfo label="Lợi nhuận"><p>Tổng lợi nhuận của các giao dịch đã bán: doanh thu − giá vốn.</p><p>Card {formatYen(profitByType.card)} + Box {formatYen(profitByType.box)} + Pack {formatYen(profitByType.pack)} + Pack Rác {formatYen(profitByType.junk_pack)}.</p><p className="font-medium text-foreground">= {formatYen(totalProfit)}</p></MetricInfo></div>
+                <div className="flex items-center justify-between gap-2"><p className="text-sm text-muted-foreground">Lợi nhuận</p><MetricInfo label="Lợi nhuận"><p>Tổng lợi nhuận của các giao dịch đã bán: doanh thu − giá vốn.</p><p>Card {formatYen(profitByType.card)} + Box {formatYen(profitByType.box)} + Pack {formatYen(profitByType.pack)} + <span className="font-semibold text-amber-200">Pack Rác {formatYen(profitByType.junk_pack)}</span>.</p><p className="font-medium text-foreground">= {formatYen(totalProfit)}</p></MetricInfo></div>
                 <p className="mt-1 text-2xl font-bold">
                   <span className={profitPrefixTone}>{profitPrefix}</span><span className={totalProfit < 0 ? "profit-negative-amount" : "rgb-profit-amount"}>{profitAmount.toLocaleString()}</span><span className={profitPrefixTone}>{profitSuffix}</span>
                 </p>
@@ -131,7 +131,7 @@ export default function Dashboard() {
                 <p className="mt-1 text-2xl font-bold"><span className="rgb-dashboard-value">{totalInStock}</span></p>
                 <MonthlyTrend trend={monthlyTrends.inStock} label="Sản phẩm trong kho" />
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Card: {inStockCards} | Box: {inStockBoxes} | Pack: {inStockPacks} | Pack Rác: {inStockJunkPacks}
+                  Card: {inStockCards} | Box: {inStockBoxes} | Pack: {inStockPacks} | <span className="font-semibold text-amber-200">Pack Rác: {inStockJunkPacks}</span>
                 </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -149,7 +149,7 @@ export default function Dashboard() {
                 <p className="mt-1 text-2xl font-bold"><span className="dashboard-sold-value">{totalSold}</span></p>
                 <MonthlyTrend trend={monthlyTrends.sold} label="Sản phẩm bán tháng này" />
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Card: {soldCards} | Box: {soldBoxes} | Pack: {soldPacks} | Pack Rác: {soldJunkPacks}
+                  Card: {soldCards} | Box: {soldBoxes} | Pack: {soldPacks} | <span className="font-semibold text-amber-200">Pack Rác: {soldJunkPacks}</span>
                 </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">

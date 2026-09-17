@@ -5,6 +5,7 @@ import { BarChart3, TrendingUp, Package, DollarSign, Download } from "lucide-rea
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { formatSignedYen, formatYen } from "@shared/formatYen";
+import { ProductTypeBadge } from "@/components/ProductTypeBadge";
 
 export default function Reports() {
   const { data: report } = trpc.reports.overview.useQuery();
@@ -174,7 +175,7 @@ export default function Reports() {
                     <span className="text-sm font-bold text-primary w-6">{i + 1}.</span>
                     <div>
                       <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{product.type}</p>
+                      <div className="mt-1"><ProductTypeBadge type={product.type} compact /></div>
                     </div>
                   </div>
                   <span className="text-sm font-bold text-green-400">{formatSignedYen(Number(product.profit))}</span>

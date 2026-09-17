@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { sortInventoryByStatus } from "@shared/inventoryStatusOrder";
 import { productTypeLabel } from "@shared/productCreateType";
+import { ProductTypeBadge } from "@/components/ProductTypeBadge";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
@@ -239,7 +240,7 @@ export default function Inventory() {
               <Card key={product.id} className={`bg-card neon-card hover:border-primary/30 transition-colors ${hasDamaged ? 'border-red-500/30' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs">{productTypeLabel(product.type)}</Badge>
+                    <ProductTypeBadge type={product.type} compact />
                     <div className="flex gap-1">
                       {hasDamaged && (
                         <Badge variant="destructive" className="text-xs">

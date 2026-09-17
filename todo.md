@@ -1459,3 +1459,10 @@
 - [x] Hiển thị và lọc tồn kho Pack Rác tách biệt khỏi Pack thông thường
 - [x] Bổ sung kiểm thử tách dữ liệu, UI và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Huy hiệu nhận diện Pack Rác
+- [x] Rà soát các nơi hiển thị loại sản phẩm và nhãn Pack Rác
+- [x] Tạo huy hiệu màu riêng, dễ phân biệt với Pack thông thường
+- [x] Áp dụng huy hiệu ở Mua Hàng, Kho Hàng, danh sách sản phẩm và Tổng quan
+- [x] Bổ sung kiểm thử UI, kiểm tra desktop/mobile và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới

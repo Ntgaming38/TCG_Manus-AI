@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
 import { formatYen } from "@shared/formatYen";
 import { productTypeLabel, type ProductType } from "@shared/productCreateType";
+import { ProductTypeBadge } from "@/components/ProductTypeBadge";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart"];
 const ADD_PURCHASE_SHOP_VALUE = "__add_purchase_shop";
@@ -381,7 +382,7 @@ export default function Purchases() {
                       <ShoppingCart className="h-5 w-5 text-blue-400" />
                     </div>
                     <div>
-                      <p className="flex flex-wrap items-center gap-1.5 font-medium text-sm"><span>{purchase.productName || 'Sản phẩm'}</span>{purchase.productType && <span className="rounded border border-border/70 bg-secondary/45 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{productTypeLabel(purchase.productType)}</span>}</p>
+                      <p className="flex flex-wrap items-center gap-1.5 font-medium text-sm"><span>{purchase.productName || 'Sản phẩm'}</span>{purchase.productType && <ProductTypeBadge type={purchase.productType} compact />}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-2">
                         <Calendar className="h-3 w-3" />
                         {new Date(purchase.purchaseDate).toLocaleDateString('vi-VN')}
