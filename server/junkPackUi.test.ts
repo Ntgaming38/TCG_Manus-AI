@@ -23,5 +23,6 @@ describe("Pack Rác", () => {
   it("validates the type and uses it as part of the product merge key", () => {
     expect(routerSource).toContain('z.enum(["card", "box", "pack", "junk_pack"])');
     expect(databaseSource).toContain('eq(products.type, data.productType as any)');
+    expect(databaseSource).toContain('findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.productType, unitPrice)');
   });
 });

@@ -21,6 +21,7 @@ import { useProductImageZoom } from "@/hooks/useProductImageZoom";
 import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
 import { ProductImageEditControls } from "@/components/ProductImageEditControls";
 import { ProductTypeBadge } from "@/components/ProductTypeBadge";
+import { ProductNameSuggestions } from "@/components/ProductNameSuggestions";
 import { Plus, Search, Filter, Package, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -310,6 +311,7 @@ export default function Products() {
               <div className="space-y-2">
                 <Label>Tên sản phẩm</Label>
                 <Input value={newProduct.name} onChange={(e) => setNewProduct(p => ({ ...p, name: e.target.value }))} placeholder="VD: Mega Dream EX" />
+                <ProductNameSuggestions search={newProduct.name} onSelect={(product) => setNewProduct((current) => ({ ...current, name: product.name, type: product.type as ProductType, series: product.series || current.series }))} />
               </div>
               <div className="space-y-2">
                 <Label>Set</Label>
@@ -369,7 +371,7 @@ export default function Products() {
                   <Input type="number" min={1} value={newProduct.quantity} onChange={(e) => setNewProduct(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá mua (¥)</Label>
+                  <Label>Giá mua/SP (¥)</Label>
                   <Input type="number" min={0} value={newProduct.buyPrice} onChange={(e) => setNewProduct(p => ({ ...p, buyPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
                 <div className="space-y-2">
@@ -377,6 +379,7 @@ export default function Products() {
                   <Input type="number" min={0} value={newProduct.marketPrice} onChange={(e) => setNewProduct(p => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
+	              <p className="-mt-1 text-xs text-muted-foreground">Tổng vốn lô: <span className="font-medium text-foreground">{formatYen(Number(newProduct.buyPrice || 0) * Number(newProduct.quantity || 0))}</span> · Sản phẩm chỉ được gộp khi trùng tên, loại và giá mua/SP.</p>
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Textarea value={newProduct.description} onChange={(e) => setNewProduct(p => ({ ...p, description: e.target.value }))} placeholder="Ghi chú thêm..." />
@@ -563,18 +566,19 @@ export default function Products() {
                     <span className="text-muted-foreground">SL:</span>
                     <span className="ml-1 font-medium">{product.quantity}</span>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Mua:</span>
-                    <span className="ml-1 font-medium">{formatYen(Number(product.buyPrice))}</span>
+	                  <div>
+	                    <span className="text-muted-foreground">Mua:</span>
+	                    <span className="ml-1 font-medium">{formatYen(Number(product.buyPrice) * Number(product.quantity || 0))}</span>
+	                    <span className="ml-1 text-[10px] text-sky-200">({formatYen(Number(product.buyPrice))}/SP)</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Giá TT:</span>
-                    <span className="ml-1 font-medium">{formatYen(Number(product.marketPrice))}</span>
+	                    <span className="ml-1 font-medium">{formatYen(Number(product.marketPrice) * Number(product.quantity || 0))}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Lãi:</span>
-                    <span className={`ml-1 font-medium ${Number(product.marketPrice) - Number(product.buyPrice) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {formatSignedYen(Number(product.marketPrice) - Number(product.buyPrice))}
+	                    <span className={`ml-1 font-medium ${Number(product.marketPrice) - Number(product.buyPrice) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+	                      {formatSignedYen((Number(product.marketPrice) - Number(product.buyPrice)) * Number(product.quantity || 0))}
                     </span>
                   </div>
                 </div>
@@ -609,9 +613,12 @@ function ProductActionMenu({ product, onEdit, onUpload, onRefreshImage, refreshi
 }
 
 function ProductListMetric({ product, column }: { product: any; column: ProductListColumnKey }) {
-  const profit = Number(product.marketPrice) - Number(product.buyPrice);
+  const quantity = Number(product.quantity || 0);
+  const purchaseValue = Number(product.buyPrice) * quantity;
+  const marketValue = Number(product.marketPrice) * quantity;
+  const profit = marketValue - purchaseValue;
   if (column === "quantity") return <span className="text-muted-foreground">SL <strong className="ml-1 text-foreground">{product.quantity}</strong></span>;
-  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">{formatYen(Number(product.buyPrice))}</strong></span>;
-  if (column === "marketPrice") return <span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">{formatYen(Number(product.marketPrice))}</strong></span>;
+  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">{formatYen(purchaseValue)}</strong><span className="ml-1 text-[10px] text-sky-200">({formatYen(Number(product.buyPrice))}/SP)</span></span>;
+  if (column === "marketPrice") return <span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">{formatYen(marketValue)}</strong></span>;
   return <span className="text-muted-foreground">Lãi <strong className={profit >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{formatSignedYen(profit)}</strong></span>;
 }

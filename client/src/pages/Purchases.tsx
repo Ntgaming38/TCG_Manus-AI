@@ -14,6 +14,7 @@ import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchas
 import { formatYen } from "@shared/formatYen";
 import { productTypeLabel, type ProductType } from "@shared/productCreateType";
 import { ProductTypeBadge } from "@/components/ProductTypeBadge";
+import { ProductNameSuggestions } from "@/components/ProductNameSuggestions";
 
 const DEFAULT_SHOPS = ["Geo", "Joshin", "Fruichi", "COMG!", "Toysrus", "Lawson", "Seven Eleven", "Family Mart"];
 const ADD_PURCHASE_SHOP_VALUE = "__add_purchase_shop";
@@ -44,10 +45,6 @@ export default function Purchases() {
   const { data: purchases, refetch } = trpc.purchases.list.useQuery({ search: search || undefined });
   const { data: savedShops = [] } = trpc.shops.list.useQuery();
   const { data: recentPurchaseShops = [] } = trpc.shops.recent.useQuery();
-  const { data: productSuggestions } = trpc.products.suggestions.useQuery(
-    { search: newPurchase.productName },
-    { enabled: newPurchase.productName.length >= 2 }
-  );
 
   const invalidateAll = () => {
     utils.purchases.list.invalidate();
@@ -275,25 +272,7 @@ export default function Purchases() {
                   onChange={(e) => setNewPurchase(p => ({ ...p, productName: e.target.value }))}
                   placeholder="Nhập tên sản phẩm..."
                 />
-                {productSuggestions && productSuggestions.length > 0 && (
-                  <div className="border border-border rounded-lg overflow-hidden mt-1">
-                    {productSuggestions.map((s: any) => (
-                      <button
-                        key={s.id}
-                        className="w-full text-left px-3 py-2 hover:bg-accent text-sm flex items-center gap-2"
-                        onClick={() => setNewPurchase(p => ({
-                          ...p, productName: s.name, productType: s.type, series: s.series || "Pokemon",
-                          price: (Number(s.buyPrice) || 0) * p.quantity,
-                        }))}
-                      >
-                        <span className="text-xs text-muted-foreground">{productTypeLabel(s.type)}</span>
-                        <span>{s.name}</span>
-                        {s.status === "sold" && <span className="rounded border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">Đã bán hết</span>}
-                        {s.buyPrice > 0 && <span className="ml-auto text-xs text-muted-foreground">{formatYen(Number(s.buyPrice))}/sp</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <ProductNameSuggestions search={newPurchase.productName} onSelect={(product) => setNewPurchase((current) => ({ ...current, productName: product.name, productType: product.type, series: product.series || "Pokemon", price: Number(product.buyPrice || 0) * current.quantity }))} />
               </div>
               <div className="space-y-2">
                 <Label>Shop mua</Label>

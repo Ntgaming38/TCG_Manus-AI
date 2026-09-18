@@ -283,9 +283,13 @@ export default function Inventory() {
                         </div>
                       </>
                     )}
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Giá vốn:</span>
-                      <span className="font-medium">{formatYen(Number(product.buyPrice) * (product.quantity || 1))}</span>
+	                    <div className="flex justify-between text-xs">
+	                      <span className="text-muted-foreground">Giá mua/SP:</span>
+	                      <span className="font-medium text-sky-200">{formatYen(Number(product.buyPrice))}</span>
+	                    </div>
+	                    <div className="flex justify-between text-xs">
+	                      <span className="text-muted-foreground">Giá vốn lô:</span>
+	                      <span className="font-medium">{formatYen(Number(product.buyPrice) * (product.quantity || 1))}</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Giá TT:</span>

@@ -6,7 +6,7 @@ import { updateChyusenNotificationSettings } from "./chyusenDb";
 
 type BackupRow = Record<string, unknown>;
 
-const productTypes = new Set(["card", "box", "pack"]);
+const productTypes = new Set(["card", "box", "pack", "junk_pack"]);
 const purchaseTypes = new Set(["mua_le", "coc_5", "coc_10", "coc_30"]);
 const purchaseStatuses = new Set(["paid", "received", "pending", "cancelled"]);
 const salePlatforms = new Set(["snkrdunk", "mercari", "yahoo", "shop", "offline", "other"]);
@@ -44,7 +44,7 @@ function backupProduct(row: BackupRow, userId: number) {
   return {
     userId,
     name,
-    type: type as "card" | "box" | "pack",
+    type: type as "card" | "box" | "pack" | "junk_pack",
     series: asText(row.series, 100) || "Pokemon",
     setName: asText(row.setName, 255),
     image: asText(row.image),
@@ -82,7 +82,7 @@ export async function restoreDataBackup(userId: number, payload: DataBackupResto
   for (const row of payload.inventory || []) {
     const product = backupProduct(row, userId);
     if (!product) continue;
-    const existing = await db.select({ id: products.id }).from(products).where(and(eq(products.userId, userId), eq(products.name, product.name), eq(products.type, product.type))).limit(1);
+    const existing = await db.select({ id: products.id }).from(products).where(and(eq(products.userId, userId), eq(products.name, product.name), eq(products.type, product.type), eq(products.buyPrice, product.buyPrice))).limit(1);
     const productId = existing[0]?.id;
     if (productId) {
       await db.update(products).set(product).where(eq(products.id, productId));

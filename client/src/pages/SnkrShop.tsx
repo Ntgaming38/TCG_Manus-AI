@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
 import { ProductImageEditControls } from "@/components/ProductImageEditControls";
+import { ProductNameSuggestions } from "@/components/ProductNameSuggestions";
 
 type ShopType = "card" | "box" | "pack";
 type WatchItem = {
@@ -171,7 +172,7 @@ export default function SnkrShop() {
         <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-4 sm:max-w-xl sm:p-6">
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-foreground"><Link2 className="h-5 w-5 text-teal-400" />Thêm sản phẩm Shop SNKR</DialogTitle><DialogDescription>Gắn URL trang sản phẩm SNKRDUNK để theo dõi giá riêng. Không tạo hàng trong Kho Hàng.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <Field label="Tên sản phẩm (tùy chọn)"><Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Để trống để tự lấy từ URL SNKRDUNK" /></Field>
+            <Field label="Tên sản phẩm (tùy chọn)"><Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Để trống để tự lấy từ URL SNKRDUNK" /><ProductNameSuggestions search={form.name} onSelect={(product) => setForm((current) => ({ ...current, name: product.name, productType: (product.type === "junk_pack" ? "pack" : product.type) as ShopType }))} /></Field>
             <div className="grid gap-3 sm:grid-cols-2"><Field label="Loại sản phẩm"><Select value={form.productType} onValueChange={(value) => setForm((current) => ({ ...current, productType: value as ShopType }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="box">Box</SelectItem><SelectItem value="pack">Pack</SelectItem><SelectItem value="card">Card</SelectItem></SelectContent></Select></Field>{form.productType === "card" && <Field label="Rank Card"><Select value={form.cardRank} onValueChange={(value) => setForm((current) => ({ ...current, cardRank: value as "A" | "B" | "C" | "D" }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="A">Rank A</SelectItem><SelectItem value="B">Rank B</SelectItem><SelectItem value="C">Rank C</SelectItem><SelectItem value="D">Rank D</SelectItem></SelectContent></Select></Field>}</div>
             <Field label="URL SNKRDUNK"><Input value={form.sourceUrl} onChange={(event) => setForm((current) => ({ ...current, sourceUrl: event.target.value }))} placeholder="https://snkrdunk.com/..." inputMode="url" /></Field>
             <p className="rounded-lg border border-teal-500/20 bg-teal-500/10 p-3 text-xs leading-5 text-teal-100">Sau khi thêm, Shop SNKR sẽ tự lấy tên, hình đại diện công khai (nếu có) và giá đầu tiên từ URL. Giá này chỉ nằm trong mục theo dõi, không ảnh hưởng bất kỳ số liệu kinh doanh nào.</p>

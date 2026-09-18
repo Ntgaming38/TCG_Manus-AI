@@ -1478,3 +1478,15 @@
 - [x] Áp dụng hiệu ứng RGB cho Card Number bên cạnh tên Card
 - [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và chạy TypeScript
 - [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Gộp tồn kho theo giá mua
+- [x] Đổi quy tắc Mua Hàng: chỉ gộp khi cùng tên, cùng loại và cùng giá mua/SP; khác giá phải tạo dòng tồn kho riêng
+- [x] Bảo toàn quy tắc tách giá khi sao lưu/khôi phục dữ liệu và cho các loại Card/Box/Pack/Pack Rác
+- [x] Làm rõ giá mua/SP trên thẻ sản phẩm và danh sách để nhận diện từng lô giá
+- [x] Bổ sung kiểm thử hồi quy, xác minh desktop/mobile và chạy TypeScript
+- [x] Lưu checkpoint và xuất bản phiên bản mới
+
+## Gợi ý tên sản phẩm trong kho
+- [x] Hiển thị gợi ý từ ký tự đầu tiên trong các biểu mẫu thêm sản phẩm
+- [x] Hiển thị tên, loại, giá mua/SP và số lượng của kết quả để tránh nhập sai
+- [x] Kiểm thử hồi quy, xác minh TypeScript/build và lưu checkpoint mới
