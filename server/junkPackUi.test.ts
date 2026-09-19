@@ -20,9 +20,9 @@ describe("Pack Rác", () => {
     expect(productsSource).toContain('<SelectItem value="junk_pack">Pack Rác</SelectItem>');
   });
 
-  it("validates the type and creates a standalone purchase lot", () => {
+  it("validates the type and merges only a matching-name, matching-price purchase lot", () => {
     expect(routerSource).toContain('z.enum(["card", "box", "pack", "junk_pack"])');
-    expect(databaseSource).toContain('One purchase always creates one independent inventory lot');
-    expect(databaseSource).not.toContain('findMatchingPurchaseInventoryLot');
+    expect(databaseSource).toContain('Merge only when name, type and whole-JPY unit buy price are all identical.');
+    expect(databaseSource).toContain('findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.productType, unitPrice)');
   });
 });

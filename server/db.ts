@@ -18,7 +18,7 @@ import { getSalesProfitBreakdown, getStockMetricBreakdown } from '../shared/dash
 import { SENSITIVE_ACTIVITY_ACTIONS } from "../shared/sensitiveActivityLog";
 import { getDashboardMonthlyTrend } from '../shared/dashboardMonthlyTrend';
 import { getCardRankLabel, normalizeCardRank } from '../shared/cardRank';
-import { getPurchaseUnitPrice } from '../shared/purchaseInventoryLot';
+import { findMatchingPurchaseInventoryLot, getPurchaseUnitPrice } from '../shared/purchaseInventoryLot';
 import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -149,8 +149,28 @@ export async function createProduct(data: InsertProduct) {
   const totalBuyPrice = Number(data.buyPrice || 0);
   const quantity = Math.max(1, Number(data.quantity || 1));
   const unitPrice = getPurchaseUnitPrice(totalBuyPrice, quantity);
-  // Every direct entry is a separate inventory lot, even when a prior lot has
-  // the same product name, type, or unit price.
+  const matchingNameAndTypeProducts = await db.select().from(products)
+    .where(and(eq(products.userId, data.userId), eq(products.name, normalizedName), eq(products.type, data.type)))
+    .limit(100);
+  const matchingLot = findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.type, unitPrice);
+
+  if (matchingLot) {
+    const nextQuantity = (matchingLot.quantity || 0) + quantity;
+    await db.update(products).set({
+      quantity: nextQuantity,
+      status: "in_stock",
+    }).where(and(eq(products.id, matchingLot.id), eq(products.userId, data.userId)));
+    await db.insert(activityLogs).values({
+      userId: data.userId,
+      action: "product_created",
+      description: `Gộp sản phẩm cùng tên và giá mua/SP: ${normalizedName} (${data.type})`,
+      entityType: "product",
+      entityId: matchingLot.id,
+      ...serializeActivityChange(null, { ...data, name: normalizedName, buyPrice: String(unitPrice), totalBuyPrice, quantity, mergedIntoProductId: matchingLot.id }),
+    });
+    return { id: matchingLot.id, merged: true };
+  }
+
   const result = await db.insert(products).values({ ...data, name: normalizedName, buyPrice: String(unitPrice) });
   await db.insert(activityLogs).values({
     userId: data.userId,
@@ -160,7 +180,7 @@ export async function createProduct(data: InsertProduct) {
     entityId: result[0].insertId,
     ...serializeActivityChange(null, { ...data, name: normalizedName, buyPrice: String(unitPrice), totalBuyPrice }),
   });
-  return { id: result[0].insertId };
+  return { id: result[0].insertId, merged: false };
 }
 
 export async function updateProduct(id: number, userId: number, data: Partial<InsertProduct>) {
@@ -772,18 +792,31 @@ export async function createPurchase(userId: number, data: {
   const totalPrice = data.price;
   const unitPrice = getPurchaseUnitPrice(totalPrice, data.quantity);
 
-  // One purchase always creates one independent inventory lot. This prevents
-  // quantities or prices from being blended with any prior Card/Box/Pack lot.
-  const result = await db.insert(products).values({
-    userId,
-    name: normalizedProductName,
-    type: data.productType as any,
-    series: data.series || "Pokemon",
-    quantity: data.quantity,
-    buyPrice: String(unitPrice),
-    status: "in_stock",
-  });
-  const productId = result[0].insertId;
+  // Merge only when name, type and whole-JPY unit buy price are all identical.
+  // Any different name, type, or unit price remains a separate inventory lot.
+  const matchingNameAndTypeProducts = await db.select().from(products)
+    .where(and(eq(products.userId, userId), eq(products.name, normalizedProductName), eq(products.type, data.productType as any)))
+    .limit(100);
+  const matchingLot = findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.productType, unitPrice);
+
+  let productId: number;
+  if (matchingLot) {
+    productId = matchingLot.id;
+    const nextQuantity = (matchingLot.quantity || 0) + data.quantity;
+    await db.update(products).set({ quantity: nextQuantity, status: "in_stock" })
+      .where(and(eq(products.id, productId), eq(products.userId, userId)));
+  } else {
+    const result = await db.insert(products).values({
+      userId,
+      name: normalizedProductName,
+      type: data.productType as any,
+      series: data.series || "Pokemon",
+      quantity: data.quantity,
+      buyPrice: String(unitPrice),
+      status: "in_stock",
+    });
+    productId = result[0].insertId;
+  }
 
   // Create purchase record
   const purchaseResult = await db.insert(purchases).values({

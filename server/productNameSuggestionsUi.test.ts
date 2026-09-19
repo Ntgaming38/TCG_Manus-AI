@@ -25,6 +25,6 @@ describe("product name suggestions", () => {
     expect(productsSource).toContain('Mua:');
     expect(productsSource).toContain('{product.quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)}');
     expect(productsSource).toContain("Giá mua/SP tự tính:");
-    expect(productsSource).toContain("Mỗi lần thêm là một lô riêng.");
+    expect(productsSource).toContain("Tự gộp khi trùng tên, loại và giá mua/SP.");
   });
 });

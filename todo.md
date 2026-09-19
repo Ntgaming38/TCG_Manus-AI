@@ -1497,3 +1497,9 @@
 - [x] Hiển thị từng lô theo SL, giá mua/SP và tổng tiền lô; chỉ tổng hợp các lô ở Tổng quan
 - [x] Sửa lô Pack Rác 30Th 20 Pack 13 × 480 ¥ theo dữ liệu người dùng đã xác nhận
 - [x] Bổ sung kiểm thử hồi quy, TypeScript/build, checkpoint và xuất bản
+
+## Gộp lô tồn kho cùng tên và giá
+- [x] Khôi phục gộp khi tên, loại và giá mua/SP đều trùng cho Thêm sản phẩm và Mua Hàng
+- [x] Giữ tách lô khi khác tên, loại hoặc giá mua/SP
+- [x] Hợp nhất an toàn các lô trùng 30Th Dekki hiện có theo dữ liệu người dùng
+- [x] Bổ sung kiểm thử hồi quy, TypeScript/build, checkpoint và xuất bản

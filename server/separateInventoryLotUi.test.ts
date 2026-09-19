@@ -14,14 +14,15 @@ describe("standalone inventory lots", () => {
     expect(databaseSource).toContain("const unitPrice = getPurchaseUnitPrice(totalBuyPrice, quantity)");
   });
 
-  it("shows quantity, unit cost, and the calculated lot total without combining lots", () => {
+  it("shows quantity, unit cost, and the calculated lot total", () => {
     expect(productsSource).toContain("{product.quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)}");
     expect(inventorySource).toContain("{product.quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)}");
     expect(salesSource).toContain("Lô đang chọn:");
   });
 
-  it("creates one distinct product row for every purchase", () => {
-    expect(databaseSource).toContain("One purchase always creates one independent inventory lot");
-    expect(databaseSource).not.toContain("findMatchingPurchaseInventoryLot");
+  it("merges a purchase only when its name, type, and unit price all match", () => {
+    expect(databaseSource).toContain("Merge only when name, type and whole-JPY unit buy price are all identical.");
+    expect(databaseSource).toContain("findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.productType, unitPrice)");
+    expect(databaseSource).toContain("findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.type, unitPrice)");
   });
 });

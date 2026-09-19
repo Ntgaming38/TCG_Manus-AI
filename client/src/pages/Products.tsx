@@ -379,7 +379,7 @@ export default function Products() {
                   <Input type="number" min={0} value={newProduct.marketPrice} onChange={(e) => setNewProduct(p => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
-	              <p className="-mt-1 text-xs text-muted-foreground">Giá mua/SP tự tính: <span className="font-medium text-foreground">{formatYen(newProduct.quantity > 0 ? Math.round(Number(newProduct.buyPrice || 0) / Number(newProduct.quantity)) : 0)}</span> · Mỗi lần thêm là một lô riêng.</p>
+	              <p className="-mt-1 text-xs text-muted-foreground">Giá mua/SP tự tính: <span className="font-medium text-foreground">{formatYen(newProduct.quantity > 0 ? Math.round(Number(newProduct.buyPrice || 0) / Number(newProduct.quantity)) : 0)}</span> · Tự gộp khi trùng tên, loại và giá mua/SP.</p>
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Textarea value={newProduct.description} onChange={(e) => setNewProduct(p => ({ ...p, description: e.target.value }))} placeholder="Ghi chú thêm..." />
