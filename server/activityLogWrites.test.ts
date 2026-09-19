@@ -106,37 +106,38 @@ describe("activity log writes", () => {
     expect(JSON.parse(latestActivity("sale_created").newValue)).toMatchObject({ productName: "Pikachu ex", quantity: 1, totalRevenue: 15000, platform: "mercari" });
   });
 
-  it("chỉ gộp giao dịch mua vào lô có cùng tên, loại và giá mua/SP", async () => {
+  it("tạo lô tồn kho riêng cho từng giao dịch mua, dù tên và giá/SP giống nhau", async () => {
     const samePriceLot = { ...product, id: 90, name: "30Th 20 Pack", type: "junk_pack" as const, buyPrice: "360", quantity: 17 };
     const differentPriceLot = { ...samePriceLot, id: 91, buyPrice: "480", quantity: 13 };
 
     state.selectResponses = [[samePriceLot, differentPriceLot]];
     await createPurchase(1, { productName: "30Th 20 Pack", productType: "junk_pack", quantity: 5, price: 1800 });
-    expect(state.updateValues).toContainEqual(expect.objectContaining({ quantity: 22, status: "in_stock" }));
-
-    state.selectResponses = [[samePriceLot, differentPriceLot]];
-    await createPurchase(1, { productName: "30Th 20 Pack", productType: "junk_pack", quantity: 5, price: 2500 });
     const insertedProducts = state.insertValues.filter((value) => value.name === "30Th 20 Pack");
-    expect(insertedProducts.at(-1)).toMatchObject({ type: "junk_pack", quantity: 5, buyPrice: "500" });
+    expect(state.updateValues).toEqual([]);
+    expect(insertedProducts.at(-1)).toMatchObject({ type: "junk_pack", quantity: 5, buyPrice: "360" });
   });
 
-  it("gộp khi thêm trực tiếp Card, Box hoặc Pack cùng tên và giá mua/SP", async () => {
+  it("tạo lô riêng khi thêm trực tiếp Card, Box hoặc Pack", async () => {
     const matchingBoxLot = { ...product, id: 92, name: "151 Booster Box", type: "box" as const, buyPrice: "9000", quantity: 2 };
     state.selectResponses = [[matchingBoxLot]];
 
-    await createProduct({ userId: 1, name: "151 Booster Box", type: "box", quantity: 3, buyPrice: "9000", status: "in_stock" });
+    await createProduct({ userId: 1, name: "151 Booster Box", type: "box", quantity: 3, buyPrice: "27000", status: "in_stock" });
 
-    expect(state.updateValues).toContainEqual(expect.objectContaining({ quantity: 5, status: "in_stock" }));
-    expect(JSON.parse(latestActivity("product_created").newValue)).toMatchObject({ mergedIntoProductId: matchingBoxLot.id, buyPrice: "9000" });
+    const insertedProducts = state.insertValues.filter((value) => value.name === "151 Booster Box");
+    expect(state.updateValues).toEqual([]);
+    expect(insertedProducts.at(-1)).toMatchObject({ quantity: 3, buyPrice: "9000" });
+    expect(JSON.parse(latestActivity("product_created").newValue)).toMatchObject({ totalBuyPrice: 27000, buyPrice: "9000" });
   });
 
-  it("kích hoạt lại sản phẩm đã hết hàng khi mua thêm và vẫn giữ trong gợi ý", async () => {
+  it("giữ lô đã bán và tạo lô mới khi mua thêm", async () => {
     const soldProduct = { ...product, quantity: 0, status: "sold" as const };
     state.selectResponses = [[soldProduct]];
 
     await createPurchase(1, { productName: soldProduct.name, productType: "card", quantity: 2, price: 20000 });
 
-    expect(state.updateValues).toContainEqual(expect.objectContaining({ quantity: 2, status: "in_stock" }));
+    const insertedProducts = state.insertValues.filter((value) => value.name === soldProduct.name);
+    expect(state.updateValues).toEqual([]);
+    expect(insertedProducts.at(-1)).toMatchObject({ quantity: 2, buyPrice: "10000", status: "in_stock" });
 
     state.selectResponses = [[soldProduct]];
     await expect(getProductSuggestions(1, "Pikachu")).resolves.toEqual([

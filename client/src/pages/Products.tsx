@@ -210,7 +210,7 @@ export default function Products() {
       series: product.series || "Pokemon",
       setName: product.setName || "",
       quantity: product.quantity,
-      buyPrice: Number(product.buyPrice),
+      buyPrice: Number(product.buyPrice) * Number(product.quantity || 0),
       marketPrice: Number(product.marketPrice) || 0,
       description: product.description || "",
       cardNumber: product.cardNumber || "",
@@ -371,15 +371,15 @@ export default function Products() {
                   <Input type="number" min={1} value={newProduct.quantity} onChange={(e) => setNewProduct(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá mua/SP (¥)</Label>
+                  <Label>Tổng giá mua (¥)</Label>
                   <Input type="number" min={0} value={newProduct.buyPrice} onChange={(e) => setNewProduct(p => ({ ...p, buyPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá thị trường (¥)</Label>
+                  <Label>Giá thị trường/SP (¥)</Label>
                   <Input type="number" min={0} value={newProduct.marketPrice} onChange={(e) => setNewProduct(p => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
-	              <p className="-mt-1 text-xs text-muted-foreground">Tổng vốn lô: <span className="font-medium text-foreground">{formatYen(Number(newProduct.buyPrice || 0) * Number(newProduct.quantity || 0))}</span> · Sản phẩm chỉ được gộp khi trùng tên, loại và giá mua/SP.</p>
+	              <p className="-mt-1 text-xs text-muted-foreground">Giá mua/SP tự tính: <span className="font-medium text-foreground">{formatYen(newProduct.quantity > 0 ? Math.round(Number(newProduct.buyPrice || 0) / Number(newProduct.quantity)) : 0)}</span> · Mỗi lần thêm là một lô riêng.</p>
               <div className="space-y-2">
                 <Label>Ghi chú</Label>
                 <Textarea value={newProduct.description} onChange={(e) => setNewProduct(p => ({ ...p, description: e.target.value }))} placeholder="Ghi chú thêm..." />
@@ -448,11 +448,11 @@ export default function Products() {
                   <Input type="number" min={0} value={editingProduct.quantity} onChange={(e) => setEditingProduct((p: any) => ({ ...p, quantity: parseInt(e.target.value) || 0 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá mua (¥)</Label>
+                  <Label>Tổng giá mua (¥)</Label>
                   <Input type="number" min={0} value={editingProduct.buyPrice} onChange={(e) => setEditingProduct((p: any) => ({ ...p, buyPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá thị trường (¥)</Label>
+                  <Label>Giá thị trường/SP (¥)</Label>
                   <Input type="number" min={0} value={editingProduct.marketPrice} onChange={(e) => setEditingProduct((p: any) => ({ ...p, marketPrice: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
@@ -569,7 +569,7 @@ export default function Products() {
 	                  <div>
 	                    <span className="text-muted-foreground">Mua:</span>
 	                    <span className="ml-1 font-medium">{formatYen(Number(product.buyPrice) * Number(product.quantity || 0))}</span>
-	                    <span className="ml-1 text-[10px] text-sky-200">({formatYen(Number(product.buyPrice))}/SP)</span>
+	                    <span className="ml-1 text-[10px] text-sky-200">({product.quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)})</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Giá TT:</span>
@@ -618,7 +618,7 @@ function ProductListMetric({ product, column }: { product: any; column: ProductL
   const marketValue = Number(product.marketPrice) * quantity;
   const profit = marketValue - purchaseValue;
   if (column === "quantity") return <span className="text-muted-foreground">SL <strong className="ml-1 text-foreground">{product.quantity}</strong></span>;
-  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">{formatYen(purchaseValue)}</strong><span className="ml-1 text-[10px] text-sky-200">({formatYen(Number(product.buyPrice))}/SP)</span></span>;
+  if (column === "buyPrice") return <span className="text-muted-foreground">Mua <strong className="ml-1 text-foreground">{formatYen(purchaseValue)}</strong><span className="ml-1 text-[10px] text-sky-200">({quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)})</span></span>;
   if (column === "marketPrice") return <span className="text-muted-foreground">Giá TT <strong className="ml-1 text-foreground">{formatYen(marketValue)}</strong></span>;
   return <span className="text-muted-foreground">Lãi <strong className={profit >= 0 ? "ml-1 text-green-400" : "ml-1 text-red-400"}>{formatSignedYen(profit)}</strong></span>;
 }

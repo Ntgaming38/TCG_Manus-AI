@@ -235,14 +235,14 @@ export default function Sales() {
                   <SelectContent>
                     {inventoryProducts?.map((p: any) => (
                       <SelectItem key={p.id} value={String(p.id)}>
-                        {p.name} ({p.type}) - SL: {p.quantity}{p.damagedQuantity > 0 ? ` (${p.damagedQuantity} hỏng)` : ''}
+                        {p.name} ({p.type}) · SL: {p.quantity} · {formatYen(Number(p.buyPrice))}/SP{p.damagedQuantity > 0 ? ` (${p.damagedQuantity} hỏng)` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedProduct && (
                   <div className="text-xs text-muted-foreground space-y-0.5">
-                    <p>Đang có: {selectedProduct.quantity} | Giá vốn: {formatYen(Number(selectedProduct.buyPrice))}</p>
+                    <p>Lô đang chọn: {selectedProduct.quantity} × {formatYen(Number(selectedProduct.buyPrice))}/SP · Tổng vốn {formatYen(Number(selectedProduct.buyPrice) * Number(selectedProduct.quantity || 0))}</p>
                     {selectedProduct.damagedQuantity > 0 && (
                       <p className="text-red-400 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />

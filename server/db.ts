@@ -18,7 +18,7 @@ import { getSalesProfitBreakdown, getStockMetricBreakdown } from '../shared/dash
 import { SENSITIVE_ACTIVITY_ACTIONS } from "../shared/sensitiveActivityLog";
 import { getDashboardMonthlyTrend } from '../shared/dashboardMonthlyTrend';
 import { getCardRankLabel, normalizeCardRank } from '../shared/cardRank';
-import { findMatchingPurchaseInventoryLot, getPurchaseUnitPrice } from '../shared/purchaseInventoryLot';
+import { getPurchaseUnitPrice } from '../shared/purchaseInventoryLot';
 import { createTrashItem } from './trashDb';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -146,29 +146,11 @@ export async function createProduct(data: InsertProduct) {
   if (!db) throw new Error("Database not available");
   const normalizedName = data.name.trim();
   if (!normalizedName) throw new Error("Tên sản phẩm không được để trống");
-  const unitPrice = Math.round(Number(data.buyPrice || 0));
-  const matchingNameAndTypeProducts = await db.select().from(products)
-    .where(and(eq(products.userId, data.userId), eq(products.name, normalizedName), eq(products.type, data.type)))
-    .limit(100);
-  const matchingLot = findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.type, unitPrice);
-
-  if (matchingLot) {
-    const nextQuantity = (matchingLot.quantity || 0) + (Number(data.quantity) || 0);
-    await db.update(products).set({
-      quantity: nextQuantity,
-      status: nextQuantity > 0 ? "in_stock" : "sold",
-    }).where(and(eq(products.id, matchingLot.id), eq(products.userId, data.userId)));
-    await db.insert(activityLogs).values({
-      userId: data.userId,
-      action: "product_created",
-      description: `Gộp sản phẩm cùng giá mua: ${normalizedName} (${data.type})`,
-      entityType: "product",
-      entityId: matchingLot.id,
-      ...serializeActivityChange(null, { ...data, name: normalizedName, buyPrice: String(unitPrice), quantity: data.quantity, mergedIntoProductId: matchingLot.id }),
-    });
-    return { id: matchingLot.id, merged: true };
-  }
-
+  const totalBuyPrice = Number(data.buyPrice || 0);
+  const quantity = Math.max(1, Number(data.quantity || 1));
+  const unitPrice = getPurchaseUnitPrice(totalBuyPrice, quantity);
+  // Every direct entry is a separate inventory lot, even when a prior lot has
+  // the same product name, type, or unit price.
   const result = await db.insert(products).values({ ...data, name: normalizedName, buyPrice: String(unitPrice) });
   await db.insert(activityLogs).values({
     userId: data.userId,
@@ -176,9 +158,9 @@ export async function createProduct(data: InsertProduct) {
     description: `Thêm sản phẩm: ${normalizedName} (${data.type})`,
     entityType: "product",
     entityId: result[0].insertId,
-    ...serializeActivityChange(null, { ...data, name: normalizedName, buyPrice: String(unitPrice) }),
+    ...serializeActivityChange(null, { ...data, name: normalizedName, buyPrice: String(unitPrice), totalBuyPrice }),
   });
-  return { id: result[0].insertId, merged: false };
+  return { id: result[0].insertId };
 }
 
 export async function updateProduct(id: number, userId: number, data: Partial<InsertProduct>) {
@@ -187,6 +169,10 @@ export async function updateProduct(id: number, userId: number, data: Partial<In
   // Validation: if quantity is being updated, ensure consistency
   const product = await getProductById(id);
   if (!product || product.userId !== userId) throw new Error("Sản phẩm không tồn tại");
+  if (data.buyPrice !== undefined) {
+    const quantityForPrice = Number(data.quantity ?? product.quantity ?? 0);
+    data.buyPrice = String(getPurchaseUnitPrice(Number(data.buyPrice), quantityForPrice));
+  }
   if (data.quantity !== undefined) {
     const newQty = data.quantity as number;
     if (newQty < 0) throw new Error("Số lượng không thể âm");
@@ -782,39 +768,22 @@ export async function createPurchase(userId: number, data: {
 
   const normalizedProductName = data.productName.trim();
   if (!normalizedProductName) throw new Error("Tên sản phẩm không được để trống");
-  // Price is entered as the total for the lot. Inventory lots remain separate
-  // whenever their rounded JPY per-item buy price differs.
+  // Price is entered as the total for this purchase lot.
   const totalPrice = data.price;
   const unitPrice = getPurchaseUnitPrice(totalPrice, data.quantity);
 
-  // Reuse only the matching price lot. This keeps Card/Box/Pack/Pack Rác with
-  // the same name but a different buy price as distinct inventory entries.
-  let productId: number;
-  const matchingNameAndTypeProducts = await db.select().from(products)
-    .where(and(eq(products.userId, userId), eq(products.name, normalizedProductName), eq(products.type, data.productType as any)))
-    .limit(100);
-  const matchingLot = findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.productType, unitPrice);
-
-  if (matchingLot) {
-    productId = matchingLot.id;
-    const currentQty = matchingLot.quantity || 0;
-    const newQty = currentQty + data.quantity;
-    await db.update(products).set({
-      quantity: newQty,
-      status: newQty > 0 ? "in_stock" : "sold",
-    }).where(eq(products.id, productId));
-  } else {
-    const result = await db.insert(products).values({
-      userId,
-      name: normalizedProductName,
-      type: data.productType as any,
-      series: data.series || "Pokemon",
-      quantity: data.quantity,
-      buyPrice: String(unitPrice),
-      status: "in_stock",
-    });
-    productId = result[0].insertId;
-  }
+  // One purchase always creates one independent inventory lot. This prevents
+  // quantities or prices from being blended with any prior Card/Box/Pack lot.
+  const result = await db.insert(products).values({
+    userId,
+    name: normalizedProductName,
+    type: data.productType as any,
+    series: data.series || "Pokemon",
+    quantity: data.quantity,
+    buyPrice: String(unitPrice),
+    status: "in_stock",
+  });
+  const productId = result[0].insertId;
 
   // Create purchase record
   const purchaseResult = await db.insert(purchases).values({
@@ -880,25 +849,11 @@ export async function updatePurchase(userId: number, data: {
   // Step 2: Apply new purchase quantity
   const qtyAfterApply = qtyAfterReverse + newQty;
 
-  // Step 3: Recalculate average buy price
-  // Get all other purchases for this product (excluding current one)
-  const otherPurchases = await db.select().from(purchases)
-    .where(and(eq(purchases.productId, purchase.productId), eq(purchases.userId, userId)));
-  let totalCostOther = 0;
-  let totalQtyOther = 0;
-  for (const p of otherPurchases) {
-    if (p.id === data.purchaseId) continue;
-    totalCostOther += Number(p.totalPrice || 0);
-    totalQtyOther += p.quantity;
-  }
-  const totalCostAll = totalCostOther + newTotalPrice;
-  const totalQtyAll = totalQtyOther + newQty;
-  const newAvgPrice = totalQtyAll > 0 ? Math.round(totalCostAll / totalQtyAll) : 0;
-
-  // Update product
+  // A purchase owns its separate inventory lot, so preserve its actual unit
+  // price rather than calculating an average with another purchase.
   await db.update(products).set({
     quantity: qtyAfterApply,
-    buyPrice: String(newAvgPrice),
+    buyPrice: String(Math.round(newUnitPrice)),
     status: qtyAfterApply > 0 ? "in_stock" : "sold",
   }).where(eq(products.id, purchase.productId));
 

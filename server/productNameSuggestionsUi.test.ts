@@ -23,7 +23,8 @@ describe("product name suggestions", () => {
 
   it("shows both a lot's total buy value and its per-item buy price", () => {
     expect(productsSource).toContain('Mua:');
-    expect(productsSource).toContain('({formatYen(Number(product.buyPrice))}/SP)');
-    expect(productsSource).toContain("Tổng vốn lô:");
+    expect(productsSource).toContain('{product.quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)}');
+    expect(productsSource).toContain("Giá mua/SP tự tính:");
+    expect(productsSource).toContain("Mỗi lần thêm là một lô riêng.");
   });
 });

@@ -20,9 +20,9 @@ describe("Pack Rác", () => {
     expect(productsSource).toContain('<SelectItem value="junk_pack">Pack Rác</SelectItem>');
   });
 
-  it("validates the type and uses it as part of the product merge key", () => {
+  it("validates the type and creates a standalone purchase lot", () => {
     expect(routerSource).toContain('z.enum(["card", "box", "pack", "junk_pack"])');
-    expect(databaseSource).toContain('eq(products.type, data.productType as any)');
-    expect(databaseSource).toContain('findMatchingPurchaseInventoryLot(matchingNameAndTypeProducts, data.productType, unitPrice)');
+    expect(databaseSource).toContain('One purchase always creates one independent inventory lot');
+    expect(databaseSource).not.toContain('findMatchingPurchaseInventoryLot');
   });
 });

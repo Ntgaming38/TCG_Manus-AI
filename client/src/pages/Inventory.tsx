@@ -124,14 +124,13 @@ export default function Inventory() {
 
   const handleEdit = () => {
     if (!selectedProduct) return;
-    const unitBuyPrice = editForm.quantity > 0 ? editForm.buyPrice / editForm.quantity : 0;
     const unitMarketPrice = editForm.quantity > 0 ? editForm.marketPrice / editForm.quantity : 0;
     updateProduct.mutate({
       id: selectedProduct.id,
       name: editForm.name,
       series: editForm.series,
       quantity: editForm.quantity,
-      buyPrice: unitBuyPrice,
+      buyPrice: editForm.buyPrice,
       marketPrice: unitMarketPrice,
     });
   };
@@ -284,12 +283,8 @@ export default function Inventory() {
                       </>
                     )}
 	                    <div className="flex justify-between text-xs">
-	                      <span className="text-muted-foreground">Giá mua/SP:</span>
-	                      <span className="font-medium text-sky-200">{formatYen(Number(product.buyPrice))}</span>
-	                    </div>
-	                    <div className="flex justify-between text-xs">
-	                      <span className="text-muted-foreground">Giá vốn lô:</span>
-	                      <span className="font-medium">{formatYen(Number(product.buyPrice) * (product.quantity || 1))}</span>
+	                      <span className="text-muted-foreground">Mua:</span>
+	                      <span className="text-right font-medium">{formatYen(Number(product.buyPrice) * (product.quantity || 0))}<span className="ml-1 text-[10px] text-sky-200">({product.quantity} × {formatYen(Number(product.buyPrice))}/{productTypeLabel(product.type)})</span></span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Giá TT:</span>
@@ -459,7 +454,7 @@ export default function Inventory() {
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="font-medium text-sm">{selectedProduct.name}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Loại: {selectedProduct.type} • SL: {selectedProduct.quantity} • Giá vốn: {formatYen(Number(selectedProduct.buyPrice))}
+                  Loại: {selectedProduct.type} • Lô: {selectedProduct.quantity} × {formatYen(Number(selectedProduct.buyPrice))}/SP • Tổng vốn: {formatYen(Number(selectedProduct.buyPrice) * Number(selectedProduct.quantity || 0))}
                 </p>
                 <p className="text-xs text-red-400 mt-2">
                   <strong>Cảnh báo:</strong> Xoá sản phẩm sẽ xoá luôn tất cả lịch sử mua/bán liên quan. Thao tác này không thể hoàn tác.

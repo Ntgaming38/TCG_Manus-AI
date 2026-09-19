@@ -1490,3 +1490,10 @@
 - [x] Hiển thị gợi ý từ ký tự đầu tiên trong các biểu mẫu thêm sản phẩm
 - [x] Hiển thị tên, loại, giá mua/SP và số lượng của kết quả để tránh nhập sai
 - [x] Kiểm thử hồi quy, xác minh TypeScript/build và lưu checkpoint mới
+
+## Tách riêng từng lô nhập hàng
+- [x] Bỏ hoàn toàn gộp lô khi thêm trực tiếp Card/Box/Pack/Pack Rác hoặc tạo Mua Hàng
+- [x] Đổi biểu mẫu Thêm sản phẩm sang nhập Tổng giá mua lô và tự lưu giá mua/SP chính xác
+- [x] Hiển thị từng lô theo SL, giá mua/SP và tổng tiền lô; chỉ tổng hợp các lô ở Tổng quan
+- [x] Sửa lô Pack Rác 30Th 20 Pack 13 × 480 ¥ theo dữ liệu người dùng đã xác nhận
+- [x] Bổ sung kiểm thử hồi quy, TypeScript/build, checkpoint và xuất bản
