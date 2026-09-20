@@ -23,6 +23,9 @@ describe("product name suggestions", () => {
     });
     expect(purchasesSource).toContain('autoComplete="off"');
     expect(purchasesSource).toContain('className="relative z-30"');
+    expect(purchasesSource).toContain("Sẽ gộp vào số lượng hiện có");
+    expect(purchasesSource).toContain('role="status"');
+    expect(purchasesSource).toContain("setSelectedExistingProduct(product)");
   });
 
   it("shows both a lot's total buy value and its per-item buy price", () => {

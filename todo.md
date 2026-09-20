@@ -1509,3 +1509,8 @@
 - [x] Hợp nhất an toàn mọi nhóm trùng, giữ lịch sử Mua/Bán và dữ liệu hiển thị tốt nhất
 - [x] Làm rõ gợi ý tên ở Mua Hàng ngay từ ký tự đầu tiên
 - [x] Bổ sung kiểm thử hồi quy, TypeScript/build, checkpoint và xuất bản
+
+## Thông báo gộp khi chọn sản phẩm Mua Hàng
+- [x] Hiển thị nhãn “Sẽ gộp vào số lượng hiện có” sau khi chọn sản phẩm từ gợi ý
+- [x] Hiển thị tên, số lượng hiện có, loại và giá mua/SP của sản phẩm được chọn
+- [x] Xóa nhãn khi người dùng thay đổi tên, loại, số lượng hoặc giá; thêm kiểm thử hồi quy
