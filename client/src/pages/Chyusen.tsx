@@ -315,6 +315,10 @@ export default function Chyusen() {
     },
     onError: (error) => toast.error(error.message),
   });
+  const markPurchaseCreated = trpc.chyusen.markPurchaseCreated.useMutation({
+    onSuccess: () => { toast.success("Đã xác nhận mua hàng. Chyusen đã hoàn tất."); invalidate(); },
+    onError: (error) => toast.error(error.message),
+  });
   const updateNotificationSettings = trpc.chyusen.updateNotificationSettings.useMutation({ onSuccess: () => { utils.chyusen.notificationSettings.invalidate(); toast.success("Đã cập nhật cài đặt nhắc hạn."); }, onError: (error) => toast.error(error.message) });
   const createSource = trpc.chyusen.createSource.useMutation({ onSuccess: () => { toast.success("Đã lưu nguồn theo dõi."); setShowSourceDialog(false); setSourceDraft({ label: "", sourceUrl: "", checkIntervalMinutes: 360, isActive: true }); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
   const updateSource = trpc.chyusen.updateSource.useMutation({ onSuccess: () => { toast.success("Đã cập nhật nguồn theo dõi."); utils.chyusen.sources.invalidate(); }, onError: (error) => toast.error(error.message) });
@@ -564,7 +568,7 @@ export default function Chyusen() {
                   {entry.applicationStatus === "not_registered" && <Button variant="outline" size="sm" onClick={() => setParticipation.mutate({ id: entry.id, applicationStatus: "registered" })}><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />Đã đăng ký</Button>}
                   {entry.applicationStatus === "registered" && <Button variant="outline" size="sm" title={entry.resultDate && !isChyusenResultReady(entry.resultDate) ? `Chờ ngày công bố: ${displayDate(entry.resultDate)}` : undefined} disabled={Boolean(entry.resultDate && !isChyusenResultReady(entry.resultDate))} className="border-yellow-400/70 text-yellow-300 hover:bg-yellow-500/15 hover:text-yellow-200 disabled:cursor-not-allowed disabled:opacity-45" onClick={() => setWinConfirmEntry(entry)}><Trophy className="mr-1.5 h-3.5 w-3.5" />{entry.resultDate && !isChyusenResultReady(entry.resultDate) ? "Chờ công bố" : "Đã trúng"}</Button>}
                   {entry.applicationStatus === "registered" && <Button variant="outline" size="sm" onClick={() => setParticipation.mutate({ id: entry.id, applicationStatus: "lost" })}><XCircle className="mr-1.5 h-3.5 w-3.5" />Đã trượt</Button>}
-                  {entry.applicationStatus === "won" && !entry.purchaseCreatedAt && <Button size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => purchaseDraft.mutate({ id: entry.id })}><Gift className="mr-1.5 h-3.5 w-3.5" />Thêm vào Mua Hàng</Button>}
+                  {entry.applicationStatus === "won" && !entry.purchaseCreatedAt && <><Button size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => purchaseDraft.mutate({ id: entry.id })}><Gift className="mr-1.5 h-3.5 w-3.5" />Thêm vào Mua Hàng</Button><Button variant="outline" size="sm" className="border-emerald-400/70 text-emerald-300 hover:bg-emerald-500/15 hover:text-emerald-200" disabled={markPurchaseCreated.isPending} onClick={() => markPurchaseCreated.mutate({ id: entry.id })}><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />{markPurchaseCreated.isPending ? "Đang hoàn tất..." : "Đã mua hàng"}</Button></>}
                   {entry.applicationStatus === "won" && !entry.purchaseCreatedAt && <Button variant="outline" size="sm" className="border-amber-400/70 text-amber-300 hover:bg-amber-500/15 hover:text-amber-200" onClick={() => setUndoWinEntry(entry)}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Hoàn tác Đã trúng</Button>}
                   <Button variant="ghost" size="sm" onClick={() => openEdit(entry)}><Pencil className="mr-1.5 h-3.5 w-3.5" />Sửa</Button><Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(entry.id)}><Trash2 className="mr-1.5 h-3.5 w-3.5" />Xóa</Button>
                 </div></CardContent>

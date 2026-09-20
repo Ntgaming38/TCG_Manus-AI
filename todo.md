@@ -1524,3 +1524,8 @@
 - [x] Tính số lượng hiện có cộng số lượng giao dịch mới
 - [x] Hiển thị tổng số lượng dự kiến ngay trên nhãn gộp thành công
 - [x] Chỉ hiển thị dự kiến khi giá mua/SP khớp và thêm kiểm thử hồi quy
+
+## Nút xác nhận Đã mua hàng cho Chūsen trúng
+- [x] Thêm nút “Đã mua hàng” cạnh “Thêm vào Mua Hàng”
+- [x] Gọi mutation hoàn tất, xóa khỏi danh sách đang theo dõi và cập nhật lại dữ liệu
+- [x] Hiển thị trạng thái đang xử lý, toast thành công và kiểm thử hồi quy
