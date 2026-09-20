@@ -1519,3 +1519,8 @@
 - [x] So sánh giá mua/SP mới với giá hiện tại theo thời gian thực
 - [x] Hiển thị cảnh báo đỏ “Không thể gộp” khi hai mức giá khác nhau
 - [x] Giữ nhãn xanh khi giá trùng và kiểm thử hồi quy
+
+## Hiển thị số lượng dự kiến sau khi gộp
+- [x] Tính số lượng hiện có cộng số lượng giao dịch mới
+- [x] Hiển thị tổng số lượng dự kiến ngay trên nhãn gộp thành công
+- [x] Chỉ hiển thị dự kiến khi giá mua/SP khớp và thêm kiểm thử hồi quy

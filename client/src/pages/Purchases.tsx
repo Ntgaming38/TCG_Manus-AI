@@ -169,6 +169,7 @@ export default function Purchases() {
 
   const selectedPurchaseUnitPrice = newPurchase.quantity > 0 ? Math.round(Number(newPurchase.price || 0) / newPurchase.quantity) : 0;
   const selectedPriceMatches = Boolean(selectedExistingProduct) && selectedPurchaseUnitPrice === Math.round(Number(selectedExistingProduct?.buyPrice || 0));
+  const projectedMergedQuantity = Number(selectedExistingProduct?.quantity || 0) + Number(newPurchase.quantity || 0);
 
   // Calculate totals for current list
   const totals = useMemo(() => {
@@ -279,7 +280,7 @@ export default function Purchases() {
                   autoComplete="off"
                 />
                 <ProductNameSuggestions className="relative z-30" search={newPurchase.productName} onSelect={(product) => { setSelectedExistingProduct(product); setNewPurchase((current) => ({ ...current, productName: product.name, productType: product.type, series: product.series || "Pokemon", price: Number(product.buyPrice || 0) * current.quantity })); }} />
-                {selectedExistingProduct && (selectedPriceMatches ? <div className="flex items-start gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100" role="status"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /><span><strong>Sẽ gộp vào số lượng hiện có</strong><br /><span className="text-emerald-200/80">{selectedExistingProduct.name} · đang có {selectedExistingProduct.quantity || 0} {productTypeLabel(selectedExistingProduct.type)} · {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP</span></span></div> : <div className="flex items-start gap-2 rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-xs text-red-100" role="alert"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" /><span><strong>Không thể gộp</strong><br /><span className="text-red-200/90">Giá nhập mới {formatYen(selectedPurchaseUnitPrice)}/SP khác giá mua hiện tại {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP.</span></span></div>)}
+                {selectedExistingProduct && (selectedPriceMatches ? <div className="flex items-start gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100" role="status"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /><span><strong>Sẽ gộp vào số lượng hiện có</strong><br /><span className="text-emerald-200/80">{selectedExistingProduct.name} · đang có {selectedExistingProduct.quantity || 0} {productTypeLabel(selectedExistingProduct.type)} · {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP</span><br /><span className="font-semibold text-emerald-100">Tổng số lượng dự kiến sau khi gộp: {projectedMergedQuantity} {productTypeLabel(selectedExistingProduct.type)}</span></span></div> : <div className="flex items-start gap-2 rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-xs text-red-100" role="alert"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" /><span><strong>Không thể gộp</strong><br /><span className="text-red-200/90">Giá nhập mới {formatYen(selectedPurchaseUnitPrice)}/SP khác giá mua hiện tại {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP.</span></span></div>)}
               </div>
               <div className="space-y-2">
                 <Label>Shop mua</Label>

@@ -30,6 +30,8 @@ describe("product name suggestions", () => {
     expect(purchasesSource).toContain('role="alert"');
     expect(purchasesSource).toContain("Giá nhập mới");
     expect(purchasesSource).toContain("selectedPriceMatches");
+    expect(purchasesSource).toContain("Tổng số lượng dự kiến sau khi gộp");
+    expect(purchasesSource).toContain("projectedMergedQuantity");
   });
 
   it("shows both a lot's total buy value and its per-item buy price", () => {
