@@ -13,12 +13,16 @@ describe("product name suggestions", () => {
     expect(suggestionSource).toContain("enabled: trimmedSearch.length >= 1");
     expect(suggestionSource).toContain("Gợi ý tên sản phẩm trong kho");
     expect(suggestionSource).toContain("{formatYen(Number(product.buyPrice || 0))}/SP");
+    expect(suggestionSource).toContain("Đang tìm tên sản phẩm trong kho…");
+    expect(suggestionSource).toContain("Chưa có tên trùng trong kho.");
   });
 
   it("is available in every product-entry workflow", () => {
     [productsSource, purchasesSource, chyusenSource, snkrShopSource].forEach((source) => {
       expect(source).toContain("ProductNameSuggestions");
     });
+    expect(purchasesSource).toContain('autoComplete="off"');
+    expect(purchasesSource).toContain('className="relative z-30"');
   });
 
   it("shows both a lot's total buy value and its per-item buy price", () => {

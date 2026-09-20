@@ -21,17 +21,17 @@ type ProductNameSuggestionsProps = {
 /** Suggests existing private inventory names as soon as the first character is entered. */
 export function ProductNameSuggestions({ search, onSelect, className = "" }: ProductNameSuggestionsProps) {
   const trimmedSearch = search.trim();
-  const { data: suggestions = [] } = trpc.products.suggestions.useQuery(
+  const { data: suggestions = [], isFetching } = trpc.products.suggestions.useQuery(
     { search: trimmedSearch },
     { enabled: trimmedSearch.length >= 1 },
   );
 
-  if (!trimmedSearch || suggestions.length === 0) return null;
+  if (!trimmedSearch) return null;
 
   return (
-    <div className={`mt-1 overflow-hidden rounded-lg border border-sky-400/35 bg-background/95 shadow-lg ${className}`} role="listbox" aria-label="Gợi ý tên sản phẩm trong kho">
+    <div className={`relative z-20 mt-1 overflow-hidden rounded-lg border border-sky-400/35 bg-background/95 shadow-lg ${className}`} role="listbox" aria-label="Gợi ý tên sản phẩm trong kho">
       <p className="border-b border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground">Tên trùng hoặc gần giống trong kho — chọn để tránh nhập sai</p>
-      {suggestions.map((product: ProductNameSuggestion) => (
+      {isFetching ? <p className="px-3 py-2 text-xs text-sky-200">Đang tìm tên sản phẩm trong kho…</p> : suggestions.length === 0 ? <p className="px-3 py-2 text-xs text-muted-foreground">Chưa có tên trùng trong kho.</p> : suggestions.map((product: ProductNameSuggestion) => (
         <button
           key={product.id}
           type="button"

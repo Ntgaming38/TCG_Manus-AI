@@ -265,14 +265,15 @@ export default function Purchases() {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="relative z-20 space-y-2">
                 <Label>Tên sản phẩm</Label>
                 <Input
                   value={newPurchase.productName}
                   onChange={(e) => setNewPurchase(p => ({ ...p, productName: e.target.value }))}
                   placeholder="Nhập tên sản phẩm..."
+                  autoComplete="off"
                 />
-                <ProductNameSuggestions search={newPurchase.productName} onSelect={(product) => setNewPurchase((current) => ({ ...current, productName: product.name, productType: product.type, series: product.series || "Pokemon", price: Number(product.buyPrice || 0) * current.quantity }))} />
+                <ProductNameSuggestions className="relative z-30" search={newPurchase.productName} onSelect={(product) => setNewPurchase((current) => ({ ...current, productName: product.name, productType: product.type, series: product.series || "Pokemon", price: Number(product.buyPrice || 0) * current.quantity }))} />
               </div>
               <div className="space-y-2">
                 <Label>Shop mua</Label>
