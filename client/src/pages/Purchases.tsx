@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Pin, Trash2, CheckCircle2 } from "lucide-react";
+import { Plus, Search, ShoppingCart, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Pin, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CHYUSEN_PURCHASE_DRAFT_STORAGE_KEY, getChyusenEntryIdToMarkAfterPurchase, parseChyusenPurchaseDraft } from "@shared/chyusenPurchaseDraft";
@@ -167,6 +167,9 @@ export default function Purchases() {
 
   const savedPurchaseShopByName = useMemo(() => new Map(savedShops.map((shop: any) => [shop.name.trim().toLocaleLowerCase(), shop])), [savedShops]);
 
+  const selectedPurchaseUnitPrice = newPurchase.quantity > 0 ? Math.round(Number(newPurchase.price || 0) / newPurchase.quantity) : 0;
+  const selectedPriceMatches = Boolean(selectedExistingProduct) && selectedPurchaseUnitPrice === Math.round(Number(selectedExistingProduct?.buyPrice || 0));
+
   // Calculate totals for current list
   const totals = useMemo(() => {
     const totalAmount = sortedPurchases.reduce((sum, p: any) => sum + Number(p.totalPrice || 0), 0);
@@ -276,7 +279,7 @@ export default function Purchases() {
                   autoComplete="off"
                 />
                 <ProductNameSuggestions className="relative z-30" search={newPurchase.productName} onSelect={(product) => { setSelectedExistingProduct(product); setNewPurchase((current) => ({ ...current, productName: product.name, productType: product.type, series: product.series || "Pokemon", price: Number(product.buyPrice || 0) * current.quantity })); }} />
-                {selectedExistingProduct && <div className="flex items-start gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100" role="status"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /><span><strong>Sẽ gộp vào số lượng hiện có</strong><br /><span className="text-emerald-200/80">{selectedExistingProduct.name} · đang có {selectedExistingProduct.quantity || 0} {productTypeLabel(selectedExistingProduct.type)} · {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP</span></span></div>}
+                {selectedExistingProduct && (selectedPriceMatches ? <div className="flex items-start gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100" role="status"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /><span><strong>Sẽ gộp vào số lượng hiện có</strong><br /><span className="text-emerald-200/80">{selectedExistingProduct.name} · đang có {selectedExistingProduct.quantity || 0} {productTypeLabel(selectedExistingProduct.type)} · {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP</span></span></div> : <div className="flex items-start gap-2 rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-xs text-red-100" role="alert"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" /><span><strong>Không thể gộp</strong><br /><span className="text-red-200/90">Giá nhập mới {formatYen(selectedPurchaseUnitPrice)}/SP khác giá mua hiện tại {formatYen(Number(selectedExistingProduct.buyPrice || 0))}/SP.</span></span></div>)}
               </div>
               <div className="space-y-2">
                 <Label>Shop mua</Label>
@@ -297,11 +300,11 @@ export default function Purchases() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Số lượng</Label>
-                  <Input type="number" min={1} value={newPurchase.quantity} onChange={(e) => { setSelectedExistingProduct(null); setNewPurchase(p => ({ ...p, quantity: parseInt(e.target.value) || 1 })); }} />
+                  <Input type="number" min={1} value={newPurchase.quantity} onChange={(e) => setNewPurchase(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Tổng giá mua (¥)</Label>
-                  <Input type="number" min={0} value={newPurchase.price} onChange={(e) => { setSelectedExistingProduct(null); setNewPurchase(p => ({ ...p, price: parseFloat(e.target.value) || 0 })); }} />
+                  <Input type="number" min={0} value={newPurchase.price} onChange={(e) => setNewPurchase(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))} />
                 </div>
               </div>
               <div className="p-3 bg-secondary/50 rounded-lg">

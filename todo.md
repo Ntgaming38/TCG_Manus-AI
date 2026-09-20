@@ -1514,3 +1514,8 @@
 - [x] Hiển thị nhãn “Sẽ gộp vào số lượng hiện có” sau khi chọn sản phẩm từ gợi ý
 - [x] Hiển thị tên, số lượng hiện có, loại và giá mua/SP của sản phẩm được chọn
 - [x] Xóa nhãn khi người dùng thay đổi tên, loại, số lượng hoặc giá; thêm kiểm thử hồi quy
+
+## Cảnh báo giá không thể gộp trong Mua Hàng
+- [x] So sánh giá mua/SP mới với giá hiện tại theo thời gian thực
+- [x] Hiển thị cảnh báo đỏ “Không thể gộp” khi hai mức giá khác nhau
+- [x] Giữ nhãn xanh khi giá trùng và kiểm thử hồi quy

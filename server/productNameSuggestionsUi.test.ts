@@ -26,6 +26,10 @@ describe("product name suggestions", () => {
     expect(purchasesSource).toContain("Sẽ gộp vào số lượng hiện có");
     expect(purchasesSource).toContain('role="status"');
     expect(purchasesSource).toContain("setSelectedExistingProduct(product)");
+    expect(purchasesSource).toContain("Không thể gộp");
+    expect(purchasesSource).toContain('role="alert"');
+    expect(purchasesSource).toContain("Giá nhập mới");
+    expect(purchasesSource).toContain("selectedPriceMatches");
   });
 
   it("shows both a lot's total buy value and its per-item buy price", () => {
