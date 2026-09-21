@@ -22,6 +22,7 @@ import { ProductImageAdjuster } from "@/components/ProductImageAdjuster";
 import { ProductImageEditControls } from "@/components/ProductImageEditControls";
 import { ProductTypeBadge } from "@/components/ProductTypeBadge";
 import { ProductNameSuggestions } from "@/components/ProductNameSuggestions";
+import { sortProductsByRecentPurchase } from "@shared/productRecentOrder";
 import { Plus, Search, Filter, Package, LayoutGrid, List, MoreVertical, Pencil, Trash2, ImagePlus, RefreshCw, Loader2, CheckCircle2, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
@@ -49,7 +50,7 @@ export default function Products() {
   const boxPackImageZoom = useProductImageZoom("box-pack");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [cardSort, setCardSort] = useState<"rarity" | "roi" | "marketPrice">("rarity");
+  const [cardSort, setCardSort] = useState<"newest" | "rarity" | "roi" | "marketPrice">("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => typeof window === "undefined" ? "grid" : (window.localStorage.getItem("tcg-products-view-mode") === "list" ? "list" : "grid"));
   const [visibleListColumns, setVisibleListColumns] = useState<ProductListColumnKey[]>(() => {
     if (typeof window === "undefined") return DEFAULT_PRODUCT_LIST_COLUMNS;
@@ -245,7 +246,7 @@ export default function Products() {
 
   const sortedProducts = useMemo(() => {
     if (!products) return [];
-    if (activeType !== "card") return products;
+    if (cardSort === "newest" || activeType !== "card") return sortProductsByRecentPurchase(products);
 
     return [...products].sort((a: any, b: any) => {
       if (cardSort === "rarity") {
@@ -515,11 +516,12 @@ export default function Products() {
           </Select>
         )}
         {activeType === "card" && (
-          <Select value={cardSort} onValueChange={(value) => setCardSort(value as "rarity" | "roi" | "marketPrice")}>
+          <Select value={cardSort} onValueChange={(value) => setCardSort(value as "newest" | "rarity" | "roi" | "marketPrice")}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Sắp xếp Card" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="newest">Mua gần nhất</SelectItem>
               <SelectItem value="rarity">Độ hiếm: FUR → Khác</SelectItem>
               <SelectItem value="roi">ROI: cao đến thấp</SelectItem>
               <SelectItem value="marketPrice">Giá thị trường: cao đến thấp</SelectItem>

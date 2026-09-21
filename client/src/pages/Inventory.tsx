@@ -13,7 +13,7 @@ import { formatYen } from "@shared/formatYen";
 import { Search, Package, Warehouse, AlertTriangle, Pencil, Trash2, EyeOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { sortInventoryByStatus } from "@shared/inventoryStatusOrder";
+import { sortProductsByRecentPurchase } from "@shared/productRecentOrder";
 import { productTypeLabel } from "@shared/productCreateType";
 import { ProductTypeBadge } from "@/components/ProductTypeBadge";
 
@@ -86,7 +86,7 @@ export default function Inventory() {
   const emptyState = getInventoryEmptyState(statusFilter);
   const displayedProducts = useMemo(() => {
     if (!products) return [];
-    return statusFilter === "all" ? sortInventoryByStatus(products) : products;
+    return sortProductsByRecentPurchase(products);
   }, [products, statusFilter]);
 
   const openDamageDialog = (product: any) => {

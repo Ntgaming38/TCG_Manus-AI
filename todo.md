@@ -1529,3 +1529,13 @@
 - [x] Thêm nút “Đã mua hàng” cạnh “Thêm vào Mua Hàng”
 - [x] Gọi mutation hoàn tất, xóa khỏi danh sách đang theo dõi và cập nhật lại dữ liệu
 - [x] Hiển thị trạng thái đang xử lý, toast thành công và kiểm thử hồi quy
+
+## Sắp xếp sản phẩm theo lần mua/thêm gần nhất
+- [x] Đặt mặc định Card, Box, Pack và Pack Rác theo updatedAt giảm dần
+- [x] Áp dụng cùng thứ tự cho Kho Hàng khi bộ lọc là Tất cả
+- [x] Giữ các lựa chọn sắp xếp Card thủ công và bổ sung kiểm thử hồi quy
+
+## Sắp xếp sản phẩm theo lần mua/thêm gần nhất — hoàn tất
+- [x] Đặt mặc định Card, Box, Pack và Pack Rác theo updatedAt giảm dần
+- [x] Áp dụng cùng thứ tự cho Kho Hàng khi bộ lọc là Tất cả
+- [x] Giữ các lựa chọn sắp xếp Card thủ công và bổ sung kiểm thử hồi quy
